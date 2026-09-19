@@ -14,7 +14,7 @@ SUPPORT_USERNAME = "@Yamen494"
 CHANNEL_USERNAME = "@YF494YF"
 CHANNEL_LINK = "https://t.me/YF494YF"
 
-DATABASE_URL = "postgresql://postgres:gGhvPiJBIxsFZdgZaMKmfuzSHwfjBRbV@postgres.railway.internal:5432/railway"
+DATABASE_URL = "postgresql://postgres:FmMcTnFMJbldpynWXDwrFfXISsKbYKvt@postgres.railway.internal:5432/railway"
 
 ORDERS_OPEN_HOUR = 12
 ORDERS_CLOSE_HOUR = 22
