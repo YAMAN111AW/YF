@@ -10,17 +10,27 @@ from datetime import datetime, timezone, timedelta
 # ============ الإعدادات ============
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "8956086702:AAEtcqzxJwA7W7daV3s4DiDMjSMTt9InJ3k")
 ADMIN_ID = 6382473367
-PAYMENT_NUMBER = "0984674400"
+PAYMENT_NUMBER_SYRIATEL = "0984674400"
+PAYMENT_NUMBER_SHAM = "0984674400"
 SUPPORT_USERNAME = "@Yamen494"
 CHANNEL_USERNAME = "@YF494YF"
 CHANNEL_LINK = "https://t.me/YF494YF"
 DATABASE_URL = os.environ.get("DATABASE_URL",
     "postgresql://postgres:FmMcTnFMJbldpynWXDwrFfXISsKbYKvt@postgres.railway.internal:5432/railway")
 
+SHAM_IMAGE_PATH = "sham.jpg"
+
 ORDERS_OPEN_HOUR = 12
 ORDERS_CLOSE_HOUR = 22
 
 bot = telebot.TeleBot(BOT_TOKEN)
+
+# 🛠️ إصلاح خطأ 409 Conflict — احذف webhook عند البداية
+try:
+    bot.remove_webhook()
+    print("✅ تم حذف أي webhook قديم")
+except Exception as e:
+    print(f"⚠️ {e}")
 
 # ============ الأسعار ============
 PACKAGES = {
@@ -49,10 +59,10 @@ TEXTS = {
         "welcome": (
             "👋 أهلاً بك <b>{name}</b> في بوت شحن الجواهر والشدات 💎🔥\n\n"
             "🎯 <b>فكرة البوت:</b>\n"
-            "يمكنك شحن فري فاير (جواهر) أو ببجي (شدات) عبر سيرياتيل كاش ✅\n\n"
+            "يمكنك شحن فري فاير (جواهر) أو ببجي (شدات) عبر سيرياتيل كاش أو شام كاش ✅\n\n"
             "📌 <b>طريقة الشراء:</b>\n"
             "1️⃣ اختر اللعبة\n2️⃣ اختر العرض\n3️⃣ أرسل ID حسابك\n"
-            "4️⃣ أرسل اسمك في اللعبة\n5️⃣ حوّل المبلغ عبر سيرياتيل كاش\n"
+            "4️⃣ اختر طريقة الدفع\n5️⃣ حوّل المبلغ\n"
             "6️⃣ انتظر موافقة الإدارة ✅\n\n"
             "⏰ <b>الطلبات تُقبل من 12 ظهرًا حتى 10 مساءً بتوقيت السعودية</b> 🇸🇦"
         ),
@@ -69,9 +79,8 @@ TEXTS = {
         "btn_info": "👤 معلوماتي",
         "btn_support": "🆘 تواصل مع الدعم",
         "btn_settings": "⚙️ الإعدادات",
-        "btn_back": "⬅️ رجوع",
-        "btn_cancel": "❌ إلغاء",
-        "btn_send_message": "✉️ إرسال شكوى / اقتراح",
+        "btn_back": "⬅️ رجوع للأزرار الرئيسية",
+        "btn_back_short": "⬅️ رجوع",
         "btn_inbox": "📬 البريد الوارد",
         "check_success": "✅ تم التحقق بنجاح! أهلاً بك 🎉",
         "check_fail": "❌ لم تشترك في القناة بعد!",
@@ -89,30 +98,48 @@ TEXTS = {
             "❌ <b>ID Free Fire غير صالح!</b>\n\n"
             "⚠️ {reason}\n\n"
             "📌 <b>شروط ID فري فاير:</b>\n"
-            "• أرقام فقط 🔢\n"
-            "• من 5 إلى 15 رقم\n"
-            "• لا يبدأ بـ 0\n\n"
+            "• أرقام فقط 🔢\n• من 5 إلى 15 رقم\n• لا يبدأ بـ 0\n\n"
             "🔁 أرسل ID صحيح:"
         ),
         "invalid_id_pubg": (
             "❌ <b>ID PUBG غير صالح!</b>\n\n"
             "⚠️ {reason}\n\n"
             "📌 <b>شروط ID ببجي:</b>\n"
-            "• أرقام فقط 🔢\n"
-            "• من 9 إلى 12 رقم\n"
-            "• لا يبدأ بـ 0\n\n"
+            "• أرقام فقط 🔢\n• من 9 إلى 12 رقم\n• لا يبدأ بـ 0\n\n"
             "🔁 أرسل ID صحيح:"
         ),
         "send_name": "📝 ممتاز! الآن أرسل <b>اسمك داخل اللعبة</b>:",
         "invalid_name": "❌ الاسم قصير جدًا! أرسل اسمك الصحيح:",
-        "final_step": (
-            "🎉 <b>الخطوة الأخيرة!</b>\n\n"
-            "💳 أرسل المبلغ <b>{price}</b> إلى:\n"
-            "<code>{number}</code>\n"
-            "عبر <b>سيرياتيل كاش</b> حصرًا 📲\n\n"
-            "⚠️ سيتم مراجعة طلبك ✅\n"
+        "choose_payment": (
+            "💳 <b>اختر طريقة الدفع:</b>\n\n"
+            "👇 اختر من الأزرار بالأسفل"
+        ),
+        "btn_syriatel": "💳 سيرياتيل كاش",
+        "btn_sham": "📷 شام كاش",
+        "payment_syriatel": (
+            "💳 <b>طريقة الدفع: سيرياتيل كاش</b>\n\n"
+            "📌 <b>الخطوات:</b>\n"
+            "1️⃣ افتح تطبيق <b>سيرياتيل كاش</b>\n"
+            "2️⃣ اختر <b>تحويل</b>\n"
+            "3️⃣ أدخل الرقم:\n"
+            f"<code>{PAYMENT_NUMBER_SYRIATEL}</code>\n"
+            "4️⃣ أدخل المبلغ: <b>{price}</b>\n"
+            "5️⃣ أكّد العملية ✅\n\n"
+            "⚠️ بعد التحويل سيتم مراجعة طلبك من قِبَل الإدارة ✅\n"
             "🔖 رقم طلبك: <b>#{oid}</b>"
         ),
+        "payment_sham": (
+            "📷 <b>طريقة الدفع: شام كاش</b>\n\n"
+            "📌 <b>الخطوات:</b>\n"
+            "1️⃣ افتح تطبيق <b>شام كاش</b>\n"
+            "2️⃣ اختر <b>مسح QR</b>\n"
+            "3️⃣ امسح الكود الموجود في الصورة بالأعلى ☝️\n"
+            "4️⃣ أدخل المبلغ: <b>{price}</b>\n"
+            "5️⃣ أكّد العملية ✅\n\n"
+            "⚠️ بعد التحويل سيتم مراجعة طلبك من قِبَل الإدارة ✅\n"
+            "🔖 رقم طلبك: <b>#{oid}</b>"
+        ),
+        "sham_image_caption": "📷 <b>امسح هذا الكود للدفع عبر شام كاش</b>\n\n💰 المبلغ المطلوب: <b>{price}</b>",
         "accepted": "✅ <b>تم قبول طلبك!</b>\n\n💎 <b>{item}</b> سيصلك خلال <b>5 دقائق</b> ⏳\n\nشكرًا ❤️",
         "rejected": "❌ عذرًا، تم <b>رفض طلبك</b>.\nتواصل مع الدعم 🆘",
         "my_info": (
@@ -129,9 +156,9 @@ TEXTS = {
             f"👨‍💻 للتواصل: {SUPPORT_USERNAME}\n\n"
             "📖 <b>طريقة الاستخدام:</b>\n"
             "1️⃣ اختر اللعبة\n2️⃣ اختر عرض الشحن 💎\n"
-            "3️⃣ أرسل ID حسابك 🆔\n4️⃣ أرسل اسمك في اللعبة 📝\n"
-            f"5️⃣ حوّل المبلغ عبر سيرياتيل كاش إلى:\n   <code>{PAYMENT_NUMBER}</code>\n"
-            "6️⃣ انتظر الموافقة ✅\n7️⃣ تصلك الجواهر/الشدات خلال 5 دقائق ⏳\n\n"
+            "3️⃣ أرسل ID حسابك 🆔\n4️⃣ اختر طريقة الدفع\n"
+            "5️⃣ حوّل المبلغ 💳\n"
+            "6️⃣ انتظر الموافقة ✅\n7️⃣ تصلك خلال 5 دقائق ⏳\n\n"
             "⏰ <b>ساعات العمل:</b> 12 ظهرًا - 10 مساءً 🇸🇦\n\n"
             "👇 يمكنك إرسال شكوى أو اقتراح عبر الزر بالأسفل:"
         ),
@@ -139,19 +166,18 @@ TEXTS = {
         "ask_message": (
             "✉️ <b>أرسل رسالتك الآن</b>\n\n"
             "📝 اكتب شكواك، اقتراحك، أو أي استفسار\n"
-            "سيتم إرسالها للإدارة مباشرة ✅\n\n"
-            "لإلغاء الإرسال اضغط زر الرجوع 👇"
+            "سيتم إرسالها للإدارة مباشرة ✅"
         ),
         "message_sent": "✅ <b>تم إرسال رسالتك بنجاح!</b>\n\nسيتم الرد عليك في أقرب وقت 📩",
         "message_too_short": "❌ الرسالة قصيرة جدًا! أرسل رسالة أطول:",
-        "inbox_title": "📬 <b>البريد الوارد</b>\n\n📥 عدد الرسائل: <b>{count}</b>",
+        "inbox_title": "📬 <b>البريد الوارد</b>\n\n📥 آخر <b>{count}</b> رسالة",
         "inbox_empty": "📭 لا يوجد رسائل حتى الآن",
         "inbox_item": (
-            "📩 <b>رسالة #{n}</b>\n\n"
-            "👤 من: <b>{name}</b>\n"
+            "📩 <b>شكوى رقم #{n}</b>\n\n"
+            "👤 الاسم: <b>{name}</b>\n"
             "🆔 <code>{uid}</code>\n"
             "🕒 {time}\n\n"
-            "💬 <b>الرسالة:</b>\n{msg}"
+            "💬 <b>الشكوى:</b>\n{msg}"
         ),
         "settings_admin": "⚙️ <b>الإعدادات (أدمن)</b>\n\nاختر:",
         "settings_user": "⚙️ <b>الإعدادات</b>\n\nاختر:",
@@ -168,16 +194,15 @@ TEXTS = {
         "order_changed": "✅ تم تغيير الترتيب!",
         "btn_order_default": "1️⃣ Free Fire ثم PUBG",
         "btn_order_swapped": "2️⃣ PUBG ثم Free Fire",
-        "cancelled": "❌ تم الإلغاء",
-        "back_done": "⬅️ رجعنا للخطوة السابقة",
+        "back_done": "⬅️ رجعنا للأزرار الرئيسية",
     },
     "en": {
         "welcome": (
             "👋 Welcome <b>{name}</b> to the Diamonds & UC bot 💎🔥\n\n"
-            "🎯 <b>Bot purpose:</b>\nTop up Free Fire or PUBG via Syriatel Cash ✅\n\n"
+            "🎯 <b>Bot purpose:</b>\nTop up via Syriatel Cash or Sham Cash ✅\n\n"
             "📌 <b>How to buy:</b>\n1️⃣ Choose game\n2️⃣ Choose package\n"
-            "3️⃣ Send your ID\n4️⃣ Send in-game name\n5️⃣ Pay via Syriatel Cash\n"
-            "6️⃣ Wait for approval ✅\n\n"
+            "3️⃣ Send your ID\n4️⃣ Choose payment method\n"
+            "5️⃣ Pay\n6️⃣ Wait for approval ✅\n\n"
             "⏰ <b>Orders: 12 PM - 10 PM (Saudi time)</b> 🇸🇦"
         ),
         "subscribe_required": (
@@ -191,9 +216,8 @@ TEXTS = {
         "btn_info": "👤 My info",
         "btn_support": "🆘 Support",
         "btn_settings": "⚙️ Settings",
-        "btn_back": "⬅️ Back",
-        "btn_cancel": "❌ Cancel",
-        "btn_send_message": "✉️ Send complaint/suggestion",
+        "btn_back": "⬅️ Back to main menu",
+        "btn_back_short": "⬅️ Back",
         "btn_inbox": "📬 Inbox",
         "check_success": "✅ Verified! Welcome 🎉",
         "check_fail": "❌ Not subscribed yet!",
@@ -216,12 +240,30 @@ TEXTS = {
         ),
         "send_name": "📝 Now send your <b>in-game name</b>:",
         "invalid_name": "❌ Name too short!",
-        "final_step": (
-            "🎉 <b>Final step!</b>\n\n"
-            "💳 Send <b>{price}</b> to:\n<code>{number}</code>\n"
-            "via <b>Syriatel Cash</b> only 📲\n\n"
-            "⚠️ Will be reviewed ✅\n🔖 Order #<b>{oid}</b>"
+        "choose_payment": "💳 <b>Choose payment method:</b>\n\n👇 From buttons below",
+        "btn_syriatel": "💳 Syriatel Cash",
+        "btn_sham": "📷 Sham Cash",
+        "payment_syriatel": (
+            "💳 <b>Payment: Syriatel Cash</b>\n\n"
+            "📌 <b>Steps:</b>\n"
+            "1️⃣ Open <b>Syriatel Cash</b>\n"
+            "2️⃣ Choose <b>Transfer</b>\n"
+            f"3️⃣ Enter: <code>{PAYMENT_NUMBER_SYRIATEL}</code>\n"
+            "4️⃣ Enter amount: <b>{price}</b>\n"
+            "5️⃣ Confirm ✅\n\n"
+            "⚠️ Reviewed by admin ✅\n🔖 Order #<b>{oid}</b>"
         ),
+        "payment_sham": (
+            "📷 <b>Payment: Sham Cash</b>\n\n"
+            "📌 <b>Steps:</b>\n"
+            "1️⃣ Open <b>Sham Cash</b>\n"
+            "2️⃣ Choose <b>Scan QR</b>\n"
+            "3️⃣ Scan the code in the image above ☝️\n"
+            "4️⃣ Enter amount: <b>{price}</b>\n"
+            "5️⃣ Confirm ✅\n\n"
+            "⚠️ Reviewed by admin ✅\n🔖 Order #<b>{oid}</b>"
+        ),
+        "sham_image_caption": "📷 <b>Scan this code to pay via Sham Cash</b>\n\n💰 Amount: <b>{price}</b>",
         "accepted": "✅ <b>Accepted!</b>\n\n💎 <b>{item}</b> within <b>5 min</b> ⏳\n\nThanks ❤️",
         "rejected": "❌ Order <b>rejected</b>.\nContact support 🆘",
         "my_info": (
@@ -234,8 +276,8 @@ TEXTS = {
             f"👨‍💻 {SUPPORT_USERNAME}\n\n"
             "📖 <b>How to use:</b>\n"
             "1️⃣ Choose game\n2️⃣ Choose package 💎\n"
-            "3️⃣ Send ID 🆔\n4️⃣ Send name 📝\n"
-            f"5️⃣ Pay via Syriatel Cash to:\n   <code>{PAYMENT_NUMBER}</code>\n"
+            "3️⃣ Send ID 🆔\n4️⃣ Choose payment\n"
+            "5️⃣ Pay 💳\n"
             "6️⃣ Wait ✅\n7️⃣ Receive in 5 min ⏳\n\n"
             "⏰ <b>Working: 12 PM - 10 PM</b> 🇸🇦\n\n"
             "👇 Send a complaint/suggestion:"
@@ -244,15 +286,14 @@ TEXTS = {
         "ask_message": (
             "✉️ <b>Send your message</b>\n\n"
             "📝 Complaint, suggestion, or inquiry\n"
-            "Will be sent directly ✅\n\n"
-            "To cancel, press Back 👇"
+            "Will be sent directly ✅"
         ),
         "message_sent": "✅ <b>Message sent!</b>\n\nWe'll reply soon 📩",
         "message_too_short": "❌ Too short!",
-        "inbox_title": "📬 <b>Inbox</b>\n\n📥 Messages: <b>{count}</b>",
+        "inbox_title": "📬 <b>Inbox</b>\n\n📥 Last <b>{count}</b> messages",
         "inbox_empty": "📭 No messages yet",
         "inbox_item": (
-            "📩 <b>Message #{n}</b>\n\n👤 From: <b>{name}</b>\n"
+            "📩 <b>Complaint #{n}</b>\n\n👤 Name: <b>{name}</b>\n"
             "🆔 <code>{uid}</code>\n🕒 {time}\n\n💬 <b>Message:</b>\n{msg}"
         ),
         "settings_admin": "⚙️ <b>Settings (Admin)</b>\n\nChoose:",
@@ -270,8 +311,7 @@ TEXTS = {
         "order_changed": "✅ Order changed!",
         "btn_order_default": "1️⃣ Free Fire then PUBG",
         "btn_order_swapped": "2️⃣ PUBG then Free Fire",
-        "cancelled": "❌ Cancelled",
-        "back_done": "⬅️ Back",
+        "back_done": "⬅️ Back to main menu",
     }
 }
 
@@ -301,9 +341,14 @@ def init_db():
             price TEXT,
             game_id TEXT,
             player_name TEXT,
+            payment_method TEXT,
             status TEXT,
             created_at TEXT
         )
+    """)
+    # لو كان جدول orders موجود مسبقًا بدون payment_method نضيفه
+    cur.execute("""
+        ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method TEXT
     """)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS settings (
@@ -324,8 +369,7 @@ def init_db():
     """)
     cur.execute("INSERT INTO settings VALUES ('button_order', 'ff,pubg') ON CONFLICT (key) DO NOTHING")
     conn.commit()
-    cur.close()
-    conn.close()
+    cur.close(); conn.close()
 
 init_db()
 
@@ -395,14 +439,11 @@ def is_subscribed(user_id):
 # ============ التحقق الذكي من ID ============
 def validate_game_id(game_id: str, game: str):
     game_id = game_id.strip()
-    
-    # فحص عام
     if not game_id.isdigit():
         return False, "يجب أن يحتوي على أرقام فقط / digits only"
     if game_id.startswith("0"):
         return False, "لا يبدأ بـ 0 / no leading 0"
 
-    # فحص حسب اللعبة
     if game == "ff":
         if len(game_id) < 5:
             return False, "ID فري فاير أقل من 5 أرقام / FF ID < 5 digits"
@@ -441,12 +482,13 @@ def main_keyboard(uid):
     return kb
 
 def back_keyboard(uid):
+    """زر الرجوع فقط — يرجّع المستخدم للأزرار الرئيسية"""
     lang = get_lang(uid)
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
     kb.row(TEXTS[lang]["btn_back"])
     return kb
 
-# ============ رسالة الترحيب ============
+# ============ رسائل ============
 def send_welcome(chat_id, first_name, uid):
     bot.send_message(
         chat_id, t(uid, "welcome", name=first_name),
@@ -459,46 +501,10 @@ def show_subscription_message(chat_id, uid):
     kb.add(types.InlineKeyboardButton(t(uid, "btn_check"), callback_data="check_sub"))
     bot.send_message(chat_id, t(uid, "subscribe_required"), parse_mode="HTML", reply_markup=kb)
 
-# ============ حالة الرجوع ============
-def save_step(uid, step, data=None):
-    bot.user_data = getattr(bot, "user_data", {})
-    if uid not in bot.user_data:
-        bot.user_data[uid] = {}
-    bot.user_data[uid]["step"] = step
-    if data:
-        bot.user_data[uid].update(data)
-
-def go_back(message):
-    uid = message.from_user.id
-    bot.user_data = getattr(bot, "user_data", {})
-    data = bot.user_data.get(uid, {})
-    step = data.get("step", 1)
-
-    if step <= 2:
-        bot.send_message(message.chat.id, t(uid, "back_done"),
-                         reply_markup=main_keyboard(uid))
-        bot.user_data[uid]["step"] = 1
-    elif step == 3:
-        game = data.get("game", "ff")
-        show_game_packages_manual(message.chat.id, uid, game)
-        bot.user_data[uid]["step"] = 2
-    elif step == 4:
-        msg = bot.send_message(
-            message.chat.id,
-            t(uid, "chosen",
-              item=data.get("package_name", ""),
-              price=data.get("price", ""),
-              game=PACKAGES[data.get("game", "ff")]["title"][get_lang(uid)]),
-            parse_mode="HTML",
-            reply_markup=back_keyboard(uid)
-        )
-        bot.register_next_step_handler(msg, get_game_id)
-        bot.user_data[uid]["step"] = 3
-    elif step == 5:
-        msg = bot.send_message(message.chat.id, t(uid, "send_name"),
-                                parse_mode="HTML", reply_markup=back_keyboard(uid))
-        bot.register_next_step_handler(msg, get_player_name)
-        bot.user_data[uid]["step"] = 4
+def send_main_menu(chat_id, uid, msg=None):
+    """يرجع المستخدم للأزرار الرئيسية"""
+    text = msg or t(uid, "back_done")
+    bot.send_message(chat_id, text, reply_markup=main_keyboard(uid))
 
 # ============ /start ============
 @bot.message_handler(commands=['start'])
@@ -507,7 +513,6 @@ def cmd_start(message):
     uid = message.from_user.id
     if is_subscribed(uid):
         send_welcome(message.chat.id, message.from_user.first_name, uid)
-        save_step(uid, 1)
     else:
         show_subscription_message(message.chat.id, uid)
 
@@ -521,11 +526,10 @@ def check_subscription(call):
             bot.delete_message(call.message.chat.id, call.message.message_id)
         except: pass
         send_welcome(call.message.chat.id, call.from_user.first_name, uid)
-        save_step(uid, 1)
     else:
         bot.answer_callback_query(call.id, t(uid, "check_fail"), show_alert=True)
 
-# ============ أزرار اللعب ============
+# ============ أزرار الألعاب ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_ff"], TEXTS["en"]["btn_ff"]])
 def show_ff(message):
     show_game_packages(message, "ff")
@@ -546,10 +550,9 @@ def show_game_packages(message, game):
         bot.send_message(message.chat.id, t(uid, "orders_closed"), parse_mode="HTML")
         return
 
-    save_step(uid, 2, {"game": game})
-    show_game_packages_manual(message.chat.id, uid, game)
+    bot.user_data = getattr(bot, "user_data", {})
+    bot.user_data[uid] = {"game": game}
 
-def show_game_packages_manual(chat_id, uid, game):
     lang = get_lang(uid)
     game_data = PACKAGES[game]
     game_title = game_data["title"][lang]
@@ -560,9 +563,8 @@ def show_game_packages_manual(chat_id, uid, game):
             text=f"{item[lang]} — {item['price']}",
             callback_data=f"pkg|{game}|{key}"
         ))
-
     bot.send_message(
-        chat_id,
+        message.chat.id,
         t(uid, "choose_package", game=game_title),
         parse_mode="HTML",
         reply_markup=kb
@@ -577,7 +579,10 @@ def choose_package(call):
     item = PACKAGES[game]["items"][key]
 
     bot.answer_callback_query(call.id, "✅")
-    save_step(uid, 3, {
+    bot.user_data = getattr(bot, "user_data", {})
+    if uid not in bot.user_data:
+        bot.user_data[uid] = {}
+    bot.user_data[uid].update({
         "game": game,
         "package_key": key,
         "package_name": item[lang],
@@ -597,14 +602,16 @@ def choose_package(call):
 def get_game_id(message):
     uid = message.from_user.id
 
-    if message.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"]]:
-        go_back(message)
+    # زر الرجوع → الأزرار الرئيسية مباشرة
+    if message.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"],
+                        TEXTS["ar"]["btn_back_short"], TEXTS["en"]["btn_back_short"]]:
+        send_main_menu(message.chat.id, uid)
         return
 
     bot.user_data = getattr(bot, "user_data", {})
     data = bot.user_data.get(uid)
     if not data:
-        bot.send_message(message.chat.id, "⚠️ اضغط /start من جديد.")
+        send_main_menu(message.chat.id, uid, "⚠️ اضغط /start من جديد.")
         return
 
     game = data.get("game", "ff")
@@ -623,8 +630,8 @@ def get_game_id(message):
         return
 
     bot.user_data[uid]["game_id"] = result
-    bot.user_data[uid]["step"] = 4
 
+    # نطلب اسم اللاعب
     msg = bot.send_message(
         message.chat.id, t(uid, "send_name"),
         parse_mode="HTML",
@@ -636,14 +643,15 @@ def get_game_id(message):
 def get_player_name(message):
     uid = message.from_user.id
 
-    if message.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"]]:
-        go_back(message)
+    if message.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"],
+                        TEXTS["ar"]["btn_back_short"], TEXTS["en"]["btn_back_short"]]:
+        send_main_menu(message.chat.id, uid)
         return
 
     bot.user_data = getattr(bot, "user_data", {})
     data = bot.user_data.get(uid)
     if not data:
-        bot.send_message(message.chat.id, "⚠️ اضغط /start من جديد.")
+        send_main_menu(message.chat.id, uid, "⚠️ اضغط /start من جديد.")
         return
 
     player_name = message.text.strip() if message.text else ""
@@ -656,39 +664,91 @@ def get_player_name(message):
         return
 
     bot.user_data[uid]["player_name"] = player_name
-    bot.user_data[uid]["step"] = 5
 
+    # ===== الآن نطلب اختيار طريقة الدفع =====
+    kb = types.InlineKeyboardMarkup(row_width=2)
+    kb.add(
+        types.InlineKeyboardButton(t(uid, "btn_syriatel"), callback_data="pay|syriatel"),
+        types.InlineKeyboardButton(t(uid, "btn_sham"), callback_data="pay|sham"),
+    )
+    bot.send_message(
+        message.chat.id,
+        t(uid, "choose_payment"),
+        parse_mode="HTML",
+        reply_markup=kb
+    )
+
+# ============ اختيار طريقة الدفع ============
+@bot.callback_query_handler(func=lambda c: c.data.startswith("pay|"))
+def choose_payment(call):
+    method = call.data.split("|")[1]
+    uid = call.from_user.id
+    bot.user_data = getattr(bot, "user_data", {})
+    data = bot.user_data.get(uid)
+    if not data:
+        bot.answer_callback_query(call.id, "⚠️ اضغط /start من جديد", show_alert=True)
+        return
+
+    bot.answer_callback_query(call.id, "✅")
+
+    # حفظ الطلب في قاعدة البيانات
     conn = db_connect()
     cur = conn.cursor()
     cur.execute(
-        "INSERT INTO orders (user_id, game, package, price, game_id, player_name, status, created_at) "
-        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING order_id",
+        "INSERT INTO orders (user_id, game, package, price, game_id, player_name, payment_method, status, created_at) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING order_id",
         (uid, data["game"], data["package_name"], data["price"],
-         data["game_id"], player_name, "pending",
+         data["game_id"], data["player_name"], method, "pending",
          datetime.now().strftime("%Y-%m-%d %H:%M"))
     )
     order_id = cur.fetchone()["order_id"]
     conn.commit()
     cur.close(); conn.close()
 
-    bot.send_message(
-        message.chat.id,
-        t(uid, "final_step", price=data["price"], number=PAYMENT_NUMBER, oid=order_id),
-        parse_mode="HTML",
-        reply_markup=main_keyboard(uid)
-    )
+    # إرسال تعليمات الدفع
+    if method == "syriatel":
+        bot.send_message(
+            call.message.chat.id,
+            t(uid, "payment_syriatel", price=data["price"], oid=order_id),
+            parse_mode="HTML"
+        )
+    else:  # sham
+        # إرسال صورة QR ثم التعليمات
+        try:
+            with open(SHAM_IMAGE_PATH, "rb") as photo:
+                bot.send_photo(
+                    call.message.chat.id,
+                    photo,
+                    caption=t(uid, "sham_image_caption", price=data["price"]),
+                    parse_mode="HTML"
+                )
+        except FileNotFoundError:
+            bot.send_message(call.message.chat.id, "⚠️ صورة sham.jpg غير موجودة")
+        bot.send_message(
+            call.message.chat.id,
+            t(uid, "payment_sham", price=data["price"], oid=order_id),
+            parse_mode="HTML",
+            reply_markup=main_keyboard(uid)
+        )
 
+    # إذا كانت سيرياتيل، أرسل لوحة الأزرار الرئيسية بعد الرسالة
+    if method == "syriatel":
+        bot.send_message(call.message.chat.id, "🔽", reply_markup=main_keyboard(uid))
+
+    # إشعار الأدمن
+    method_label = "💳 سيرياتيل كاش" if method == "syriatel" else "📷 شام كاش"
     admin_text = (
         "🔔 <b>طلب شراء جديد!</b>\n\n"
         f"🔖 رقم الطلب: <b>#{order_id}</b>\n"
-        f"👤 المستخدم: {message.from_user.full_name}\n"
-        f"🆔 يوزر: @{message.from_user.username or 'لا يوجد'}\n"
+        f"👤 المستخدم: {call.from_user.full_name}\n"
+        f"🆔 يوزر: @{call.from_user.username or 'لا يوجد'}\n"
         f"🆔 تلغرام آيدي: <code>{uid}</code>\n\n"
         f"🎮 اللعبة: <b>{data['game'].upper()}</b>\n"
         f"💎 العرض: <b>{data['package_name']}</b>\n"
         f"💰 السعر: <b>{data['price']}</b>\n"
         f"🎮 ID اللعبة: <code>{data['game_id']}</code>\n"
-        f"📝 اسم اللاعب: <b>{player_name}</b>\n\n"
+        f"📝 اسم اللاعب: <b>{data['player_name']}</b>\n"
+        f"💳 طريقة الدفع: <b>{method_label}</b>\n\n"
         "اضغط زر الموافقة بعد التأكد:"
     )
     kb = types.InlineKeyboardMarkup()
@@ -793,7 +853,7 @@ def support(message):
 
     bot.send_message(message.chat.id, t(uid, "support"), parse_mode="HTML", reply_markup=kb)
 
-# ============ إرسال شكوى / اقتراح ============
+# ============ إرسال شكوى ============
 @bot.callback_query_handler(func=lambda c: c.data == "send_complaint")
 def ask_complaint(call):
     uid = call.from_user.id
@@ -809,8 +869,9 @@ def ask_complaint(call):
 def receive_complaint(message):
     uid = message.from_user.id
 
-    if message.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"]]:
-        bot.send_message(message.chat.id, t(uid, "back_done"), reply_markup=main_keyboard(uid))
+    if message.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"],
+                        TEXTS["ar"]["btn_back_short"], TEXTS["en"]["btn_back_short"]]:
+        send_main_menu(message.chat.id, uid)
         return
 
     text = message.text.strip() if message.text else ""
@@ -848,14 +909,15 @@ def receive_complaint(message):
     )
     bot.send_message(ADMIN_ID, admin_text, parse_mode="HTML")
 
-# ============ البريد الوارد (للأدمن) ============
+# ============ البريد الوارد (أدمن) ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_inbox"], TEXTS["en"]["btn_inbox"]] and m.from_user.id == ADMIN_ID)
 def show_inbox(message):
     uid = message.from_user.id
 
     conn = db_connect()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM messages ORDER BY id DESC LIMIT 20")
+    # آخر 10 رسائل
+    cur.execute("SELECT * FROM messages ORDER BY id DESC LIMIT 10")
     msgs = cur.fetchall()
     cur.close(); conn.close()
 
@@ -1003,4 +1065,4 @@ def cancel_reset(call):
 
 # ============ تشغيل ============
 print("🤖 البوت يعمل الآن...")
-bot.infinity_polling()
+bot.infinity_polling(skip_pending=True, timeout=30, long_polling_timeout=30)
