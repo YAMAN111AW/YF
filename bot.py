@@ -24,10 +24,8 @@ ORDERS_CLOSE_HOUR = 22
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# قاموس عالمي لحالة المستخدمين (بدل bot.user_data)
 USER_DATA = {}
 
-# 🛠️ إصلاح خطأ 409 Conflict
 try:
     bot.remove_webhook()
     print("✅ تم حذف أي webhook قديم")
@@ -198,7 +196,6 @@ TEXTS = {
         "btn_order_swapped": "2️⃣ PUBG ثم Free Fire",
         "back_done": "⬅️ رجعنا للخطوة السابقة",
         "unknown_msg": "🤔 لم أفهم رسالتك. استخدم الأزرار بالأسفل 👇",
-        "choose_game": "🎮 <b>اختر اللعبة التي تريد شحنها:</b>\n\n👇 من الأزرار بالأسفل",
     },
     "en": {
         "welcome": (
@@ -317,7 +314,6 @@ TEXTS = {
         "btn_order_swapped": "2️⃣ PUBG then Free Fire",
         "back_done": "⬅️ Back",
         "unknown_msg": "🤔 I didn't understand. Use the buttons below 👇",
-        "choose_game": "🎮 <b>Choose the game:</b>\n\n👇 From buttons below",
     }
 }
 
@@ -378,7 +374,8 @@ init_db()
 
 # ============ دوال مساعدة ============
 def gen_random_id():
-    return "USR-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    """إيدي عشوائي أرقام فقط من 8 خانات"""
+    return str(random.randint(10000000, 99999999))
 
 def get_user(uid):
     conn = db_connect()
@@ -443,20 +440,20 @@ def is_subscribed(user_id):
 def validate_game_id(game_id: str, game: str):
     game_id = game_id.strip()
     if not game_id.isdigit():
-        return False, "يجب أن يحتوي على أرقام فقط / digits only"
+        return False, "يجب أن يحتوي على أرقام فقط"
     if game_id.startswith("0"):
-        return False, "لا يبدأ بـ 0 / no leading 0"
+        return False, "لا يبدأ بـ 0"
 
     if game == "ff":
         if len(game_id) < 5:
-            return False, "ID فري فاير أقل من 5 أرقام / FF ID < 5 digits"
+            return False, "ID فري فاير أقل من 5 أرقام"
         if len(game_id) > 15:
-            return False, "ID فري فاير أكثر من 15 رقم / FF ID > 15 digits"
+            return False, "ID فري فاير أكثر من 15 رقم"
     elif game == "pubg":
         if len(game_id) < 9:
-            return False, "ID ببجي أقل من 9 أرقام / PUBG ID < 9 digits"
+            return False, "ID ببجي أقل من 9 أرقام"
         if len(game_id) > 12:
-            return False, "ID ببجي أكثر من 12 رقم / PUBG ID > 12 digits"
+            return False, "ID ببجي أكثر من 12 رقم"
 
     return True, game_id
 
@@ -490,10 +487,8 @@ def back_keyboard(uid):
     T = TEXTS[lang]
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
 
-    # صف الرجوع
     kb.row(T["btn_back"])
 
-    # صف الألعاب
     order = get_button_order().split(",")
     row_games = []
     for g in order:
@@ -545,7 +540,6 @@ def show_game_packages_manual(chat_id, uid, game):
 
 # ============ دالة الرجوع الذكية ============
 def go_back(message):
-    """يرجّع المستخدم للخطوة السابقة + يعرض الأزرار الرئيسية خلف الكيبورد"""
     uid = message.from_user.id
     data = USER_DATA.get(uid, {})
     step = data.get("step", 1)
@@ -558,13 +552,11 @@ def go_back(message):
         )
         USER_DATA[uid] = {"step": 1}
     elif step == 3:
-        # كنا في إدخال ID → نرجع لاختيار العرض
         game = data.get("game", "ff")
         show_game_packages_manual(message.chat.id, uid, game)
         USER_DATA[uid]["step"] = 2
         bot.send_message(message.chat.id, "🔽", reply_markup=back_keyboard(uid))
     elif step == 4:
-        # كنا في إدخال الاسم → نرجع لإدخال ID
         msg = bot.send_message(
             message.chat.id,
             t(uid, "chosen",
@@ -577,7 +569,6 @@ def go_back(message):
         bot.register_next_step_handler(msg, get_game_id)
         USER_DATA[uid]["step"] = 3
     elif step == 5:
-        # كنا في اختيار الدفع → نرجع لإدخال الاسم
         msg = bot.send_message(
             message.chat.id, t(uid, "send_name"),
             parse_mode="HTML", reply_markup=back_keyboard(uid)
@@ -734,7 +725,6 @@ def get_player_name(message):
     USER_DATA[uid]["player_name"] = player_name
     USER_DATA[uid]["step"] = 5
 
-    # أزرار الدفع
     kb = types.InlineKeyboardMarkup(row_width=2)
     kb.add(
         types.InlineKeyboardButton(t(uid, "btn_syriatel"), callback_data="pay|syriatel"),
@@ -761,7 +751,6 @@ def choose_payment(call):
 
         bot.answer_callback_query(call.id, "✅")
 
-        # حفظ الطلب
         conn = db_connect()
         cur = conn.cursor()
         cur.execute(
@@ -775,7 +764,6 @@ def choose_payment(call):
         conn.commit()
         cur.close(); conn.close()
 
-        # إرسال تعليمات الدفع
         if method == "syriatel":
             bot.send_message(
                 call.message.chat.id,
@@ -801,7 +789,6 @@ def choose_payment(call):
                 reply_markup=main_keyboard(uid)
             )
 
-        # إشعار الأدمن
         method_label = "💳 سيرياتيل كاش" if method == "syriatel" else "📷 شام كاش"
         admin_text = (
             "🔔 <b>طلب شراء جديد!</b>\n\n"
@@ -824,7 +811,6 @@ def choose_payment(call):
         )
         bot.send_message(ADMIN_ID, admin_text, parse_mode="HTML", reply_markup=kb)
 
-        # تنظيف
         USER_DATA.pop(uid, None)
 
     except Exception as e:
@@ -834,7 +820,7 @@ def choose_payment(call):
         except: pass
 
 # ============ قبول / رفض ============
-@bot.callback_query_handler(func=lambda c: c.data.startswith(("accept|", "reject|")))
+@bot.callback_query_handler(func=lambda c: c.data.startswith("accept|") or c.data.startswith("reject|"))
 def handle_decision(call):
     try:
         action, oid = call.data.split("|")
@@ -1037,48 +1023,59 @@ def settings_menu(message):
     bot.send_message(message.chat.id, title, parse_mode="HTML", reply_markup=kb)
 
 # ============ معالج الإعدادات ============
-@bot.callback_query_handler(func=lambda c: c.data.startswith("cfg_"))
-def cfg_handler(call):
+@bot.callback_query_handler(func=lambda c: c.data == "cfg_lang")
+def cfg_lang(call):
     try:
         uid = call.from_user.id
-        action = call.data
+        kb = types.InlineKeyboardMarkup(row_width=2)
+        kb.add(
+            types.InlineKeyboardButton("🇸🇦 العربية", callback_data="set_lang|ar"),
+            types.InlineKeyboardButton("🇬🇧 English", callback_data="set_lang|en"),
+        )
+        bot.edit_message_text(
+            t(uid, "lang_pick"),
+            call.message.chat.id, call.message.message_id,
+            reply_markup=kb
+        )
+        bot.answer_callback_query(call.id)
+    except Exception as e:
+        print(f"❌ {e}")
 
-        if action == "cfg_lang":
-            kb = types.InlineKeyboardMarkup(row_width=2)
-            kb.add(
-                types.InlineKeyboardButton("🇸🇦 العربية", callback_data="set_lang|ar"),
-                types.InlineKeyboardButton("🇬🇧 English", callback_data="set_lang|en"),
-            )
-            bot.edit_message_text(
-                t(uid, "lang_pick"),
-                call.message.chat.id, call.message.message_id,
-                reply_markup=kb
-            )
+@bot.callback_query_handler(func=lambda c: c.data == "cfg_order")
+def cfg_order(call):
+    try:
+        uid = call.from_user.id
+        if uid != ADMIN_ID:
+            bot.answer_callback_query(call.id, "🚫", show_alert=True)
+            return
+        current = get_button_order()
+        order_str = "🔥 FF → 🎯 PUBG" if current == "ff,pubg" else "🎯 PUBG → 🔥 FF"
+        kb = types.InlineKeyboardMarkup(row_width=1)
+        kb.add(types.InlineKeyboardButton(t(uid, "btn_order_default"), callback_data="set_order|ff,pubg"))
+        kb.add(types.InlineKeyboardButton(t(uid, "btn_order_swapped"), callback_data="set_order|pubg,ff"))
+        bot.edit_message_text(
+            t(uid, "order_current", order=order_str),
+            call.message.chat.id, call.message.message_id,
+            parse_mode="HTML", reply_markup=kb
+        )
+        bot.answer_callback_query(call.id)
+    except Exception as e:
+        print(f"❌ {e}")
 
-        elif action == "cfg_order" and uid == ADMIN_ID:
-            current = get_button_order()
-            order_str = "🔥 FF → 🎯 PUBG" if current == "ff,pubg" else "🎯 PUBG → 🔥 FF"
-            kb = types.InlineKeyboardMarkup(row_width=1)
-            kb.add(types.InlineKeyboardButton(t(uid, "btn_order_default"), callback_data="set_order|ff,pubg"))
-            kb.add(types.InlineKeyboardButton(t(uid, "btn_order_swapped"), callback_data="set_order|pubg,ff"))
-            bot.edit_message_text(
-                t(uid, "order_current", order=order_str),
-                call.message.chat.id, call.message.message_id,
-                parse_mode="HTML", reply_markup=kb
-            )
-
-        elif action == "cfg_reset":
-            kb = types.InlineKeyboardMarkup(row_width=2)
-            kb.add(
-                types.InlineKeyboardButton(t(uid, "btn_yes"), callback_data="do_reset"),
-                types.InlineKeyboardButton(t(uid, "btn_no"), callback_data="cancel_reset"),
-            )
-            bot.edit_message_text(
-                t(uid, "reset_confirm"),
-                call.message.chat.id, call.message.message_id,
-                reply_markup=kb
-            )
-
+@bot.callback_query_handler(func=lambda c: c.data == "cfg_reset")
+def cfg_reset(call):
+    try:
+        uid = call.from_user.id
+        kb = types.InlineKeyboardMarkup(row_width=2)
+        kb.add(
+            types.InlineKeyboardButton(t(uid, "btn_yes"), callback_data="do_reset"),
+            types.InlineKeyboardButton(t(uid, "btn_no"), callback_data="cancel_reset"),
+        )
+        bot.edit_message_text(
+            t(uid, "reset_confirm"),
+            call.message.chat.id, call.message.message_id,
+            reply_markup=kb
+        )
         bot.answer_callback_query(call.id)
     except Exception as e:
         print(f"❌ {e}")
@@ -1157,14 +1154,7 @@ def cancel_reset(call):
     except Exception as e:
         print(f"❌ {e}")
 
-# ============ معالجات أخطاء عامة ============
-@bot.callback_query_handler(func=lambda call: True)
-def unknown_callback(call):
-    print(f"⚠️ callback غير معروف: {call.data}")
-    try:
-        bot.answer_callback_query(call.id, "⚠️ الزر غير معروف، جرّب من جديد")
-    except: pass
-
+# ============ معالج رسائل غير معروفة ============
 @bot.message_handler(func=lambda m: True)
 def unknown_message(message):
     try:
