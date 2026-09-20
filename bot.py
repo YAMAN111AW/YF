@@ -3,8 +3,8 @@ from telebot import types
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import random
-import string
 import os
+import time
 from datetime import datetime, timezone, timedelta
 
 # ============ الإعدادات ============
@@ -26,11 +26,54 @@ bot = telebot.TeleBot(BOT_TOKEN)
 
 USER_DATA = {}
 
-try:
-    bot.remove_webhook()
-    print("✅ تم حذف أي webhook قديم")
-except Exception as e:
-    print(f"⚠️ {e}")
+# ============================================================
+# 🛠️ إعادة تعيين allowed_updates — لحل مشكلة أزرار Inline
+# ============================================================
+import requests
+
+def fix_allowed_updates():
+    """إجبار تلغرام على إرسال callback_query للبوت"""
+    try:
+        # احذف webhook + pending updates
+        r1 = requests.get(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook",
+            params={"drop_pending_updates": "true"},
+            timeout=10
+        )
+        print(f"🔧 deleteWebhook: {r1.json()}")
+
+        # أرسل getUpdates مع كل الـ updates المسموحة لتحديث الإعدادات
+        r2 = requests.get(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates",
+            params={
+                "allowed_updates": '["message","edited_message","channel_post","edited_channel_post","callback_query","inline_query","chosen_inline_result","poll","poll_answer","my_chat_member","chat_member","chat_join_request"]',
+                "timeout": 1
+            },
+            timeout=15
+        )
+        print(f"🔧 getUpdates: {r2.json().get('ok')}")
+
+        # تحقق
+        r3 = requests.get(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/getWebhookInfo",
+            timeout=10
+        )
+        info = r3.json()
+        allowed = info.get("result", {}).get("allowed_updates", [])
+        print(f"🔧 allowed_updates الآن: {allowed}")
+
+        if "callback_query" in allowed:
+            print("✅ callback_query مسموح — الأزرار ستشتغل!")
+            return True
+        else:
+            print("⚠️ callback_query لا يزال غير مسموح")
+            return False
+    except Exception as e:
+        print(f"❌ خطأ في fix_allowed_updates: {e}")
+        return False
+
+fix_allowed_updates()
+time.sleep(1)
 
 # ============ الأسعار ============
 PACKAGES = {
@@ -109,10 +152,7 @@ TEXTS = {
         ),
         "send_name": "📝 ممتاز! الآن أرسل <b>اسمك داخل اللعبة</b>:",
         "invalid_name": "❌ الاسم قصير جدًا! أرسل اسمك الصحيح:",
-        "choose_payment": (
-            "💳 <b>اختر طريقة الدفع:</b>\n\n"
-            "👇 اختر من الأزرار بالأسفل"
-        ),
+        "choose_payment": "💳 <b>اختر طريقة الدفع:</b>\n\n👇 اختر من الأزرار بالأسفل",
         "btn_syriatel": "💳 سيرياتيل كاش",
         "btn_sham": "📷 شام كاش",
         "payment_syriatel": (
@@ -374,7 +414,6 @@ init_db()
 
 # ============ دوال مساعدة ============
 def gen_random_id():
-    """إيدي عشوائي أرقام فقط من 8 خانات"""
     return str(random.randint(10000000, 99999999))
 
 def get_user(uid):
@@ -436,7 +475,6 @@ def is_subscribed(user_id):
         print(f"❌ خطأ في التحقق من الاشتراك: {e}")
         return False
 
-# ============ التحقق من ID ============
 def validate_game_id(game_id: str, game: str):
     game_id = game_id.strip()
     if not game_id.isdigit():
@@ -457,7 +495,7 @@ def validate_game_id(game_id: str, game: str):
 
     return True, game_id
 
-# ============ لوحة الأزرار الرئيسية ============
+# ============ لوحات الأزرار ============
 def main_keyboard(uid):
     lang = get_lang(uid)
     T = TEXTS[lang]
@@ -482,7 +520,6 @@ def main_keyboard(uid):
     return kb
 
 def back_keyboard(uid):
-    """زر الرجوع + الأزرار الرئيسية معًا"""
     lang = get_lang(uid)
     T = TEXTS[lang]
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -506,7 +543,7 @@ def back_keyboard(uid):
 
     return kb
 
-# ============ رسائل ============
+# ============ رسائل مساعدة ============
 def send_welcome(chat_id, first_name, uid):
     bot.send_message(
         chat_id, t(uid, "welcome", name=first_name),
@@ -538,18 +575,13 @@ def show_game_packages_manual(chat_id, uid, game):
         reply_markup=kb
     )
 
-# ============ دالة الرجوع الذكية ============
 def go_back(message):
     uid = message.from_user.id
     data = USER_DATA.get(uid, {})
     step = data.get("step", 1)
 
     if step <= 2:
-        bot.send_message(
-            message.chat.id,
-            t(uid, "back_done"),
-            reply_markup=main_keyboard(uid)
-        )
+        bot.send_message(message.chat.id, t(uid, "back_done"), reply_markup=main_keyboard(uid))
         USER_DATA[uid] = {"step": 1}
     elif step == 3:
         game = data.get("game", "ff")
@@ -658,7 +690,9 @@ def choose_package(call):
         bot.register_next_step_handler(msg, get_game_id)
     except Exception as e:
         print(f"❌ خطأ في choose_package: {e}")
-        bot.answer_callback_query(call.id, "⚠️ خطأ، حاول من جديد")
+        try:
+            bot.answer_callback_query(call.id, "⚠️ خطأ، حاول من جديد")
+        except: pass
 
 # ============ ID اللعبة ============
 def get_game_id(message):
@@ -1022,7 +1056,6 @@ def settings_menu(message):
     title = t(uid, "settings_admin") if is_admin else t(uid, "settings_user")
     bot.send_message(message.chat.id, title, parse_mode="HTML", reply_markup=kb)
 
-# ============ معالج الإعدادات ============
 @bot.callback_query_handler(func=lambda c: c.data == "cfg_lang")
 def cfg_lang(call):
     try:
@@ -1154,7 +1187,7 @@ def cancel_reset(call):
     except Exception as e:
         print(f"❌ {e}")
 
-# ============ معالج رسائل غير معروفة ============
+# ============ رسائل غير معروفة ============
 @bot.message_handler(func=lambda m: True)
 def unknown_message(message):
     try:
@@ -1173,4 +1206,19 @@ def unknown_message(message):
 
 # ============ تشغيل ============
 print("🤖 البوت يعمل الآن...")
-bot.infinity_polling(skip_pending=True, timeout=30, long_polling_timeout=30)
+print("🎯 allowed_updates مضمّن: callback_query مسموح")
+
+bot.infinity_polling(
+    allowed_updates=[
+        "message",
+        "edited_message",
+        "callback_query",
+        "inline_query",
+        "chosen_inline_result",
+        "channel_post",
+        "edited_channel_post"
+    ],
+    skip_pending=True,
+    timeout=30,
+    long_polling_timeout=30
+            )
