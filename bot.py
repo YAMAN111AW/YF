@@ -11,7 +11,6 @@ from datetime import datetime, timezone, timedelta
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "8956086702:AAEtcqzxJwA7W7daV3s4DiDMjSMTt9InJ3k")
 ADMIN_ID = 6382473367
 PAYMENT_NUMBER_SYRIATEL = "0984674400"
-PAYMENT_NUMBER_SHAM = "0984674400"
 SUPPORT_USERNAME = "@Yamen494"
 CHANNEL_USERNAME = "@YF494YF"
 CHANNEL_LINK = "https://t.me/YF494YF"
@@ -25,7 +24,10 @@ ORDERS_CLOSE_HOUR = 22
 
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# 🛠️ إصلاح خطأ 409 Conflict — احذف webhook عند البداية
+# قاموس عالمي لحالة المستخدمين (بدل bot.user_data)
+USER_DATA = {}
+
+# 🛠️ إصلاح خطأ 409 Conflict
 try:
     bot.remove_webhook()
     print("✅ تم حذف أي webhook قديم")
@@ -62,8 +64,8 @@ TEXTS = {
             "يمكنك شحن فري فاير (جواهر) أو ببجي (شدات) عبر سيرياتيل كاش أو شام كاش ✅\n\n"
             "📌 <b>طريقة الشراء:</b>\n"
             "1️⃣ اختر اللعبة\n2️⃣ اختر العرض\n3️⃣ أرسل ID حسابك\n"
-            "4️⃣ اختر طريقة الدفع\n5️⃣ حوّل المبلغ\n"
-            "6️⃣ انتظر موافقة الإدارة ✅\n\n"
+            "4️⃣ أرسل اسمك في اللعبة\n5️⃣ اختر طريقة الدفع\n6️⃣ حوّل المبلغ\n"
+            "7️⃣ انتظر موافقة الإدارة ✅\n\n"
             "⏰ <b>الطلبات تُقبل من 12 ظهرًا حتى 10 مساءً بتوقيت السعودية</b> 🇸🇦"
         ),
         "subscribe_required": (
@@ -79,8 +81,7 @@ TEXTS = {
         "btn_info": "👤 معلوماتي",
         "btn_support": "🆘 تواصل مع الدعم",
         "btn_settings": "⚙️ الإعدادات",
-        "btn_back": "⬅️ رجوع للأزرار الرئيسية",
-        "btn_back_short": "⬅️ رجوع",
+        "btn_back": "⬅️ رجوع",
         "btn_inbox": "📬 البريد الوارد",
         "check_success": "✅ تم التحقق بنجاح! أهلاً بك 🎉",
         "check_fail": "❌ لم تشترك في القناة بعد!",
@@ -156,9 +157,9 @@ TEXTS = {
             f"👨‍💻 للتواصل: {SUPPORT_USERNAME}\n\n"
             "📖 <b>طريقة الاستخدام:</b>\n"
             "1️⃣ اختر اللعبة\n2️⃣ اختر عرض الشحن 💎\n"
-            "3️⃣ أرسل ID حسابك 🆔\n4️⃣ اختر طريقة الدفع\n"
-            "5️⃣ حوّل المبلغ 💳\n"
-            "6️⃣ انتظر الموافقة ✅\n7️⃣ تصلك خلال 5 دقائق ⏳\n\n"
+            "3️⃣ أرسل ID حسابك 🆔\n4️⃣ أرسل اسمك في اللعبة 📝\n"
+            "5️⃣ اختر طريقة الدفع\n6️⃣ حوّل المبلغ 💳\n"
+            "7️⃣ انتظر الموافقة ✅\n8️⃣ تصلك خلال 5 دقائق ⏳\n\n"
             "⏰ <b>ساعات العمل:</b> 12 ظهرًا - 10 مساءً 🇸🇦\n\n"
             "👇 يمكنك إرسال شكوى أو اقتراح عبر الزر بالأسفل:"
         ),
@@ -166,7 +167,8 @@ TEXTS = {
         "ask_message": (
             "✉️ <b>أرسل رسالتك الآن</b>\n\n"
             "📝 اكتب شكواك، اقتراحك، أو أي استفسار\n"
-            "سيتم إرسالها للإدارة مباشرة ✅"
+            "سيتم إرسالها للإدارة مباشرة ✅\n\n"
+            "لإلغاء الإرسال اضغط زر الرجوع 👇"
         ),
         "message_sent": "✅ <b>تم إرسال رسالتك بنجاح!</b>\n\nسيتم الرد عليك في أقرب وقت 📩",
         "message_too_short": "❌ الرسالة قصيرة جدًا! أرسل رسالة أطول:",
@@ -194,15 +196,17 @@ TEXTS = {
         "order_changed": "✅ تم تغيير الترتيب!",
         "btn_order_default": "1️⃣ Free Fire ثم PUBG",
         "btn_order_swapped": "2️⃣ PUBG ثم Free Fire",
-        "back_done": "⬅️ رجعنا للأزرار الرئيسية",
+        "back_done": "⬅️ رجعنا للخطوة السابقة",
+        "unknown_msg": "🤔 لم أفهم رسالتك. استخدم الأزرار بالأسفل 👇",
+        "choose_game": "🎮 <b>اختر اللعبة التي تريد شحنها:</b>\n\n👇 من الأزرار بالأسفل",
     },
     "en": {
         "welcome": (
             "👋 Welcome <b>{name}</b> to the Diamonds & UC bot 💎🔥\n\n"
             "🎯 <b>Bot purpose:</b>\nTop up via Syriatel Cash or Sham Cash ✅\n\n"
             "📌 <b>How to buy:</b>\n1️⃣ Choose game\n2️⃣ Choose package\n"
-            "3️⃣ Send your ID\n4️⃣ Choose payment method\n"
-            "5️⃣ Pay\n6️⃣ Wait for approval ✅\n\n"
+            "3️⃣ Send your ID\n4️⃣ Send in-game name\n5️⃣ Choose payment\n"
+            "6️⃣ Pay\n7️⃣ Wait for approval ✅\n\n"
             "⏰ <b>Orders: 12 PM - 10 PM (Saudi time)</b> 🇸🇦"
         ),
         "subscribe_required": (
@@ -216,8 +220,7 @@ TEXTS = {
         "btn_info": "👤 My info",
         "btn_support": "🆘 Support",
         "btn_settings": "⚙️ Settings",
-        "btn_back": "⬅️ Back to main menu",
-        "btn_back_short": "⬅️ Back",
+        "btn_back": "⬅️ Back",
         "btn_inbox": "📬 Inbox",
         "check_success": "✅ Verified! Welcome 🎉",
         "check_fail": "❌ Not subscribed yet!",
@@ -276,9 +279,9 @@ TEXTS = {
             f"👨‍💻 {SUPPORT_USERNAME}\n\n"
             "📖 <b>How to use:</b>\n"
             "1️⃣ Choose game\n2️⃣ Choose package 💎\n"
-            "3️⃣ Send ID 🆔\n4️⃣ Choose payment\n"
-            "5️⃣ Pay 💳\n"
-            "6️⃣ Wait ✅\n7️⃣ Receive in 5 min ⏳\n\n"
+            "3️⃣ Send ID 🆔\n4️⃣ Send name 📝\n"
+            "5️⃣ Choose payment\n6️⃣ Pay 💳\n"
+            "7️⃣ Wait ✅\n8️⃣ Receive in 5 min ⏳\n\n"
             "⏰ <b>Working: 12 PM - 10 PM</b> 🇸🇦\n\n"
             "👇 Send a complaint/suggestion:"
         ),
@@ -286,7 +289,8 @@ TEXTS = {
         "ask_message": (
             "✉️ <b>Send your message</b>\n\n"
             "📝 Complaint, suggestion, or inquiry\n"
-            "Will be sent directly ✅"
+            "Will be sent directly ✅\n\n"
+            "To cancel, press Back 👇"
         ),
         "message_sent": "✅ <b>Message sent!</b>\n\nWe'll reply soon 📩",
         "message_too_short": "❌ Too short!",
@@ -311,7 +315,9 @@ TEXTS = {
         "order_changed": "✅ Order changed!",
         "btn_order_default": "1️⃣ Free Fire then PUBG",
         "btn_order_swapped": "2️⃣ PUBG then Free Fire",
-        "back_done": "⬅️ Back to main menu",
+        "back_done": "⬅️ Back",
+        "unknown_msg": "🤔 I didn't understand. Use the buttons below 👇",
+        "choose_game": "🎮 <b>Choose the game:</b>\n\n👇 From buttons below",
     }
 }
 
@@ -346,10 +352,7 @@ def init_db():
             created_at TEXT
         )
     """)
-    # لو كان جدول orders موجود مسبقًا بدون payment_method نضيفه
-    cur.execute("""
-        ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method TEXT
-    """)
+    cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method TEXT")
     cur.execute("""
         CREATE TABLE IF NOT EXISTS settings (
             key TEXT PRIMARY KEY,
@@ -433,10 +436,10 @@ def is_subscribed(user_id):
         m = bot.get_chat_member(CHANNEL_USERNAME, user_id)
         return m.status in ("member", "administrator", "creator")
     except Exception as e:
-        print(f"❌ {e}")
+        print(f"❌ خطأ في التحقق من الاشتراك: {e}")
         return False
 
-# ============ التحقق الذكي من ID ============
+# ============ التحقق من ID ============
 def validate_game_id(game_id: str, game: str):
     game_id = game_id.strip()
     if not game_id.isdigit():
@@ -457,7 +460,7 @@ def validate_game_id(game_id: str, game: str):
 
     return True, game_id
 
-# ============ لوحات الأزرار ============
+# ============ لوحة الأزرار الرئيسية ============
 def main_keyboard(uid):
     lang = get_lang(uid)
     T = TEXTS[lang]
@@ -482,10 +485,30 @@ def main_keyboard(uid):
     return kb
 
 def back_keyboard(uid):
-    """زر الرجوع فقط — يرجّع المستخدم للأزرار الرئيسية"""
+    """زر الرجوع + الأزرار الرئيسية معًا"""
     lang = get_lang(uid)
+    T = TEXTS[lang]
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    kb.row(TEXTS[lang]["btn_back"])
+
+    # صف الرجوع
+    kb.row(T["btn_back"])
+
+    # صف الألعاب
+    order = get_button_order().split(",")
+    row_games = []
+    for g in order:
+        if g == "ff":
+            row_games.append(T["btn_ff"])
+        elif g == "pubg":
+            row_games.append(T["btn_pubg"])
+    kb.row(*row_games)
+
+    kb.row(T["btn_info"], T["btn_settings"])
+    if uid == ADMIN_ID:
+        kb.row(T["btn_support"], T["btn_inbox"])
+    else:
+        kb.row(T["btn_support"])
+
     return kb
 
 # ============ رسائل ============
@@ -501,10 +524,66 @@ def show_subscription_message(chat_id, uid):
     kb.add(types.InlineKeyboardButton(t(uid, "btn_check"), callback_data="check_sub"))
     bot.send_message(chat_id, t(uid, "subscribe_required"), parse_mode="HTML", reply_markup=kb)
 
-def send_main_menu(chat_id, uid, msg=None):
-    """يرجع المستخدم للأزرار الرئيسية"""
-    text = msg or t(uid, "back_done")
-    bot.send_message(chat_id, text, reply_markup=main_keyboard(uid))
+def show_game_packages_manual(chat_id, uid, game):
+    lang = get_lang(uid)
+    game_data = PACKAGES[game]
+    game_title = game_data["title"][lang]
+
+    kb = types.InlineKeyboardMarkup(row_width=1)
+    for key, item in game_data["items"].items():
+        kb.add(types.InlineKeyboardButton(
+            text=f"{item[lang]} — {item['price']}",
+            callback_data=f"pkg|{game}|{key}"
+        ))
+
+    bot.send_message(
+        chat_id,
+        t(uid, "choose_package", game=game_title),
+        parse_mode="HTML",
+        reply_markup=kb
+    )
+
+# ============ دالة الرجوع الذكية ============
+def go_back(message):
+    """يرجّع المستخدم للخطوة السابقة + يعرض الأزرار الرئيسية خلف الكيبورد"""
+    uid = message.from_user.id
+    data = USER_DATA.get(uid, {})
+    step = data.get("step", 1)
+
+    if step <= 2:
+        bot.send_message(
+            message.chat.id,
+            t(uid, "back_done"),
+            reply_markup=main_keyboard(uid)
+        )
+        USER_DATA[uid] = {"step": 1}
+    elif step == 3:
+        # كنا في إدخال ID → نرجع لاختيار العرض
+        game = data.get("game", "ff")
+        show_game_packages_manual(message.chat.id, uid, game)
+        USER_DATA[uid]["step"] = 2
+        bot.send_message(message.chat.id, "🔽", reply_markup=back_keyboard(uid))
+    elif step == 4:
+        # كنا في إدخال الاسم → نرجع لإدخال ID
+        msg = bot.send_message(
+            message.chat.id,
+            t(uid, "chosen",
+              item=data.get("package_name", ""),
+              price=data.get("price", ""),
+              game=PACKAGES[data.get("game", "ff")]["title"][get_lang(uid)]),
+            parse_mode="HTML",
+            reply_markup=back_keyboard(uid)
+        )
+        bot.register_next_step_handler(msg, get_game_id)
+        USER_DATA[uid]["step"] = 3
+    elif step == 5:
+        # كنا في اختيار الدفع → نرجع لإدخال الاسم
+        msg = bot.send_message(
+            message.chat.id, t(uid, "send_name"),
+            parse_mode="HTML", reply_markup=back_keyboard(uid)
+        )
+        bot.register_next_step_handler(msg, get_player_name)
+        USER_DATA[uid]["step"] = 4
 
 # ============ /start ============
 @bot.message_handler(commands=['start'])
@@ -513,21 +592,26 @@ def cmd_start(message):
     uid = message.from_user.id
     if is_subscribed(uid):
         send_welcome(message.chat.id, message.from_user.first_name, uid)
+        USER_DATA[uid] = {"step": 1}
     else:
         show_subscription_message(message.chat.id, uid)
 
 # ============ التحقق من الاشتراك ============
 @bot.callback_query_handler(func=lambda c: c.data == "check_sub")
 def check_subscription(call):
-    uid = call.from_user.id
-    if is_subscribed(uid):
-        bot.answer_callback_query(call.id, t(uid, "check_success"))
-        try:
-            bot.delete_message(call.message.chat.id, call.message.message_id)
-        except: pass
-        send_welcome(call.message.chat.id, call.from_user.first_name, uid)
-    else:
-        bot.answer_callback_query(call.id, t(uid, "check_fail"), show_alert=True)
+    try:
+        uid = call.from_user.id
+        if is_subscribed(uid):
+            bot.answer_callback_query(call.id, t(uid, "check_success"))
+            try:
+                bot.delete_message(call.message.chat.id, call.message.message_id)
+            except: pass
+            send_welcome(call.message.chat.id, call.from_user.first_name, uid)
+            USER_DATA[uid] = {"step": 1}
+        else:
+            bot.answer_callback_query(call.id, t(uid, "check_fail"), show_alert=True)
+    except Exception as e:
+        print(f"❌ {e}")
 
 # ============ أزرار الألعاب ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_ff"], TEXTS["en"]["btn_ff"]])
@@ -550,68 +634,53 @@ def show_game_packages(message, game):
         bot.send_message(message.chat.id, t(uid, "orders_closed"), parse_mode="HTML")
         return
 
-    bot.user_data = getattr(bot, "user_data", {})
-    bot.user_data[uid] = {"game": game}
-
-    lang = get_lang(uid)
-    game_data = PACKAGES[game]
-    game_title = game_data["title"][lang]
-
-    kb = types.InlineKeyboardMarkup(row_width=1)
-    for key, item in game_data["items"].items():
-        kb.add(types.InlineKeyboardButton(
-            text=f"{item[lang]} — {item['price']}",
-            callback_data=f"pkg|{game}|{key}"
-        ))
-    bot.send_message(
-        message.chat.id,
-        t(uid, "choose_package", game=game_title),
-        parse_mode="HTML",
-        reply_markup=kb
-    )
+    USER_DATA[uid] = {"game": game, "step": 2}
+    show_game_packages_manual(message.chat.id, uid, game)
+    bot.send_message(message.chat.id, "🔽", reply_markup=main_keyboard(uid))
 
 # ============ اختيار العرض ============
 @bot.callback_query_handler(func=lambda c: c.data.startswith("pkg|"))
 def choose_package(call):
-    _, game, key = call.data.split("|")
-    uid = call.from_user.id
-    lang = get_lang(uid)
-    item = PACKAGES[game]["items"][key]
+    try:
+        _, game, key = call.data.split("|")
+        uid = call.from_user.id
+        lang = get_lang(uid)
+        item = PACKAGES[game]["items"][key]
 
-    bot.answer_callback_query(call.id, "✅")
-    bot.user_data = getattr(bot, "user_data", {})
-    if uid not in bot.user_data:
-        bot.user_data[uid] = {}
-    bot.user_data[uid].update({
-        "game": game,
-        "package_key": key,
-        "package_name": item[lang],
-        "price": item["price"]
-    })
+        bot.answer_callback_query(call.id, "✅")
 
-    game_title = PACKAGES[game]["title"][lang]
-    msg = bot.send_message(
-        call.message.chat.id,
-        t(uid, "chosen", item=item[lang], price=item["price"], game=game_title),
-        parse_mode="HTML",
-        reply_markup=back_keyboard(uid)
-    )
-    bot.register_next_step_handler(msg, get_game_id)
+        USER_DATA[uid] = {
+            "game": game,
+            "package_key": key,
+            "package_name": item[lang],
+            "price": item["price"],
+            "step": 3
+        }
+
+        game_title = PACKAGES[game]["title"][lang]
+        msg = bot.send_message(
+            call.message.chat.id,
+            t(uid, "chosen", item=item[lang], price=item["price"], game=game_title),
+            parse_mode="HTML",
+            reply_markup=back_keyboard(uid)
+        )
+        bot.register_next_step_handler(msg, get_game_id)
+    except Exception as e:
+        print(f"❌ خطأ في choose_package: {e}")
+        bot.answer_callback_query(call.id, "⚠️ خطأ، حاول من جديد")
 
 # ============ ID اللعبة ============
 def get_game_id(message):
     uid = message.from_user.id
 
-    # زر الرجوع → الأزرار الرئيسية مباشرة
-    if message.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"],
-                        TEXTS["ar"]["btn_back_short"], TEXTS["en"]["btn_back_short"]]:
-        send_main_menu(message.chat.id, uid)
+    if message.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"]]:
+        go_back(message)
         return
 
-    bot.user_data = getattr(bot, "user_data", {})
-    data = bot.user_data.get(uid)
+    data = USER_DATA.get(uid)
     if not data:
-        send_main_menu(message.chat.id, uid, "⚠️ اضغط /start من جديد.")
+        bot.send_message(message.chat.id, "⚠️ اضغط /start من جديد.",
+                         reply_markup=main_keyboard(uid))
         return
 
     game = data.get("game", "ff")
@@ -629,9 +698,9 @@ def get_game_id(message):
         bot.register_next_step_handler(msg, get_game_id)
         return
 
-    bot.user_data[uid]["game_id"] = result
+    USER_DATA[uid]["game_id"] = result
+    USER_DATA[uid]["step"] = 4
 
-    # نطلب اسم اللاعب
     msg = bot.send_message(
         message.chat.id, t(uid, "send_name"),
         parse_mode="HTML",
@@ -643,15 +712,14 @@ def get_game_id(message):
 def get_player_name(message):
     uid = message.from_user.id
 
-    if message.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"],
-                        TEXTS["ar"]["btn_back_short"], TEXTS["en"]["btn_back_short"]]:
-        send_main_menu(message.chat.id, uid)
+    if message.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"]]:
+        go_back(message)
         return
 
-    bot.user_data = getattr(bot, "user_data", {})
-    data = bot.user_data.get(uid)
+    data = USER_DATA.get(uid)
     if not data:
-        send_main_menu(message.chat.id, uid, "⚠️ اضغط /start من جديد.")
+        bot.send_message(message.chat.id, "⚠️ اضغط /start من جديد.",
+                         reply_markup=main_keyboard(uid))
         return
 
     player_name = message.text.strip() if message.text else ""
@@ -663,9 +731,10 @@ def get_player_name(message):
         bot.register_next_step_handler(msg, get_player_name)
         return
 
-    bot.user_data[uid]["player_name"] = player_name
+    USER_DATA[uid]["player_name"] = player_name
+    USER_DATA[uid]["step"] = 5
 
-    # ===== الآن نطلب اختيار طريقة الدفع =====
+    # أزرار الدفع
     kb = types.InlineKeyboardMarkup(row_width=2)
     kb.add(
         types.InlineKeyboardButton(t(uid, "btn_syriatel"), callback_data="pay|syriatel"),
@@ -677,119 +746,128 @@ def get_player_name(message):
         parse_mode="HTML",
         reply_markup=kb
     )
+    bot.send_message(message.chat.id, "🔽", reply_markup=back_keyboard(uid))
 
 # ============ اختيار طريقة الدفع ============
 @bot.callback_query_handler(func=lambda c: c.data.startswith("pay|"))
 def choose_payment(call):
-    method = call.data.split("|")[1]
-    uid = call.from_user.id
-    bot.user_data = getattr(bot, "user_data", {})
-    data = bot.user_data.get(uid)
-    if not data:
-        bot.answer_callback_query(call.id, "⚠️ اضغط /start من جديد", show_alert=True)
-        return
+    try:
+        method = call.data.split("|")[1]
+        uid = call.from_user.id
+        data = USER_DATA.get(uid)
+        if not data or "game_id" not in data:
+            bot.answer_callback_query(call.id, "⚠️ اضغط /start من جديد", show_alert=True)
+            return
 
-    bot.answer_callback_query(call.id, "✅")
+        bot.answer_callback_query(call.id, "✅")
 
-    # حفظ الطلب في قاعدة البيانات
-    conn = db_connect()
-    cur = conn.cursor()
-    cur.execute(
-        "INSERT INTO orders (user_id, game, package, price, game_id, player_name, payment_method, status, created_at) "
-        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING order_id",
-        (uid, data["game"], data["package_name"], data["price"],
-         data["game_id"], data["player_name"], method, "pending",
-         datetime.now().strftime("%Y-%m-%d %H:%M"))
-    )
-    order_id = cur.fetchone()["order_id"]
-    conn.commit()
-    cur.close(); conn.close()
-
-    # إرسال تعليمات الدفع
-    if method == "syriatel":
-        bot.send_message(
-            call.message.chat.id,
-            t(uid, "payment_syriatel", price=data["price"], oid=order_id),
-            parse_mode="HTML"
+        # حفظ الطلب
+        conn = db_connect()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO orders (user_id, game, package, price, game_id, player_name, payment_method, status, created_at) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING order_id",
+            (uid, data["game"], data["package_name"], data["price"],
+             data["game_id"], data["player_name"], method, "pending",
+             datetime.now().strftime("%Y-%m-%d %H:%M"))
         )
-    else:  # sham
-        # إرسال صورة QR ثم التعليمات
+        order_id = cur.fetchone()["order_id"]
+        conn.commit()
+        cur.close(); conn.close()
+
+        # إرسال تعليمات الدفع
+        if method == "syriatel":
+            bot.send_message(
+                call.message.chat.id,
+                t(uid, "payment_syriatel", price=data["price"], oid=order_id),
+                parse_mode="HTML",
+                reply_markup=main_keyboard(uid)
+            )
+        else:
+            try:
+                with open(SHAM_IMAGE_PATH, "rb") as photo:
+                    bot.send_photo(
+                        call.message.chat.id,
+                        photo,
+                        caption=t(uid, "sham_image_caption", price=data["price"]),
+                        parse_mode="HTML"
+                    )
+            except FileNotFoundError:
+                bot.send_message(call.message.chat.id, "⚠️ صورة sham.jpg غير موجودة")
+            bot.send_message(
+                call.message.chat.id,
+                t(uid, "payment_sham", price=data["price"], oid=order_id),
+                parse_mode="HTML",
+                reply_markup=main_keyboard(uid)
+            )
+
+        # إشعار الأدمن
+        method_label = "💳 سيرياتيل كاش" if method == "syriatel" else "📷 شام كاش"
+        admin_text = (
+            "🔔 <b>طلب شراء جديد!</b>\n\n"
+            f"🔖 رقم الطلب: <b>#{order_id}</b>\n"
+            f"👤 المستخدم: {call.from_user.full_name}\n"
+            f"🆔 يوزر: @{call.from_user.username or 'لا يوجد'}\n"
+            f"🆔 تلغرام آيدي: <code>{uid}</code>\n\n"
+            f"🎮 اللعبة: <b>{data['game'].upper()}</b>\n"
+            f"💎 العرض: <b>{data['package_name']}</b>\n"
+            f"💰 السعر: <b>{data['price']}</b>\n"
+            f"🎮 ID اللعبة: <code>{data['game_id']}</code>\n"
+            f"📝 اسم اللاعب: <b>{data['player_name']}</b>\n"
+            f"💳 طريقة الدفع: <b>{method_label}</b>\n\n"
+            "اضغط زر الموافقة بعد التأكد:"
+        )
+        kb = types.InlineKeyboardMarkup()
+        kb.add(
+            types.InlineKeyboardButton("✅ قبول", callback_data=f"accept|{order_id}"),
+            types.InlineKeyboardButton("❌ رفض", callback_data=f"reject|{order_id}")
+        )
+        bot.send_message(ADMIN_ID, admin_text, parse_mode="HTML", reply_markup=kb)
+
+        # تنظيف
+        USER_DATA.pop(uid, None)
+
+    except Exception as e:
+        print(f"❌ خطأ في choose_payment: {e}")
         try:
-            with open(SHAM_IMAGE_PATH, "rb") as photo:
-                bot.send_photo(
-                    call.message.chat.id,
-                    photo,
-                    caption=t(uid, "sham_image_caption", price=data["price"]),
-                    parse_mode="HTML"
-                )
-        except FileNotFoundError:
-            bot.send_message(call.message.chat.id, "⚠️ صورة sham.jpg غير موجودة")
-        bot.send_message(
-            call.message.chat.id,
-            t(uid, "payment_sham", price=data["price"], oid=order_id),
-            parse_mode="HTML",
-            reply_markup=main_keyboard(uid)
-        )
-
-    # إذا كانت سيرياتيل، أرسل لوحة الأزرار الرئيسية بعد الرسالة
-    if method == "syriatel":
-        bot.send_message(call.message.chat.id, "🔽", reply_markup=main_keyboard(uid))
-
-    # إشعار الأدمن
-    method_label = "💳 سيرياتيل كاش" if method == "syriatel" else "📷 شام كاش"
-    admin_text = (
-        "🔔 <b>طلب شراء جديد!</b>\n\n"
-        f"🔖 رقم الطلب: <b>#{order_id}</b>\n"
-        f"👤 المستخدم: {call.from_user.full_name}\n"
-        f"🆔 يوزر: @{call.from_user.username or 'لا يوجد'}\n"
-        f"🆔 تلغرام آيدي: <code>{uid}</code>\n\n"
-        f"🎮 اللعبة: <b>{data['game'].upper()}</b>\n"
-        f"💎 العرض: <b>{data['package_name']}</b>\n"
-        f"💰 السعر: <b>{data['price']}</b>\n"
-        f"🎮 ID اللعبة: <code>{data['game_id']}</code>\n"
-        f"📝 اسم اللاعب: <b>{data['player_name']}</b>\n"
-        f"💳 طريقة الدفع: <b>{method_label}</b>\n\n"
-        "اضغط زر الموافقة بعد التأكد:"
-    )
-    kb = types.InlineKeyboardMarkup()
-    kb.add(
-        types.InlineKeyboardButton("✅ قبول", callback_data=f"accept|{order_id}"),
-        types.InlineKeyboardButton("❌ رفض", callback_data=f"reject|{order_id}")
-    )
-    bot.send_message(ADMIN_ID, admin_text, parse_mode="HTML", reply_markup=kb)
+            bot.answer_callback_query(call.id, "⚠️ خطأ، حاول مرة أخرى")
+        except: pass
 
 # ============ قبول / رفض ============
 @bot.callback_query_handler(func=lambda c: c.data.startswith(("accept|", "reject|")))
 def handle_decision(call):
-    action, oid = call.data.split("|")
-    oid = int(oid)
-
-    conn = db_connect()
-    cur = conn.cursor()
-    cur.execute("SELECT user_id, package FROM orders WHERE order_id = %s", (oid,))
-    row = cur.fetchone()
-    if not row:
-        bot.answer_callback_query(call.id, "⚠️ غير موجود")
-        cur.close(); conn.close(); return
-
-    user_id = row["user_id"]
-    package = row["package"]
-
-    if action == "accept":
-        cur.execute("UPDATE orders SET status = 'accepted' WHERE order_id = %s", (oid,))
-        conn.commit()
-        bot.send_message(user_id, t(user_id, "accepted", item=package), parse_mode="HTML")
-        bot.answer_callback_query(call.id, "✅")
-    else:
-        cur.execute("UPDATE orders SET status = 'rejected' WHERE order_id = %s", (oid,))
-        conn.commit()
-        bot.send_message(user_id, t(user_id, "rejected"), parse_mode="HTML")
-        bot.answer_callback_query(call.id, "❌")
-
-    cur.close(); conn.close()
     try:
-        bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)
-    except: pass
+        action, oid = call.data.split("|")
+        oid = int(oid)
+
+        conn = db_connect()
+        cur = conn.cursor()
+        cur.execute("SELECT user_id, package FROM orders WHERE order_id = %s", (oid,))
+        row = cur.fetchone()
+        if not row:
+            bot.answer_callback_query(call.id, "⚠️ غير موجود")
+            cur.close(); conn.close(); return
+
+        user_id = row["user_id"]
+        package = row["package"]
+
+        if action == "accept":
+            cur.execute("UPDATE orders SET status = 'accepted' WHERE order_id = %s", (oid,))
+            conn.commit()
+            bot.send_message(user_id, t(user_id, "accepted", item=package), parse_mode="HTML")
+            bot.answer_callback_query(call.id, "✅")
+        else:
+            cur.execute("UPDATE orders SET status = 'rejected' WHERE order_id = %s", (oid,))
+            conn.commit()
+            bot.send_message(user_id, t(user_id, "rejected"), parse_mode="HTML")
+            bot.answer_callback_query(call.id, "❌")
+
+        cur.close(); conn.close()
+        try:
+            bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)
+        except: pass
+    except Exception as e:
+        print(f"❌ {e}")
 
 # ============ زر معلوماتي ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_info"], TEXTS["en"]["btn_info"]])
@@ -856,22 +934,24 @@ def support(message):
 # ============ إرسال شكوى ============
 @bot.callback_query_handler(func=lambda c: c.data == "send_complaint")
 def ask_complaint(call):
-    uid = call.from_user.id
-    bot.answer_callback_query(call.id)
-    msg = bot.send_message(
-        call.message.chat.id,
-        t(uid, "ask_message"),
-        parse_mode="HTML",
-        reply_markup=back_keyboard(uid)
-    )
-    bot.register_next_step_handler(msg, receive_complaint)
+    try:
+        uid = call.from_user.id
+        bot.answer_callback_query(call.id)
+        msg = bot.send_message(
+            call.message.chat.id,
+            t(uid, "ask_message"),
+            parse_mode="HTML",
+            reply_markup=back_keyboard(uid)
+        )
+        bot.register_next_step_handler(msg, receive_complaint)
+    except Exception as e:
+        print(f"❌ {e}")
 
 def receive_complaint(message):
     uid = message.from_user.id
 
-    if message.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"],
-                        TEXTS["ar"]["btn_back_short"], TEXTS["en"]["btn_back_short"]]:
-        send_main_menu(message.chat.id, uid)
+    if message.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"]]:
+        bot.send_message(message.chat.id, t(uid, "back_done"), reply_markup=main_keyboard(uid))
         return
 
     text = message.text.strip() if message.text else ""
@@ -898,7 +978,6 @@ def receive_complaint(message):
     bot.send_message(message.chat.id, t(uid, "message_sent"), parse_mode="HTML",
                      reply_markup=main_keyboard(uid))
 
-    # إشعار الأدمن
     admin_text = (
         "📩 <b>رسالة جديدة من المستخدمين!</b>\n\n"
         f"🔖 رقم: #{msg_id}\n"
@@ -909,14 +988,13 @@ def receive_complaint(message):
     )
     bot.send_message(ADMIN_ID, admin_text, parse_mode="HTML")
 
-# ============ البريد الوارد (أدمن) ============
+# ============ البريد الوارد ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_inbox"], TEXTS["en"]["btn_inbox"]] and m.from_user.id == ADMIN_ID)
 def show_inbox(message):
     uid = message.from_user.id
 
     conn = db_connect()
     cur = conn.cursor()
-    # آخر 10 رسائل
     cur.execute("SELECT * FROM messages ORDER BY id DESC LIMIT 10")
     msgs = cur.fetchall()
     cur.close(); conn.close()
@@ -961,107 +1039,147 @@ def settings_menu(message):
 # ============ معالج الإعدادات ============
 @bot.callback_query_handler(func=lambda c: c.data.startswith("cfg_"))
 def cfg_handler(call):
-    uid = call.from_user.id
-    action = call.data
+    try:
+        uid = call.from_user.id
+        action = call.data
 
-    if action == "cfg_lang":
-        kb = types.InlineKeyboardMarkup(row_width=2)
-        kb.add(
-            types.InlineKeyboardButton("🇸🇦 العربية", callback_data="set_lang|ar"),
-            types.InlineKeyboardButton("🇬🇧 English", callback_data="set_lang|en"),
-        )
-        bot.edit_message_text(
-            t(uid, "lang_pick"),
-            call.message.chat.id, call.message.message_id,
-            reply_markup=kb
-        )
+        if action == "cfg_lang":
+            kb = types.InlineKeyboardMarkup(row_width=2)
+            kb.add(
+                types.InlineKeyboardButton("🇸🇦 العربية", callback_data="set_lang|ar"),
+                types.InlineKeyboardButton("🇬🇧 English", callback_data="set_lang|en"),
+            )
+            bot.edit_message_text(
+                t(uid, "lang_pick"),
+                call.message.chat.id, call.message.message_id,
+                reply_markup=kb
+            )
 
-    elif action == "cfg_order" and uid == ADMIN_ID:
-        current = get_button_order()
-        order_str = "🔥 FF → 🎯 PUBG" if current == "ff,pubg" else "🎯 PUBG → 🔥 FF"
-        kb = types.InlineKeyboardMarkup(row_width=1)
-        kb.add(types.InlineKeyboardButton(t(uid, "btn_order_default"), callback_data="set_order|ff,pubg"))
-        kb.add(types.InlineKeyboardButton(t(uid, "btn_order_swapped"), callback_data="set_order|pubg,ff"))
-        bot.edit_message_text(
-            t(uid, "order_current", order=order_str),
-            call.message.chat.id, call.message.message_id,
-            parse_mode="HTML", reply_markup=kb
-        )
+        elif action == "cfg_order" and uid == ADMIN_ID:
+            current = get_button_order()
+            order_str = "🔥 FF → 🎯 PUBG" if current == "ff,pubg" else "🎯 PUBG → 🔥 FF"
+            kb = types.InlineKeyboardMarkup(row_width=1)
+            kb.add(types.InlineKeyboardButton(t(uid, "btn_order_default"), callback_data="set_order|ff,pubg"))
+            kb.add(types.InlineKeyboardButton(t(uid, "btn_order_swapped"), callback_data="set_order|pubg,ff"))
+            bot.edit_message_text(
+                t(uid, "order_current", order=order_str),
+                call.message.chat.id, call.message.message_id,
+                parse_mode="HTML", reply_markup=kb
+            )
 
-    elif action == "cfg_reset":
-        kb = types.InlineKeyboardMarkup(row_width=2)
-        kb.add(
-            types.InlineKeyboardButton(t(uid, "btn_yes"), callback_data="do_reset"),
-            types.InlineKeyboardButton(t(uid, "btn_no"), callback_data="cancel_reset"),
-        )
-        bot.edit_message_text(
-            t(uid, "reset_confirm"),
-            call.message.chat.id, call.message.message_id,
-            reply_markup=kb
-        )
+        elif action == "cfg_reset":
+            kb = types.InlineKeyboardMarkup(row_width=2)
+            kb.add(
+                types.InlineKeyboardButton(t(uid, "btn_yes"), callback_data="do_reset"),
+                types.InlineKeyboardButton(t(uid, "btn_no"), callback_data="cancel_reset"),
+            )
+            bot.edit_message_text(
+                t(uid, "reset_confirm"),
+                call.message.chat.id, call.message.message_id,
+                reply_markup=kb
+            )
 
-    bot.answer_callback_query(call.id)
+        bot.answer_callback_query(call.id)
+    except Exception as e:
+        print(f"❌ {e}")
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("set_lang|"))
 def set_lang(call):
-    uid = call.from_user.id
-    new_lang = call.data.split("|")[1]
-
-    conn = db_connect()
-    cur = conn.cursor()
-    cur.execute("UPDATE users SET language = %s WHERE user_id = %s", (new_lang, uid))
-    conn.commit()
-    cur.close(); conn.close()
-
-    bot.answer_callback_query(call.id, t(uid, "lang_changed"))
     try:
-        bot.delete_message(call.message.chat.id, call.message.message_id)
-    except: pass
-    bot.send_message(call.message.chat.id, t(uid, "lang_changed"),
-                     reply_markup=main_keyboard(uid))
+        uid = call.from_user.id
+        new_lang = call.data.split("|")[1]
+
+        conn = db_connect()
+        cur = conn.cursor()
+        cur.execute("UPDATE users SET language = %s WHERE user_id = %s", (new_lang, uid))
+        conn.commit()
+        cur.close(); conn.close()
+
+        bot.answer_callback_query(call.id, t(uid, "lang_changed"))
+        try:
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+        except: pass
+        bot.send_message(call.message.chat.id, t(uid, "lang_changed"),
+                         reply_markup=main_keyboard(uid))
+    except Exception as e:
+        print(f"❌ {e}")
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("set_order|"))
 def set_order(call):
-    uid = call.from_user.id
-    if uid != ADMIN_ID:
-        bot.answer_callback_query(call.id, "🚫", show_alert=True)
-        return
-
-    new_order = call.data.split("|")[1]
-    set_button_order(new_order)
-
-    bot.answer_callback_query(call.id, t(uid, "order_changed"))
     try:
-        bot.delete_message(call.message.chat.id, call.message.message_id)
-    except: pass
-    bot.send_message(call.message.chat.id, t(uid, "order_changed"),
-                     reply_markup=main_keyboard(uid))
+        uid = call.from_user.id
+        if uid != ADMIN_ID:
+            bot.answer_callback_query(call.id, "🚫", show_alert=True)
+            return
+
+        new_order = call.data.split("|")[1]
+        set_button_order(new_order)
+
+        bot.answer_callback_query(call.id, t(uid, "order_changed"))
+        try:
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+        except: pass
+        bot.send_message(call.message.chat.id, t(uid, "order_changed"),
+                         reply_markup=main_keyboard(uid))
+    except Exception as e:
+        print(f"❌ {e}")
 
 @bot.callback_query_handler(func=lambda c: c.data == "do_reset")
 def do_reset(call):
-    uid = call.from_user.id
-
-    conn = db_connect()
-    cur = conn.cursor()
-    cur.execute("DELETE FROM orders WHERE user_id = %s", (uid,))
-    cur.execute("DELETE FROM users WHERE user_id = %s", (uid,))
-    conn.commit()
-    cur.close(); conn.close()
-
-    bot.answer_callback_query(call.id, "🗑️")
     try:
-        bot.delete_message(call.message.chat.id, call.message.message_id)
-    except: pass
+        uid = call.from_user.id
 
-    bot.send_message(call.message.chat.id, t(uid, "reset_done"))
-    cmd_start(call.message)
+        conn = db_connect()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM orders WHERE user_id = %s", (uid,))
+        cur.execute("DELETE FROM users WHERE user_id = %s", (uid,))
+        conn.commit()
+        cur.close(); conn.close()
+
+        bot.answer_callback_query(call.id, "🗑️")
+        try:
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+        except: pass
+
+        bot.send_message(call.message.chat.id, t(uid, "reset_done"))
+        USER_DATA.pop(uid, None)
+        cmd_start(call.message)
+    except Exception as e:
+        print(f"❌ {e}")
 
 @bot.callback_query_handler(func=lambda c: c.data == "cancel_reset")
 def cancel_reset(call):
-    bot.answer_callback_query(call.id, "✅")
     try:
-        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.answer_callback_query(call.id, "✅")
+        try:
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+        except: pass
+    except Exception as e:
+        print(f"❌ {e}")
+
+# ============ معالجات أخطاء عامة ============
+@bot.callback_query_handler(func=lambda call: True)
+def unknown_callback(call):
+    print(f"⚠️ callback غير معروف: {call.data}")
+    try:
+        bot.answer_callback_query(call.id, "⚠️ الزر غير معروف، جرّب من جديد")
     except: pass
+
+@bot.message_handler(func=lambda m: True)
+def unknown_message(message):
+    try:
+        uid = message.from_user.id
+        ensure_user(message)
+        if is_subscribed(uid):
+            bot.send_message(
+                message.chat.id,
+                t(uid, "unknown_msg"),
+                reply_markup=main_keyboard(uid)
+            )
+        else:
+            show_subscription_message(message.chat.id, uid)
+    except Exception as e:
+        print(f"❌ {e}")
 
 # ============ تشغيل ============
 print("🤖 البوت يعمل الآن...")
