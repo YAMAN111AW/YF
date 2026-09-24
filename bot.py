@@ -32,9 +32,7 @@ USER_DATA = {}
 import requests
 
 def fix_allowed_updates():
-    """إجبار تلغرام على إرسال callback_query للبوت"""
     try:
-        # احذف webhook + pending updates
         r1 = requests.get(
             f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook",
             params={"drop_pending_updates": "true"},
@@ -42,7 +40,6 @@ def fix_allowed_updates():
         )
         print(f"🔧 deleteWebhook: {r1.json()}")
 
-        # أرسل getUpdates مع كل الـ updates المسموحة لتحديث الإعدادات
         r2 = requests.get(
             f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates",
             params={
@@ -53,7 +50,6 @@ def fix_allowed_updates():
         )
         print(f"🔧 getUpdates: {r2.json().get('ok')}")
 
-        # تحقق
         r3 = requests.get(
             f"https://api.telegram.org/bot{BOT_TOKEN}/getWebhookInfo",
             timeout=10
@@ -93,6 +89,15 @@ PACKAGES = {
             "pubg_660":  {"ar": "660 شدة 🪙",  "en": "660 UC 🪙",  "price": "1275 ل.س"},
             "pubg_1800": {"ar": "1800 شدة 🪙", "en": "1800 UC 🪙", "price": "3180 ل.س"},
         }
+    },
+    "jawaker": {
+        "title": {"ar": "🃏 جواكر", "en": "🃏 Jawaker"},
+        "items": {
+            "jw_10000": {"ar": "10000 توكنز ♦️", "en": "10000 Tokens ♦️", "price": "180 ل.س"},
+            "jw_15000": {"ar": "15000 توكنز ♠️", "en": "15000 Tokens ♠️", "price": "260 ل.س"},
+            "jw_20000": {"ar": "20000 توكنز ♥️", "en": "20000 Tokens ♥️", "price": "340 ل.س"},
+            "jw_30000": {"ar": "30000 توكنز ♣️", "en": "30000 Tokens ♣️", "price": "490 ل.س"},
+        }
     }
 }
 
@@ -102,7 +107,7 @@ TEXTS = {
         "welcome": (
             "👋 أهلاً بك <b>{name}</b> في بوت شحن الجواهر والشدات 💎🔥\n\n"
             "🎯 <b>فكرة البوت:</b>\n"
-            "يمكنك شحن فري فاير (جواهر) أو ببجي (شدات) عبر سيرياتيل كاش أو شام كاش ✅\n\n"
+            "يمكنك شحن فري فاير، ببجي، أو جواكر عبر سيرياتيل كاش أو شام كاش ✅\n\n"
             "📌 <b>طريقة الشراء:</b>\n"
             "1️⃣ اختر اللعبة\n2️⃣ اختر العرض\n3️⃣ أرسل ID حسابك\n"
             "4️⃣ أرسل اسمك في اللعبة\n5️⃣ اختر طريقة الدفع\n6️⃣ حوّل المبلغ\n"
@@ -119,6 +124,7 @@ TEXTS = {
         "btn_check": "✅ تحقق من الاشتراك",
         "btn_ff": "🔥 Free Fire",
         "btn_pubg": "🎯 PUBG",
+        "btn_jawaker": "🃏 Jawaker",
         "btn_info": "👤 معلوماتي",
         "btn_support": "🆘 تواصل مع الدعم",
         "btn_settings": "⚙️ الإعدادات",
@@ -150,6 +156,13 @@ TEXTS = {
             "• أرقام فقط 🔢\n• من 9 إلى 12 رقم\n• لا يبدأ بـ 0\n\n"
             "🔁 أرسل ID صحيح:"
         ),
+        "invalid_id_jawaker": (
+            "❌ <b>ID جواكر غير صالح!</b>\n\n"
+            "⚠️ {reason}\n\n"
+            "📌 <b>شروط ID جواكر:</b>\n"
+            "• أرقام فقط 🔢\n• من 6 إلى 12 رقم\n• لا يبدأ بـ 0\n\n"
+            "🔁 أرسل ID صحيح:"
+        ),
         "send_name": "📝 ممتاز! الآن أرسل <b>اسمك داخل اللعبة</b>:",
         "invalid_name": "❌ الاسم قصير جدًا! أرسل اسمك الصحيح:",
         "choose_payment": "💳 <b>اختر طريقة الدفع:</b>\n\n👇 اختر من الأزرار بالأسفل",
@@ -164,7 +177,8 @@ TEXTS = {
             f"<code>{PAYMENT_NUMBER_SYRIATEL}</code>\n"
             "4️⃣ أدخل المبلغ: <b>{price}</b>\n"
             "5️⃣ أكّد العملية ✅\n\n"
-            "⚠️ بعد التحويل سيتم مراجعة طلبك من قِبَل الإدارة ✅\n"
+            "⏳ <b>سيصل طلبك خلال 5 دقائق من موافقة الإدارة</b>\n\n"
+            "⚠️ سيتم مراجعة طلبك من قِبَل الإدارة ✅\n"
             "🔖 رقم طلبك: <b>#{oid}</b>"
         ),
         "payment_sham": (
@@ -175,11 +189,16 @@ TEXTS = {
             "3️⃣ امسح الكود الموجود في الصورة بالأعلى ☝️\n"
             "4️⃣ أدخل المبلغ: <b>{price}</b>\n"
             "5️⃣ أكّد العملية ✅\n\n"
-            "⚠️ بعد التحويل سيتم مراجعة طلبك من قِبَل الإدارة ✅\n"
+            "⏳ <b>سيصل طلبك خلال 5 دقائق من موافقة الإدارة</b>\n\n"
+            "⚠️ سيتم مراجعة طلبك من قِبَل الإدارة ✅\n"
             "🔖 رقم طلبك: <b>#{oid}</b>"
         ),
         "sham_image_caption": "📷 <b>امسح هذا الكود للدفع عبر شام كاش</b>\n\n💰 المبلغ المطلوب: <b>{price}</b>",
-        "accepted": "✅ <b>تم قبول طلبك!</b>\n\n💎 <b>{item}</b> سيصلك خلال <b>5 دقائق</b> ⏳\n\nشكرًا ❤️",
+        "accepted": (
+            "✅ <b>تم قبول طلبك!</b>\n\n"
+            "💎 <b>{item}</b> سيصلك خلال <b>5 دقائق</b> ⏳\n\n"
+            "شكرًا لثقتك ❤️"
+        ),
         "rejected": "❌ عذرًا، تم <b>رفض طلبك</b>.\nتواصل مع الدعم 🆘",
         "my_info": (
             "👤 <b>معلوماتك:</b>\n\n"
@@ -232,15 +251,17 @@ TEXTS = {
         "btn_no": "❌ إلغاء",
         "order_current": "🔀 <b>ترتيب الأزرار الحالي:</b>\n\n{order}\n\nاختر:",
         "order_changed": "✅ تم تغيير الترتيب!",
-        "btn_order_default": "1️⃣ Free Fire ثم PUBG",
-        "btn_order_swapped": "2️⃣ PUBG ثم Free Fire",
+        "btn_order_1": "1️⃣ FF → PUBG → Jawaker",
+        "btn_order_2": "2️⃣ Jawaker → FF → PUBG",
+        "btn_order_3": "3️⃣ PUBG → Jawaker → FF",
         "back_done": "⬅️ رجعنا للخطوة السابقة",
         "unknown_msg": "🤔 لم أفهم رسالتك. استخدم الأزرار بالأسفل 👇",
     },
     "en": {
         "welcome": (
-            "👋 Welcome <b>{name}</b> to the Diamonds & UC bot 💎🔥\n\n"
-            "🎯 <b>Bot purpose:</b>\nTop up via Syriatel Cash or Sham Cash ✅\n\n"
+            "👋 Welcome <b>{name}</b> to the Top-Up bot 💎🔥\n\n"
+            "🎯 <b>Bot purpose:</b>\n"
+            "Top up Free Fire, PUBG, or Jawaker via Syriatel Cash or Sham Cash ✅\n\n"
             "📌 <b>How to buy:</b>\n1️⃣ Choose game\n2️⃣ Choose package\n"
             "3️⃣ Send your ID\n4️⃣ Send in-game name\n5️⃣ Choose payment\n"
             "6️⃣ Pay\n7️⃣ Wait for approval ✅\n\n"
@@ -254,6 +275,7 @@ TEXTS = {
         "btn_check": "✅ Check subscription",
         "btn_ff": "🔥 Free Fire",
         "btn_pubg": "🎯 PUBG",
+        "btn_jawaker": "🃏 Jawaker",
         "btn_info": "👤 My info",
         "btn_support": "🆘 Support",
         "btn_settings": "⚙️ Settings",
@@ -278,6 +300,11 @@ TEXTS = {
             "📌 <b>PUBG ID rules:</b>\n• Digits only 🔢\n• 9-12 digits\n• No leading 0\n\n"
             "🔁 Send a valid ID:"
         ),
+        "invalid_id_jawaker": (
+            "❌ <b>Invalid Jawaker ID!</b>\n\n⚠️ {reason}\n\n"
+            "📌 <b>Jawaker ID rules:</b>\n• Digits only 🔢\n• 6-12 digits\n• No leading 0\n\n"
+            "🔁 Send a valid ID:"
+        ),
         "send_name": "📝 Now send your <b>in-game name</b>:",
         "invalid_name": "❌ Name too short!",
         "choose_payment": "💳 <b>Choose payment method:</b>\n\n👇 From buttons below",
@@ -291,6 +318,7 @@ TEXTS = {
             f"3️⃣ Enter: <code>{PAYMENT_NUMBER_SYRIATEL}</code>\n"
             "4️⃣ Enter amount: <b>{price}</b>\n"
             "5️⃣ Confirm ✅\n\n"
+            "⏳ <b>Delivery within 5 min after admin approval</b>\n\n"
             "⚠️ Reviewed by admin ✅\n🔖 Order #<b>{oid}</b>"
         ),
         "payment_sham": (
@@ -301,10 +329,15 @@ TEXTS = {
             "3️⃣ Scan the code in the image above ☝️\n"
             "4️⃣ Enter amount: <b>{price}</b>\n"
             "5️⃣ Confirm ✅\n\n"
+            "⏳ <b>Delivery within 5 min after admin approval</b>\n\n"
             "⚠️ Reviewed by admin ✅\n🔖 Order #<b>{oid}</b>"
         ),
         "sham_image_caption": "📷 <b>Scan this code to pay via Sham Cash</b>\n\n💰 Amount: <b>{price}</b>",
-        "accepted": "✅ <b>Accepted!</b>\n\n💎 <b>{item}</b> within <b>5 min</b> ⏳\n\nThanks ❤️",
+        "accepted": (
+            "✅ <b>Accepted!</b>\n\n"
+            "💎 <b>{item}</b> within <b>5 min</b> ⏳\n\n"
+            "Thanks ❤️"
+        ),
         "rejected": "❌ Order <b>rejected</b>.\nContact support 🆘",
         "my_info": (
             "👤 <b>Your info:</b>\n\n📛 {name}\n🆔 <code>{rid}</code>\n"
@@ -350,8 +383,9 @@ TEXTS = {
         "btn_no": "❌ Cancel",
         "order_current": "🔀 <b>Current order:</b>\n\n{order}\n\nChoose:",
         "order_changed": "✅ Order changed!",
-        "btn_order_default": "1️⃣ Free Fire then PUBG",
-        "btn_order_swapped": "2️⃣ PUBG then Free Fire",
+        "btn_order_1": "1️⃣ FF → PUBG → Jawaker",
+        "btn_order_2": "2️⃣ Jawaker → FF → PUBG",
+        "btn_order_3": "3️⃣ PUBG → Jawaker → FF",
         "back_done": "⬅️ Back",
         "unknown_msg": "🤔 I didn't understand. Use the buttons below 👇",
     }
@@ -406,7 +440,12 @@ def init_db():
             created_at TEXT
         )
     """)
-    cur.execute("INSERT INTO settings VALUES ('button_order', 'ff,pubg') ON CONFLICT (key) DO NOTHING")
+    cur.execute("INSERT INTO settings VALUES ('button_order', 'ff,pubg,jawaker') ON CONFLICT (key) DO NOTHING")
+    # تحديث الترتيب الافتراضي لو كان القديم (ff,pubg فقط)
+    cur.execute("SELECT value FROM settings WHERE key = 'button_order'")
+    row = cur.fetchone()
+    if row and row["value"] == "ff,pubg":
+        cur.execute("UPDATE settings SET value = 'ff,pubg,jawaker' WHERE key = 'button_order'")
     conn.commit()
     cur.close(); conn.close()
 
@@ -454,7 +493,7 @@ def get_button_order():
     cur.execute("SELECT value FROM settings WHERE key = 'button_order'")
     row = cur.fetchone()
     cur.close(); conn.close()
-    return row["value"] if row else "ff,pubg"
+    return row["value"] if row else "ff,pubg,jawaker"
 
 def set_button_order(value):
     conn = db_connect()
@@ -492,23 +531,38 @@ def validate_game_id(game_id: str, game: str):
             return False, "ID ببجي أقل من 9 أرقام"
         if len(game_id) > 12:
             return False, "ID ببجي أكثر من 12 رقم"
+    elif game == "jawaker":
+        if len(game_id) < 6:
+            return False, "ID جواكر أقل من 6 أرقام"
+        if len(game_id) > 12:
+            return False, "ID جواكر أكثر من 12 رقم"
 
     return True, game_id
 
-# ============ لوحات الأزرار ============
+# ============ الأزرار ============
 def main_keyboard(uid):
     lang = get_lang(uid)
     T = TEXTS[lang]
     order = get_button_order().split(",")
+
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
 
-    row1 = []
-    for g in order:
-        if g == "ff":
-            row1.append(T["btn_ff"])
-        elif g == "pubg":
-            row1.append(T["btn_pubg"])
-    kb.row(*row1)
+    # الألعاب في صف واحد أو صفين
+    game_map = {
+        "ff": T["btn_ff"],
+        "pubg": T["btn_pubg"],
+        "jawaker": T["btn_jawaker"],
+    }
+    buttons = [game_map[g] for g in order if g in game_map]
+
+    # نوزّعهم: صف أول فيه أول لعبتين، صف ثاني فيه الثالثة إذا موجودة
+    if len(buttons) == 3:
+        kb.row(buttons[0], buttons[1])
+        kb.row(buttons[2])
+    elif len(buttons) == 2:
+        kb.row(*buttons)
+    else:
+        kb.row(*buttons)
 
     kb.row(T["btn_info"], T["btn_settings"])
 
@@ -520,30 +574,10 @@ def main_keyboard(uid):
     return kb
 
 def back_keyboard(uid):
-    lang = get_lang(uid)
-    T = TEXTS[lang]
-    kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    """لوحة الرجوع + الأزرار الرئيسية"""
+    return main_keyboard(uid)
 
-    kb.row(T["btn_back"])
-
-    order = get_button_order().split(",")
-    row_games = []
-    for g in order:
-        if g == "ff":
-            row_games.append(T["btn_ff"])
-        elif g == "pubg":
-            row_games.append(T["btn_pubg"])
-    kb.row(*row_games)
-
-    kb.row(T["btn_info"], T["btn_settings"])
-    if uid == ADMIN_ID:
-        kb.row(T["btn_support"], T["btn_inbox"])
-    else:
-        kb.row(T["btn_support"])
-
-    return kb
-
-# ============ رسائل مساعدة ============
+# ============ رسائل ============
 def send_welcome(chat_id, first_name, uid):
     bot.send_message(
         chat_id, t(uid, "welcome", name=first_name),
@@ -645,6 +679,10 @@ def show_ff(message):
 def show_pubg(message):
     show_game_packages(message, "pubg")
 
+@bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_jawaker"], TEXTS["en"]["btn_jawaker"]])
+def show_jawaker(message):
+    show_game_packages(message, "jawaker")
+
 def show_game_packages(message, game):
     ensure_user(message)
     uid = message.from_user.id
@@ -713,7 +751,7 @@ def get_game_id(message):
     valid, result = validate_game_id(game_id, game)
 
     if not valid:
-        key = "invalid_id_ff" if game == "ff" else "invalid_id_pubg"
+        key = "invalid_id_ff" if game == "ff" else ("invalid_id_pubg" if game == "pubg" else "invalid_id_jawaker")
         msg = bot.send_message(
             message.chat.id,
             t(uid, key, reason=result),
@@ -1035,7 +1073,7 @@ def show_inbox(message):
         ))
         bot.send_message(message.chat.id, text, parse_mode="HTML", reply_markup=kb)
 
-# ============ زر الإعدادات ============
+# ============ الإعدادات ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_settings"], TEXTS["en"]["btn_settings"]])
 def settings_menu(message):
     uid = message.from_user.id
@@ -1081,11 +1119,20 @@ def cfg_order(call):
         if uid != ADMIN_ID:
             bot.answer_callback_query(call.id, "🚫", show_alert=True)
             return
+
         current = get_button_order()
-        order_str = "🔥 FF → 🎯 PUBG" if current == "ff,pubg" else "🎯 PUBG → 🔥 FF"
+        order_display = {
+            "ff,pubg,jawaker": "1️⃣ FF → PUBG → Jawaker",
+            "jawaker,ff,pubg": "2️⃣ Jawaker → FF → PUBG",
+            "pubg,jawaker,ff": "3️⃣ PUBG → Jawaker → FF",
+        }
+        order_str = order_display.get(current, current)
+
         kb = types.InlineKeyboardMarkup(row_width=1)
-        kb.add(types.InlineKeyboardButton(t(uid, "btn_order_default"), callback_data="set_order|ff,pubg"))
-        kb.add(types.InlineKeyboardButton(t(uid, "btn_order_swapped"), callback_data="set_order|pubg,ff"))
+        kb.add(types.InlineKeyboardButton(t(uid, "btn_order_1"), callback_data="set_order|ff,pubg,jawaker"))
+        kb.add(types.InlineKeyboardButton(t(uid, "btn_order_2"), callback_data="set_order|jawaker,ff,pubg"))
+        kb.add(types.InlineKeyboardButton(t(uid, "btn_order_3"), callback_data="set_order|pubg,jawaker,ff"))
+
         bot.edit_message_text(
             t(uid, "order_current", order=order_str),
             call.message.chat.id, call.message.message_id,
@@ -1207,6 +1254,7 @@ def unknown_message(message):
 # ============ تشغيل ============
 print("🤖 البوت يعمل الآن...")
 print("🎯 allowed_updates مضمّن: callback_query مسموح")
+print("🃏 Jawaker مضاف بنجاح")
 
 bot.infinity_polling(
     allowed_updates=[
@@ -1221,4 +1269,4 @@ bot.infinity_polling(
     skip_pending=True,
     timeout=30,
     long_polling_timeout=30
-            )
+        )
