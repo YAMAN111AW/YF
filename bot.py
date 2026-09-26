@@ -5,6 +5,7 @@ from psycopg2.extras import RealDictCursor
 import random
 import os
 import time
+import threading
 from datetime import datetime, timezone, timedelta
 
 # ============ الإعدادات ============
@@ -21,14 +22,11 @@ SHAM_IMAGE_PATH = "sham.jpg"
 
 ORDERS_OPEN_HOUR = 12
 ORDERS_CLOSE_HOUR = 22
+PAYMENT_TIMEOUT_SECONDS = 300  # 5 دقائق
 
 bot = telebot.TeleBot(BOT_TOKEN)
-
 USER_DATA = {}
 
-# ============================================================
-# 🛠️ إعادة تعيين allowed_updates — لحل مشكلة أزرار Inline
-# ============================================================
 import requests
 
 def fix_allowed_updates():
@@ -84,7 +82,7 @@ PACKAGES = {
     "pubg": {
         "title": {"ar": "🎯 ببجي", "en": "🎯 PUBG"},
         "items": {
-            "pubg_60":   {"ar": "60 شدة 🪙",   "en": "60 UC 🪙",   "price": "135 ل.س"},
+            "pubg_60":   {"ar": "60 شدة 🪙",   "en": "60 UC 🪙",   "price": "140 ل.س"},
             "pubg_325":  {"ar": "325 شدة 🪙",  "en": "325 UC 🪙",  "price": "650 ل.س"},
             "pubg_660":  {"ar": "660 شدة 🪙",  "en": "660 UC 🪙",  "price": "1275 ل.س"},
             "pubg_1800": {"ar": "1800 شدة 🪙", "en": "1800 UC 🪙", "price": "3180 ل.س"},
@@ -110,7 +108,7 @@ TEXTS = {
             "يمكنك شحن فري فاير، ببجي، أو جواكر عبر سيرياتيل كاش أو شام كاش ✅\n\n"
             "📌 <b>طريقة الشراء:</b>\n"
             "1️⃣ اختر اللعبة\n2️⃣ اختر العرض\n3️⃣ أرسل ID حسابك\n"
-            "4️⃣ أرسل اسمك في اللعبة\n5️⃣ اختر طريقة الدفع\n6️⃣ حوّل المبلغ\n"
+            "4️⃣ أرسل اسمك في اللعبة\n5️⃣ اختر طريقة الدفع\n6️⃣ حوّل المبلغ خلال 5 دقائق\n"
             "7️⃣ انتظر موافقة الإدارة ✅\n\n"
             "⏰ <b>الطلبات تُقبل من 12 ظهرًا حتى 10 مساءً بتوقيت السعودية</b> 🇸🇦"
         ),
@@ -168,30 +166,21 @@ TEXTS = {
         "choose_payment": "💳 <b>اختر طريقة الدفع:</b>\n\n👇 اختر من الأزرار بالأسفل",
         "btn_syriatel": "💳 سيرياتيل كاش",
         "btn_sham": "📷 شام كاش",
-        "payment_syriatel": (
-            "💳 <b>طريقة الدفع: سيرياتيل كاش</b>\n\n"
+        "payment_with_timer": (
+            "💳 <b>طريقة الدفع: {method}</b>\n\n"
             "📌 <b>الخطوات:</b>\n"
-            "1️⃣ افتح تطبيق <b>سيرياتيل كاش</b>\n"
-            "2️⃣ اختر <b>تحويل</b>\n"
-            "3️⃣ أدخل الرقم:\n"
-            f"<code>{PAYMENT_NUMBER_SYRIATEL}</code>\n"
-            "4️⃣ أدخل المبلغ: <b>{price}</b>\n"
-            "5️⃣ أكّد العملية ✅\n\n"
-            "⏳ <b>سيصل طلبك خلال 5 دقائق من موافقة الإدارة</b>\n\n"
+            "{steps}\n\n"
+            "⏳ <b>المتبقي للتسديد: {remaining}</b>\n\n"
+            "🔔 <b>ملاحظة مهمة:</b>\n"
+            "يجب تسديد المبلغ خلال <b>5 دقائق</b> وإلا سيُلغى الطلب تلقائيًا!\n\n"
             "⚠️ سيتم مراجعة طلبك من قِبَل الإدارة ✅\n"
             "🔖 رقم طلبك: <b>#{oid}</b>"
         ),
-        "payment_sham": (
-            "📷 <b>طريقة الدفع: شام كاش</b>\n\n"
-            "📌 <b>الخطوات:</b>\n"
-            "1️⃣ افتح تطبيق <b>شام كاش</b>\n"
-            "2️⃣ اختر <b>مسح QR</b>\n"
-            "3️⃣ امسح الكود الموجود في الصورة بالأعلى ☝️\n"
-            "4️⃣ أدخل المبلغ: <b>{price}</b>\n"
-            "5️⃣ أكّد العملية ✅\n\n"
-            "⏳ <b>سيصل طلبك خلال 5 دقائق من موافقة الإدارة</b>\n\n"
-            "⚠️ سيتم مراجعة طلبك من قِبَل الإدارة ✅\n"
-            "🔖 رقم طلبك: <b>#{oid}</b>"
+        "payment_expired": (
+            "⌛ <b>انتهى وقت التسديد!</b>\n\n"
+            "عذرًا، لم يتم تسديد المبلغ خلال <b>5 دقائق</b>.\n"
+            "🔖 رقم طلبك: <b>#{oid}</b>\n\n"
+            "🔄 يمكنك إنشاء طلب جديد عبر /start"
         ),
         "sham_image_caption": "📷 <b>امسح هذا الكود للدفع عبر شام كاش</b>\n\n💰 المبلغ المطلوب: <b>{price}</b>",
         "accepted": (
@@ -215,7 +204,7 @@ TEXTS = {
             "📖 <b>طريقة الاستخدام:</b>\n"
             "1️⃣ اختر اللعبة\n2️⃣ اختر عرض الشحن 💎\n"
             "3️⃣ أرسل ID حسابك 🆔\n4️⃣ أرسل اسمك في اللعبة 📝\n"
-            "5️⃣ اختر طريقة الدفع\n6️⃣ حوّل المبلغ 💳\n"
+            "5️⃣ اختر طريقة الدفع\n6️⃣ حوّل المبلغ خلال 5 دقائق 💳\n"
             "7️⃣ انتظر الموافقة ✅\n8️⃣ تصلك خلال 5 دقائق ⏳\n\n"
             "⏰ <b>ساعات العمل:</b> 12 ظهرًا - 10 مساءً 🇸🇦\n\n"
             "👇 يمكنك إرسال شكوى أو اقتراح عبر الزر بالأسفل:"
@@ -264,7 +253,7 @@ TEXTS = {
             "Top up Free Fire, PUBG, or Jawaker via Syriatel Cash or Sham Cash ✅\n\n"
             "📌 <b>How to buy:</b>\n1️⃣ Choose game\n2️⃣ Choose package\n"
             "3️⃣ Send your ID\n4️⃣ Send in-game name\n5️⃣ Choose payment\n"
-            "6️⃣ Pay\n7️⃣ Wait for approval ✅\n\n"
+            "6️⃣ Pay within 5 minutes\n7️⃣ Wait for approval ✅\n\n"
             "⏰ <b>Orders: 12 PM - 10 PM (Saudi time)</b> 🇸🇦"
         ),
         "subscribe_required": (
@@ -310,27 +299,21 @@ TEXTS = {
         "choose_payment": "💳 <b>Choose payment method:</b>\n\n👇 From buttons below",
         "btn_syriatel": "💳 Syriatel Cash",
         "btn_sham": "📷 Sham Cash",
-        "payment_syriatel": (
-            "💳 <b>Payment: Syriatel Cash</b>\n\n"
+        "payment_with_timer": (
+            "💳 <b>Payment: {method}</b>\n\n"
             "📌 <b>Steps:</b>\n"
-            "1️⃣ Open <b>Syriatel Cash</b>\n"
-            "2️⃣ Choose <b>Transfer</b>\n"
-            f"3️⃣ Enter: <code>{PAYMENT_NUMBER_SYRIATEL}</code>\n"
-            "4️⃣ Enter amount: <b>{price}</b>\n"
-            "5️⃣ Confirm ✅\n\n"
-            "⏳ <b>Delivery within 5 min after admin approval</b>\n\n"
-            "⚠️ Reviewed by admin ✅\n🔖 Order #<b>{oid}</b>"
+            "{steps}\n\n"
+            "⏳ <b>Time left to pay: {remaining}</b>\n\n"
+            "🔔 <b>Important:</b>\n"
+            "You must pay within <b>5 minutes</b> or the order will be auto-cancelled!\n\n"
+            "⚠️ Reviewed by admin ✅\n"
+            "🔖 Order #<b>{oid}</b>"
         ),
-        "payment_sham": (
-            "📷 <b>Payment: Sham Cash</b>\n\n"
-            "📌 <b>Steps:</b>\n"
-            "1️⃣ Open <b>Sham Cash</b>\n"
-            "2️⃣ Choose <b>Scan QR</b>\n"
-            "3️⃣ Scan the code in the image above ☝️\n"
-            "4️⃣ Enter amount: <b>{price}</b>\n"
-            "5️⃣ Confirm ✅\n\n"
-            "⏳ <b>Delivery within 5 min after admin approval</b>\n\n"
-            "⚠️ Reviewed by admin ✅\n🔖 Order #<b>{oid}</b>"
+        "payment_expired": (
+            "⌛ <b>Payment time expired!</b>\n\n"
+            "Sorry, you didn't pay within <b>5 minutes</b>.\n"
+            "🔖 Order #<b>{oid}</b>\n\n"
+            "🔄 Create a new order via /start"
         ),
         "sham_image_caption": "📷 <b>Scan this code to pay via Sham Cash</b>\n\n💰 Amount: <b>{price}</b>",
         "accepted": (
@@ -350,7 +333,7 @@ TEXTS = {
             "📖 <b>How to use:</b>\n"
             "1️⃣ Choose game\n2️⃣ Choose package 💎\n"
             "3️⃣ Send ID 🆔\n4️⃣ Send name 📝\n"
-            "5️⃣ Choose payment\n6️⃣ Pay 💳\n"
+            "5️⃣ Choose payment\n6️⃣ Pay within 5 min 💳\n"
             "7️⃣ Wait ✅\n8️⃣ Receive in 5 min ⏳\n\n"
             "⏰ <b>Working: 12 PM - 10 PM</b> 🇸🇦\n\n"
             "👇 Send a complaint/suggestion:"
@@ -440,12 +423,17 @@ def init_db():
             created_at TEXT
         )
     """)
-    cur.execute("INSERT INTO settings VALUES ('button_order', 'ff,pubg,jawaker') ON CONFLICT (key) DO NOTHING")
-    # تحديث الترتيب الافتراضي لو كان القديم (ff,pubg فقط)
+
+    # 🔧 ترتيب الأزرار — نضمن jawaker موجود
     cur.execute("SELECT value FROM settings WHERE key = 'button_order'")
     row = cur.fetchone()
-    if row and row["value"] == "ff,pubg":
-        cur.execute("UPDATE settings SET value = 'ff,pubg,jawaker' WHERE key = 'button_order'")
+    if row:
+        if "jawaker" not in row["value"]:
+            cur.execute("UPDATE settings SET value = 'ff,pubg,jawaker' WHERE key = 'button_order'")
+            print("🔧 تم تحديث ترتيب الأزرار إلى: ff,pubg,jawaker")
+    else:
+        cur.execute("INSERT INTO settings VALUES ('button_order', 'ff,pubg,jawaker')")
+
     conn.commit()
     cur.close(); conn.close()
 
@@ -539,7 +527,155 @@ def validate_game_id(game_id: str, game: str):
 
     return True, game_id
 
-# ============ الأزرار ============
+# ============ العداد الحي ⏳ ============
+def format_remaining(seconds, lang):
+    if lang == "en":
+        m = seconds // 60
+        s = seconds % 60
+        if m > 0 and s > 0:
+            return f"{m} min {s} sec"
+        elif m > 0:
+            return f"{m} min"
+        else:
+            return f"{s} sec"
+    else:
+        m = seconds // 60
+        s = seconds % 60
+        if m > 0 and s > 0:
+            return f"{m} دقيقة و {s} ثانية"
+        elif m > 0:
+            return f"{m} دقيقة"
+        else:
+            return f"{s} ثانية"
+
+
+def build_payment_steps(method, lang, price):
+    if method == "syriatel":
+        if lang == "ar":
+            return (
+                "1️⃣ افتح تطبيق <b>سيرياتيل كاش</b>\n"
+                "2️⃣ اختر <b>تحويل</b>\n"
+                f"3️⃣ أدخل الرقم: <code>{PAYMENT_NUMBER_SYRIATEL}</code>\n"
+                f"4️⃣ أدخل المبلغ: <b>{price}</b>\n"
+                "5️⃣ أكّد العملية ✅"
+            ), "سيرياتيل كاش 💳"
+        else:
+            return (
+                "1️⃣ Open <b>Syriatel Cash</b>\n"
+                "2️⃣ Choose <b>Transfer</b>\n"
+                f"3️⃣ Enter: <code>{PAYMENT_NUMBER_SYRIATEL}</code>\n"
+                f"4️⃣ Enter amount: <b>{price}</b>\n"
+                "5️⃣ Confirm ✅"
+            ), "Syriatel Cash 💳"
+    else:
+        if lang == "ar":
+            return (
+                "1️⃣ افتح تطبيق <b>شام كاش</b>\n"
+                "2️⃣ اختر <b>مسح QR</b>\n"
+                "3️⃣ امسح الكود المرسل بالصورة ☝️\n"
+                f"4️⃣ أدخل المبلغ: <b>{price}</b>\n"
+                "5️⃣ أكّد العملية ✅"
+            ), "شام كاش 📷"
+        else:
+            return (
+                "1️⃣ Open <b>Sham Cash</b>\n"
+                "2️⃣ Choose <b>Scan QR</b>\n"
+                "3️⃣ Scan the code above ☝️\n"
+                f"4️⃣ Enter amount: <b>{price}</b>\n"
+                "5️⃣ Confirm ✅"
+            ), "Sham Cash 📷"
+
+
+def start_countdown(chat_id, message_id, order_id, method, uid, total_seconds=300):
+    def run():
+        lang = get_lang(uid)
+        try:
+            conn = db_connect()
+            cur = conn.cursor()
+            cur.execute("SELECT price FROM orders WHERE order_id = %s", (order_id,))
+            row = cur.fetchone()
+            cur.close(); conn.close()
+            if not row:
+                return
+            price_str = row["price"]
+        except Exception as e:
+            print(f"❌ countdown db: {e}")
+            return
+
+        steps_text, method_name = build_payment_steps(method, lang, price_str)
+
+        remaining = total_seconds
+        while remaining > 0:
+            time.sleep(60)
+            remaining -= 60
+
+            # فحص حالة الطلب
+            try:
+                conn = db_connect()
+                cur = conn.cursor()
+                cur.execute("SELECT status FROM orders WHERE order_id = %s", (order_id,))
+                r = cur.fetchone()
+                cur.close(); conn.close()
+                if r and r["status"] != "pending":
+                    # الأدمن قرر → نوقف
+                    return
+            except Exception as e:
+                print(f"❌ countdown check: {e}")
+
+            if remaining > 0:
+                remaining_text = format_remaining(remaining, lang)
+                try:
+                    bot.edit_message_text(
+                        t(uid, "payment_with_timer",
+                          method=method_name,
+                          steps=steps_text,
+                          remaining=remaining_text,
+                          oid=order_id),
+                        chat_id=chat_id,
+                        message_id=message_id,
+                        parse_mode="HTML"
+                    )
+                except Exception as e:
+                    print(f"⚠️ edit_message: {e}")
+                    return
+
+        # انتهى الوقت
+        try:
+            conn = db_connect()
+            cur = conn.cursor()
+            cur.execute("SELECT status FROM orders WHERE order_id = %s", (order_id,))
+            r = cur.fetchone()
+            if r and r["status"] == "pending":
+                cur.execute("UPDATE orders SET status = 'expired' WHERE order_id = %s", (order_id,))
+                conn.commit()
+                cur.close(); conn.close()
+
+                try:
+                    bot.edit_message_text(
+                        t(uid, "payment_expired", oid=order_id),
+                        chat_id=chat_id,
+                        message_id=message_id,
+                        parse_mode="HTML"
+                    )
+                except Exception as e:
+                    print(f"⚠️ edit expired: {e}")
+
+                try:
+                    bot.send_message(
+                        ADMIN_ID,
+                        f"⌛ <b>طلب #{order_id} انتهى وقته</b> (لم يُسدَّد خلال 5 دقائق)",
+                        parse_mode="HTML"
+                    )
+                except: pass
+            else:
+                cur.close(); conn.close()
+        except Exception as e:
+            print(f"❌ countdown end: {e}")
+
+    th = threading.Thread(target=run, daemon=True)
+    th.start()
+
+# ============ لوحات الأزرار ============
 def main_keyboard(uid):
     lang = get_lang(uid)
     T = TEXTS[lang]
@@ -547,7 +683,6 @@ def main_keyboard(uid):
 
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
 
-    # الألعاب في صف واحد أو صفين
     game_map = {
         "ff": T["btn_ff"],
         "pubg": T["btn_pubg"],
@@ -555,7 +690,6 @@ def main_keyboard(uid):
     }
     buttons = [game_map[g] for g in order if g in game_map]
 
-    # نوزّعهم: صف أول فيه أول لعبتين، صف ثاني فيه الثالثة إذا موجودة
     if len(buttons) == 3:
         kb.row(buttons[0], buttons[1])
         kb.row(buttons[2])
@@ -574,7 +708,6 @@ def main_keyboard(uid):
     return kb
 
 def back_keyboard(uid):
-    """لوحة الرجوع + الأزرار الرئيسية"""
     return main_keyboard(uid)
 
 # ============ رسائل ============
@@ -836,14 +969,10 @@ def choose_payment(call):
         conn.commit()
         cur.close(); conn.close()
 
-        if method == "syriatel":
-            bot.send_message(
-                call.message.chat.id,
-                t(uid, "payment_syriatel", price=data["price"], oid=order_id),
-                parse_mode="HTML",
-                reply_markup=main_keyboard(uid)
-            )
-        else:
+        lang = get_lang(uid)
+
+        # إذا شام كاش — نرسل الصورة أولاً
+        if method == "sham":
             try:
                 with open(SHAM_IMAGE_PATH, "rb") as photo:
                     bot.send_photo(
@@ -854,13 +983,33 @@ def choose_payment(call):
                     )
             except FileNotFoundError:
                 bot.send_message(call.message.chat.id, "⚠️ صورة sham.jpg غير موجودة")
-            bot.send_message(
-                call.message.chat.id,
-                t(uid, "payment_sham", price=data["price"], oid=order_id),
-                parse_mode="HTML",
-                reply_markup=main_keyboard(uid)
-            )
 
+        # نص الرسالة الأساسية
+        steps_text, method_name = build_payment_steps(method, lang, data["price"])
+        remaining_text = "5 دقائق" if lang == "ar" else "5 min"
+
+        sent_msg = bot.send_message(
+            call.message.chat.id,
+            t(uid, "payment_with_timer",
+              method=method_name,
+              steps=steps_text,
+              remaining=remaining_text,
+              oid=order_id),
+            parse_mode="HTML",
+            reply_markup=main_keyboard(uid)
+        )
+
+        # 🎬 تشغيل العداد الحي
+        start_countdown(
+            chat_id=call.message.chat.id,
+            message_id=sent_msg.message_id,
+            order_id=order_id,
+            method=method,
+            uid=uid,
+            total_seconds=PAYMENT_TIMEOUT_SECONDS
+        )
+
+        # إشعار الأدمن
         method_label = "💳 سيرياتيل كاش" if method == "syriatel" else "📷 شام كاش"
         admin_text = (
             "🔔 <b>طلب شراء جديد!</b>\n\n"
@@ -873,7 +1022,8 @@ def choose_payment(call):
             f"💰 السعر: <b>{data['price']}</b>\n"
             f"🎮 ID اللعبة: <code>{data['game_id']}</code>\n"
             f"📝 اسم اللاعب: <b>{data['player_name']}</b>\n"
-            f"💳 طريقة الدفع: <b>{method_label}</b>\n\n"
+            f"💳 طريقة الدفع: <b>{method_label}</b>\n"
+            f"⏳ <b>مهلة التسديد: 5 دقائق</b>\n\n"
             "اضغط زر الموافقة بعد التأكد:"
         )
         kb = types.InlineKeyboardMarkup()
@@ -953,6 +1103,7 @@ def my_info(message):
         "pending": "⏳ قيد المراجعة" if lang == "ar" else "⏳ Pending",
         "accepted": "✅ مقبول" if lang == "ar" else "✅ Accepted",
         "rejected": "❌ مرفوض" if lang == "ar" else "❌ Rejected",
+        "expired": "⌛ انتهى الوقت" if lang == "ar" else "⌛ Expired",
     }
 
     if not orders:
@@ -1253,8 +1404,9 @@ def unknown_message(message):
 
 # ============ تشغيل ============
 print("🤖 البوت يعمل الآن...")
-print("🎯 allowed_updates مضمّن: callback_query مسموح")
-print("🃏 Jawaker مضاف بنجاح")
+print("🎯 callback_query مسموح")
+print("⏳ العداد الحي مفعّل — 5 دقائق")
+print("💰 سعر 60 شدة: 140 ل.س")
 
 bot.infinity_polling(
     allowed_updates=[
@@ -1269,4 +1421,4 @@ bot.infinity_polling(
     skip_pending=True,
     timeout=30,
     long_polling_timeout=30
-        )
+)
