@@ -22,7 +22,7 @@ SHAM_IMAGE_PATH = "sham.jpg"
 
 ORDERS_OPEN_HOUR = 12
 ORDERS_CLOSE_HOUR = 22
-PAYMENT_TIMEOUT_SECONDS = 300  # 5 دقائق
+PAYMENT_TIMEOUT_SECONDS = 300
 
 bot = telebot.TeleBot(BOT_TOKEN)
 USER_DATA = {}
@@ -72,20 +72,27 @@ time.sleep(1)
 # ============ الأسعار ============
 PACKAGES = {
     "ff": {
-        "title": {"ar": "🔥 فري فاير", "en": "🔥 Free Fire"},
+        "title": {"ar": "💎 شحن جواهر فري فاير", "en": "💎 Free Fire Diamonds"},
         "items": {
             "ff_110": {"ar": "110 جوهرة 💎", "en": "110 Diamonds 💎", "price": "160 ل.س"},
             "ff_231": {"ar": "231 جوهرة 💎", "en": "231 Diamonds 💎", "price": "290 ل.س"},
             "ff_583": {"ar": "583 جوهرة 💎", "en": "583 Diamonds 💎", "price": "700 ل.س"},
         }
     },
+    "ff_membership": {
+        "title": {"ar": "⭐ عضوية فري فاير", "en": "⭐ Free Fire Membership"},
+        "items": {
+            "ffm_week":  {"ar": "عضوية أسبوعية ⭐", "en": "Weekly Membership ⭐", "price": "350 ل.س"},
+            "ffm_month": {"ar": "عضوية شهرية ⭐",  "en": "Monthly Membership ⭐", "price": "1570 ل.س"},
+        }
+    },
     "pubg": {
         "title": {"ar": "🎯 ببجي", "en": "🎯 PUBG"},
         "items": {
             "pubg_60":   {"ar": "60 شدة 🪙",   "en": "60 UC 🪙",   "price": "140 ل.س"},
-            "pubg_325":  {"ar": "325 شدة 🪙",  "en": "325 UC 🪙",  "price": "650 ل.س"},
-            "pubg_660":  {"ar": "660 شدة 🪙",  "en": "660 UC 🪙",  "price": "1275 ل.س"},
-            "pubg_1800": {"ar": "1800 شدة 🪙", "en": "1800 UC 🪙", "price": "3180 ل.س"},
+            "pubg_325":  {"ar": "325 شدة 🪙",  "en": "325 UC 🪙",  "price": "670 ل.س"},
+            "pubg_660":  {"ar": "660 شدة 🪙",  "en": "660 UC 🪙",  "price": "1300 ل.س"},
+            "pubg_1800": {"ar": "1800 شدة 🪙", "en": "1800 UC 🪙", "price": "3210 ل.س"},
         }
     },
     "jawaker": {
@@ -134,6 +141,17 @@ TEXTS = {
             "⛔ عذرًا، البوت لا يستقبل الطلبات حاليًا.\n"
             "🕛 ساعات العمل: من <b>12 ظهرًا</b> حتى <b>10 مساءً</b> بتوقيت السعودية 🇸🇦"
         ),
+        "orders_closed_dev": (
+            "🔧 <b>البوت في وضع الصيانة/التجارب مؤقتًا</b>\n\n"
+            "⛔ لا يستقبل الطلبات حاليًا.\n"
+            "🔄 يرجى المحاولة لاحقًا."
+        ),
+        "choose_ff_type": (
+            "🔥 <b>اختر نوع الشحن في فري فاير:</b>\n\n"
+            "👇 من الأزرار بالأسفل"
+        ),
+        "btn_ff_diamonds": "💎 شحن جواهر",
+        "btn_ff_membership": "⭐ شحن عضوية",
         "choose_package": "💎 <b>قائمة أسعار {game}:</b>\n\nاختر العرض الذي تريده 👇",
         "chosen": (
             "✅ اخترت: <b>{item}</b> بسعر <b>{price}</b>\n\n"
@@ -229,9 +247,25 @@ TEXTS = {
         ),
         "settings_admin": "⚙️ <b>الإعدادات (أدمن)</b>\n\nاختر:",
         "settings_user": "⚙️ <b>الإعدادات</b>\n\nاختر:",
+        "settings_dev": "🔧 <b>وضع المطور</b>",
         "btn_change_lang": "🌐 تغيير اللغة",
         "btn_change_order": "🔀 ترتيب الأزرار (أدمن)",
         "btn_reset_data": "🗑️ تصفير بياناتي",
+        "btn_dev_mode": "🔧 وضع المطور (تشغيل البوت)",
+        "dev_mode_current_on": (
+            "🔧 <b>حالة وضع المطور:</b> ✅ مفعّل\n\n"
+            "البوت يعمل حاليًا خارج ساعات العمل الرسمية.\n\n"
+            "اضغط الزر لإيقافه:"
+        ),
+        "dev_mode_current_off": (
+            "🔧 <b>حالة وضع المطور:</b> ❌ موقّف\n\n"
+            "البوت يتبع ساعات العمل الرسمية (12 ظهرًا - 10 مساءً).\n\n"
+            "اضغط الزر لتشغيله مؤقتًا:"
+        ),
+        "btn_dev_on": "✅ تشغيل البوت مؤقتًا",
+        "btn_dev_off": "🛑 إيقاف البوت مؤقتًا",
+        "dev_mode_enabled": "✅ <b>تم تفعيل وضع المطور</b>\n\nالبوت يقبل الطلبات الآن خارج ساعات العمل 🚀",
+        "dev_mode_disabled": "🛑 <b>تم إيقاف وضع المطور</b>\n\nالبوت عاد لساعات العمل الرسمية.",
         "lang_changed": "✅ تم تغيير اللغة إلى العربية 🇸🇦",
         "lang_pick": "🌐 اختر اللغة:",
         "reset_confirm": "⚠️ هل أنت متأكد من حذف كل بياناتك؟\n\nهذا لا يمكن التراجع عنه!",
@@ -273,6 +307,14 @@ TEXTS = {
         "check_success": "✅ Verified! Welcome 🎉",
         "check_fail": "❌ Not subscribed yet!",
         "orders_closed": "⛔ Orders closed.\n🕛 Working: 12 PM - 10 PM 🇸🇦",
+        "orders_closed_dev": (
+            "🔧 <b>Bot is in maintenance/test mode</b>\n\n"
+            "⛔ Not accepting orders right now.\n"
+            "🔄 Please try again later."
+        ),
+        "choose_ff_type": "🔥 <b>Choose Free Fire top-up type:</b>\n\n👇 From buttons below",
+        "btn_ff_diamonds": "💎 Diamonds",
+        "btn_ff_membership": "⭐ Membership",
         "choose_package": "💎 <b>{game} prices:</b>\n\nChoose 👇",
         "chosen": (
             "✅ Chosen: <b>{item}</b> for <b>{price}</b>\n\n"
@@ -355,9 +397,25 @@ TEXTS = {
         ),
         "settings_admin": "⚙️ <b>Settings (Admin)</b>\n\nChoose:",
         "settings_user": "⚙️ <b>Settings</b>\n\nChoose:",
+        "settings_dev": "🔧 <b>Developer Mode</b>",
         "btn_change_lang": "🌐 Change language",
         "btn_change_order": "🔀 Button order (Admin)",
         "btn_reset_data": "🗑️ Reset my data",
+        "btn_dev_mode": "🔧 Developer mode (Bot toggle)",
+        "dev_mode_current_on": (
+            "🔧 <b>Developer Mode:</b> ✅ ON\n\n"
+            "Bot is accepting orders outside working hours.\n\n"
+            "Press to disable:"
+        ),
+        "dev_mode_current_off": (
+            "🔧 <b>Developer Mode:</b> ❌ OFF\n\n"
+            "Bot follows working hours (12 PM - 10 PM).\n\n"
+            "Press to enable temporarily:"
+        ),
+        "btn_dev_on": "✅ Enable bot temporarily",
+        "btn_dev_off": "🛑 Disable bot temporarily",
+        "dev_mode_enabled": "✅ <b>Developer Mode enabled</b>\n\nBot is now accepting orders outside hours 🚀",
+        "dev_mode_disabled": "🛑 <b>Developer Mode disabled</b>\n\nBot returned to working hours.",
         "lang_changed": "✅ Language: English 🇬🇧",
         "lang_pick": "🌐 Choose language:",
         "reset_confirm": "⚠️ Delete all your data?\n\nCannot be undone!",
@@ -424,15 +482,18 @@ def init_db():
         )
     """)
 
-    # 🔧 ترتيب الأزرار — نضمن jawaker موجود
+    # ترتيب الأزرار
     cur.execute("SELECT value FROM settings WHERE key = 'button_order'")
     row = cur.fetchone()
     if row:
         if "jawaker" not in row["value"]:
             cur.execute("UPDATE settings SET value = 'ff,pubg,jawaker' WHERE key = 'button_order'")
-            print("🔧 تم تحديث ترتيب الأزرار إلى: ff,pubg,jawaker")
+            print("🔧 تحديث ترتيب الأزرار: ff,pubg,jawaker")
     else:
         cur.execute("INSERT INTO settings VALUES ('button_order', 'ff,pubg,jawaker')")
+
+    # وضع المطور (افتراضي: off)
+    cur.execute("INSERT INTO settings VALUES ('dev_mode', 'off') ON CONFLICT (key) DO NOTHING")
 
     conn.commit()
     cur.close(); conn.close()
@@ -490,7 +551,28 @@ def set_button_order(value):
     conn.commit()
     cur.close(); conn.close()
 
+def get_setting(key, default=None):
+    conn = db_connect()
+    cur = conn.cursor()
+    cur.execute("SELECT value FROM settings WHERE key = %s", (key,))
+    row = cur.fetchone()
+    cur.close(); conn.close()
+    return row["value"] if row else default
+
+def set_setting(key, value):
+    conn = db_connect()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO settings VALUES (%s, %s)
+        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+    """, (key, value))
+    conn.commit()
+    cur.close(); conn.close()
+
 def is_orders_open():
+    # إذا وضع المطور مفعّل، الطلبات مفتوحة دائمًا
+    if get_setting("dev_mode", "off") == "on":
+        return True
     now = datetime.now(timezone(timedelta(hours=3)))
     return ORDERS_OPEN_HOUR <= now.hour < ORDERS_CLOSE_HOUR
 
@@ -509,7 +591,7 @@ def validate_game_id(game_id: str, game: str):
     if game_id.startswith("0"):
         return False, "لا يبدأ بـ 0"
 
-    if game == "ff":
+    if game in ("ff", "ff_membership"):
         if len(game_id) < 5:
             return False, "ID فري فاير أقل من 5 أرقام"
         if len(game_id) > 15:
@@ -527,7 +609,7 @@ def validate_game_id(game_id: str, game: str):
 
     return True, game_id
 
-# ============ العداد الحي ⏳ ============
+# ============ العداد الحي ============
 def format_remaining(seconds, lang):
     if lang == "en":
         m = seconds // 60
@@ -547,7 +629,6 @@ def format_remaining(seconds, lang):
             return f"{m} دقيقة"
         else:
             return f"{s} ثانية"
-
 
 def build_payment_steps(method, lang, price):
     if method == "syriatel":
@@ -585,7 +666,6 @@ def build_payment_steps(method, lang, price):
                 "5️⃣ Confirm ✅"
             ), "Sham Cash 📷"
 
-
 def start_countdown(chat_id, message_id, order_id, method, uid, total_seconds=300):
     def run():
         lang = get_lang(uid)
@@ -609,7 +689,6 @@ def start_countdown(chat_id, message_id, order_id, method, uid, total_seconds=30
             time.sleep(60)
             remaining -= 60
 
-            # فحص حالة الطلب
             try:
                 conn = db_connect()
                 cur = conn.cursor()
@@ -617,7 +696,6 @@ def start_countdown(chat_id, message_id, order_id, method, uid, total_seconds=30
                 r = cur.fetchone()
                 cur.close(); conn.close()
                 if r and r["status"] != "pending":
-                    # الأدمن قرر → نوقف
                     return
             except Exception as e:
                 print(f"❌ countdown check: {e}")
@@ -639,7 +717,6 @@ def start_countdown(chat_id, message_id, order_id, method, uid, total_seconds=30
                     print(f"⚠️ edit_message: {e}")
                     return
 
-        # انتهى الوقت
         try:
             conn = db_connect()
             cur = conn.cursor()
@@ -723,16 +800,17 @@ def show_subscription_message(chat_id, uid):
     kb.add(types.InlineKeyboardButton(t(uid, "btn_check"), callback_data="check_sub"))
     bot.send_message(chat_id, t(uid, "subscribe_required"), parse_mode="HTML", reply_markup=kb)
 
-def show_game_packages_manual(chat_id, uid, game):
+def show_packages_for_game(chat_id, uid, game_key, game_title_key):
+    """يعرض العروض لأي لعبة أو قسم"""
     lang = get_lang(uid)
-    game_data = PACKAGES[game]
+    game_data = PACKAGES[game_key]
     game_title = game_data["title"][lang]
 
     kb = types.InlineKeyboardMarkup(row_width=1)
     for key, item in game_data["items"].items():
         kb.add(types.InlineKeyboardButton(
             text=f"{item[lang]} — {item['price']}",
-            callback_data=f"pkg|{game}|{key}"
+            callback_data=f"pkg|{game_key}|{key}"
         ))
 
     bot.send_message(
@@ -752,7 +830,11 @@ def go_back(message):
         USER_DATA[uid] = {"step": 1}
     elif step == 3:
         game = data.get("game", "ff")
-        show_game_packages_manual(message.chat.id, uid, game)
+        # إذا اللعبة هي ff_membership أو ff → نرجع لقائمة الفاير فاير (نوعين)
+        if game in ("ff", "ff_membership"):
+            show_ff_types(message.chat.id, uid)
+        else:
+            show_packages_for_game(message.chat.id, uid, game, None)
         USER_DATA[uid]["step"] = 2
         bot.send_message(message.chat.id, "🔽", reply_markup=back_keyboard(uid))
     elif step == 4:
@@ -774,6 +856,20 @@ def go_back(message):
         )
         bot.register_next_step_handler(msg, get_player_name)
         USER_DATA[uid]["step"] = 4
+
+# ============ شاشة نوع فري فاير ============
+def show_ff_types(chat_id, uid):
+    kb = types.InlineKeyboardMarkup(row_width=2)
+    kb.add(
+        types.InlineKeyboardButton(t(uid, "btn_ff_diamonds"), callback_data="ff_type|diamonds"),
+        types.InlineKeyboardButton(t(uid, "btn_ff_membership"), callback_data="ff_type|membership"),
+    )
+    bot.send_message(
+        chat_id,
+        t(uid, "choose_ff_type"),
+        parse_mode="HTML",
+        reply_markup=kb
+    )
 
 # ============ /start ============
 @bot.message_handler(commands=['start'])
@@ -806,7 +902,23 @@ def check_subscription(call):
 # ============ أزرار الألعاب ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_ff"], TEXTS["en"]["btn_ff"]])
 def show_ff(message):
-    show_game_packages(message, "ff")
+    ensure_user(message)
+    uid = message.from_user.id
+
+    if not is_subscribed(uid):
+        show_subscription_message(message.chat.id, uid)
+        return
+
+    if not is_orders_open():
+        if get_setting("dev_mode", "off") == "on":
+            bot.send_message(message.chat.id, t(uid, "orders_closed_dev"), parse_mode="HTML")
+        else:
+            bot.send_message(message.chat.id, t(uid, "orders_closed"), parse_mode="HTML")
+        return
+
+    USER_DATA[uid] = {"game": "ff", "step": 2}
+    show_ff_types(message.chat.id, uid)
+    bot.send_message(message.chat.id, "🔽", reply_markup=main_keyboard(uid))
 
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_pubg"], TEXTS["en"]["btn_pubg"]])
 def show_pubg(message):
@@ -825,12 +937,35 @@ def show_game_packages(message, game):
         return
 
     if not is_orders_open():
-        bot.send_message(message.chat.id, t(uid, "orders_closed"), parse_mode="HTML")
+        if get_setting("dev_mode", "off") == "on":
+            bot.send_message(message.chat.id, t(uid, "orders_closed_dev"), parse_mode="HTML")
+        else:
+            bot.send_message(message.chat.id, t(uid, "orders_closed"), parse_mode="HTML")
         return
 
     USER_DATA[uid] = {"game": game, "step": 2}
-    show_game_packages_manual(message.chat.id, uid, game)
+    show_packages_for_game(message.chat.id, uid, game, None)
     bot.send_message(message.chat.id, "🔽", reply_markup=main_keyboard(uid))
+
+# ============ اختيار نوع FF ============
+@bot.callback_query_handler(func=lambda c: c.data.startswith("ff_type|"))
+def choose_ff_type(call):
+    try:
+        ff_type = call.data.split("|")[1]
+        uid = call.from_user.id
+
+        bot.answer_callback_query(call.id, "✅")
+
+        if ff_type == "diamonds":
+            USER_DATA[uid] = {"game": "ff", "step": 2}
+            show_packages_for_game(call.message.chat.id, uid, "ff", None)
+        else:
+            USER_DATA[uid] = {"game": "ff_membership", "step": 2}
+            show_packages_for_game(call.message.chat.id, uid, "ff_membership", None)
+
+        bot.send_message(call.message.chat.id, "🔽", reply_markup=back_keyboard(uid))
+    except Exception as e:
+        print(f"❌ ff_type: {e}")
 
 # ============ اختيار العرض ============
 @bot.callback_query_handler(func=lambda c: c.data.startswith("pkg|"))
@@ -884,7 +1019,7 @@ def get_game_id(message):
     valid, result = validate_game_id(game_id, game)
 
     if not valid:
-        key = "invalid_id_ff" if game == "ff" else ("invalid_id_pubg" if game == "pubg" else "invalid_id_jawaker")
+        key = "invalid_id_ff" if game in ("ff", "ff_membership") else ("invalid_id_pubg" if game == "pubg" else "invalid_id_jawaker")
         msg = bot.send_message(
             message.chat.id,
             t(uid, key, reason=result),
@@ -971,7 +1106,6 @@ def choose_payment(call):
 
         lang = get_lang(uid)
 
-        # إذا شام كاش — نرسل الصورة أولاً
         if method == "sham":
             try:
                 with open(SHAM_IMAGE_PATH, "rb") as photo:
@@ -984,7 +1118,6 @@ def choose_payment(call):
             except FileNotFoundError:
                 bot.send_message(call.message.chat.id, "⚠️ صورة sham.jpg غير موجودة")
 
-        # نص الرسالة الأساسية
         steps_text, method_name = build_payment_steps(method, lang, data["price"])
         remaining_text = "5 دقائق" if lang == "ar" else "5 min"
 
@@ -999,7 +1132,6 @@ def choose_payment(call):
             reply_markup=main_keyboard(uid)
         )
 
-        # 🎬 تشغيل العداد الحي
         start_countdown(
             chat_id=call.message.chat.id,
             message_id=sent_msg.message_id,
@@ -1009,7 +1141,6 @@ def choose_payment(call):
             total_seconds=PAYMENT_TIMEOUT_SECONDS
         )
 
-        # إشعار الأدمن
         method_label = "💳 سيرياتيل كاش" if method == "syriatel" else "📷 شام كاش"
         admin_text = (
             "🔔 <b>طلب شراء جديد!</b>\n\n"
@@ -1240,6 +1371,7 @@ def settings_menu(message):
     kb.add(types.InlineKeyboardButton(t(uid, "btn_change_lang"), callback_data="cfg_lang"))
     if is_admin:
         kb.add(types.InlineKeyboardButton(t(uid, "btn_change_order"), callback_data="cfg_order"))
+        kb.add(types.InlineKeyboardButton(t(uid, "btn_dev_mode"), callback_data="cfg_dev"))
     kb.add(types.InlineKeyboardButton(t(uid, "btn_reset_data"), callback_data="cfg_reset"))
 
     title = t(uid, "settings_admin") if is_admin else t(uid, "settings_user")
@@ -1292,6 +1424,75 @@ def cfg_order(call):
         bot.answer_callback_query(call.id)
     except Exception as e:
         print(f"❌ {e}")
+
+# ============ وضع المطور ============
+@bot.callback_query_handler(func=lambda c: c.data == "cfg_dev")
+def cfg_dev(call):
+    try:
+        uid = call.from_user.id
+        if uid != ADMIN_ID:
+            bot.answer_callback_query(call.id, "🚫", show_alert=True)
+            return
+
+        current = get_setting("dev_mode", "off")
+        if current == "on":
+            text = t(uid, "dev_mode_current_on")
+            btn = t(uid, "btn_dev_off")
+            cb = "dev|off"
+        else:
+            text = t(uid, "dev_mode_current_off")
+            btn = t(uid, "btn_dev_on")
+            cb = "dev|on"
+
+        kb = types.InlineKeyboardMarkup(row_width=1)
+        kb.add(types.InlineKeyboardButton(btn, callback_data=cb))
+
+        bot.edit_message_text(
+            text,
+            call.message.chat.id, call.message.message_id,
+            parse_mode="HTML", reply_markup=kb
+        )
+        bot.answer_callback_query(call.id)
+    except Exception as e:
+        print(f"❌ {e}")
+
+@bot.callback_query_handler(func=lambda c: c.data.startswith("dev|"))
+def dev_toggle(call):
+    try:
+        uid = call.from_user.id
+        if uid != ADMIN_ID:
+            bot.answer_callback_query(call.id, "🚫", show_alert=True)
+            return
+
+        action = call.data.split("|")[1]
+        if action == "on":
+            set_setting("dev_mode", "on")
+            bot.answer_callback_query(call.id, t(uid, "dev_mode_enabled"), show_alert=True)
+            try:
+                bot.edit_message_text(
+                    t(uid, "dev_mode_current_on"),
+                    call.message.chat.id, call.message.message_id,
+                    parse_mode="HTML",
+                    reply_markup=types.InlineKeyboardMarkup().add(
+                        types.InlineKeyboardButton(t(uid, "btn_dev_off"), callback_data="dev|off")
+                    )
+                )
+            except: pass
+        else:
+            set_setting("dev_mode", "off")
+            bot.answer_callback_query(call.id, t(uid, "dev_mode_disabled"), show_alert=True)
+            try:
+                bot.edit_message_text(
+                    t(uid, "dev_mode_current_off"),
+                    call.message.chat.id, call.message.message_id,
+                    parse_mode="HTML",
+                    reply_markup=types.InlineKeyboardMarkup().add(
+                        types.InlineKeyboardButton(t(uid, "btn_dev_on"), callback_data="dev|on")
+                    )
+                )
+            except: pass
+    except Exception as e:
+        print(f"❌ dev_toggle: {e}")
 
 @bot.callback_query_handler(func=lambda c: c.data == "cfg_reset")
 def cfg_reset(call):
@@ -1405,8 +1606,9 @@ def unknown_message(message):
 # ============ تشغيل ============
 print("🤖 البوت يعمل الآن...")
 print("🎯 callback_query مسموح")
-print("⏳ العداد الحي مفعّل — 5 دقائق")
-print("💰 سعر 60 شدة: 140 ل.س")
+print("⏳ العداد الحي مفعّل")
+print("⭐ عضوية FF مضاف")
+print("🔧 وضع المطور مضاف")
 
 bot.infinity_polling(
     allowed_updates=[
@@ -1421,4 +1623,4 @@ bot.infinity_polling(
     skip_pending=True,
     timeout=30,
     long_polling_timeout=30
-)
+    )
