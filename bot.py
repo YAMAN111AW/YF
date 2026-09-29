@@ -751,7 +751,6 @@ def start_countdown(chat_id, message_id, order_id, method, uid, total_seconds=30
 
 # ============ لوحات الأزرار ============
 def games_row(uid):
-    """يرجّع صف الألعاب حسب ترتيب الإعدادات"""
     T = TEXTS[get_lang(uid)]
     order = get_button_order().split(",")
     game_map = {
@@ -770,8 +769,6 @@ def main_keyboard(uid):
     if len(games) == 3:
         kb.row(games[0], games[1])
         kb.row(games[2])
-    elif len(games) == 2:
-        kb.row(*games)
     else:
         kb.row(*games)
 
@@ -790,16 +787,12 @@ def back_keyboard(uid):
     T = TEXTS[lang]
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
 
-    # ⬅️ زر الرجوع أول صف
     kb.row(T["btn_back"])
 
-    # صف الألعاب
     games = games_row(uid)
     if len(games) == 3:
         kb.row(games[0], games[1])
         kb.row(games[2])
-    elif len(games) == 2:
-        kb.row(*games)
     else:
         kb.row(*games)
 
@@ -825,7 +818,6 @@ def show_subscription_message(chat_id, uid):
     bot.send_message(chat_id, t(uid, "subscribe_required"), parse_mode="HTML", reply_markup=kb)
 
 def show_packages_for_game(chat_id, uid, game_key):
-    """يعرض العروض + زر رجوع خلف الكيبورد"""
     lang = get_lang(uid)
     game_data = PACKAGES[game_key]
     game_title = game_data["title"][lang]
@@ -843,11 +835,9 @@ def show_packages_for_game(chat_id, uid, game_key):
         parse_mode="HTML",
         reply_markup=kb
     )
-    # ✅ زر الرجوع خلف الكيبورد
     bot.send_message(chat_id, "🔽", reply_markup=back_keyboard(uid))
 
 def show_ff_types(chat_id, uid):
-    """قائمة FF (جواهر / عضوية) + زر رجوع"""
     kb = types.InlineKeyboardMarkup(row_width=2)
     kb.add(
         types.InlineKeyboardButton(t(uid, "btn_ff_diamonds"), callback_data="ff_type|diamonds"),
@@ -859,7 +849,6 @@ def show_ff_types(chat_id, uid):
         parse_mode="HTML",
         reply_markup=kb
     )
-    # ✅ زر الرجوع خلف الكيبورد
     bot.send_message(chat_id, "🔽", reply_markup=back_keyboard(uid))
 
 # ============ زر الرجوع الذكي ============
@@ -868,24 +857,29 @@ def go_back(message):
     data = USER_DATA.get(uid, {})
     step = data.get("step", 1)
 
+    if not data or step == 0:
+        bot.send_message(
+            message.chat.id,
+            t(uid, "back_done"),
+            reply_markup=main_keyboard(uid)
+        )
+        USER_DATA[uid] = {"step": 1}
+        return
+
     if step <= 2:
-        # من القائمة الحالية → الأزرار الرئيسية
         bot.send_message(message.chat.id, t(uid, "back_done"),
                          reply_markup=main_keyboard(uid))
         USER_DATA[uid] = {"step": 1}
 
     elif step == 3:
-        # كنا في إدخال ID → نرجع لقائمة العروض
         game = data.get("game", "ff")
         if game in ("ff", "ff_membership"):
-            # نرجع لقائمة FF (نوعين)
             show_ff_types(message.chat.id, uid)
         else:
             show_packages_for_game(message.chat.id, uid, game)
         USER_DATA[uid]["step"] = 2
 
     elif step == 4:
-        # كنا في إدخال الاسم → نرجع لإدخال ID
         game = data.get("game", "ff")
         game_title = PACKAGES[game]["title"][get_lang(uid)]
         msg = bot.send_message(
@@ -901,13 +895,28 @@ def go_back(message):
         USER_DATA[uid]["step"] = 3
 
     elif step == 5:
-        # كنا في اختيار الدفع → نرجع لإدخال الاسم
         msg = bot.send_message(
             message.chat.id, t(uid, "send_name"),
             parse_mode="HTML", reply_markup=back_keyboard(uid)
         )
         bot.register_next_step_handler(msg, get_player_name)
         USER_DATA[uid]["step"] = 4
+
+# ============ 🎯 معالج زر الرجوع — أول معالج ============
+@bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"]])
+def back_button_handler(message):
+    try:
+        ensure_user(message)
+        go_back(message)
+    except Exception as e:
+        print(f"❌ back_button_handler: {e}")
+        try:
+            bot.send_message(
+                message.chat.id,
+                "⚠️ حدث خطأ، جرّب مرة أخرى",
+                reply_markup=main_keyboard(message.from_user.id)
+            )
+        except: pass
 
 # ============ /start ============
 @bot.message_handler(commands=['start'])
@@ -1027,7 +1036,7 @@ def choose_package(call):
             call.message.chat.id,
             t(uid, "chosen", item=item[lang], price=item["price"], game=game_title),
             parse_mode="HTML",
-            reply_markup=back_keyboard(uid)  # ✅ زر رجوع خلف الكيبورد
+            reply_markup=back_keyboard(uid)
         )
         bot.register_next_step_handler(msg, get_game_id)
     except Exception as e:
@@ -1060,7 +1069,7 @@ def get_game_id(message):
             message.chat.id,
             t(uid, key, reason=result),
             parse_mode="HTML",
-            reply_markup=back_keyboard(uid)  # ✅ زر رجوع
+            reply_markup=back_keyboard(uid)
         )
         bot.register_next_step_handler(msg, get_game_id)
         return
@@ -1071,7 +1080,7 @@ def get_game_id(message):
     msg = bot.send_message(
         message.chat.id, t(uid, "send_name"),
         parse_mode="HTML",
-        reply_markup=back_keyboard(uid)  # ✅ زر رجوع
+        reply_markup=back_keyboard(uid)
     )
     bot.register_next_step_handler(msg, get_player_name)
 
@@ -1112,7 +1121,6 @@ def get_player_name(message):
         parse_mode="HTML",
         reply_markup=kb
     )
-    # ✅ زر رجوع خلف الكيبورد
     bot.send_message(message.chat.id, "🔽", reply_markup=back_keyboard(uid))
 
 # ============ اختيار طريقة الدفع ============
@@ -1622,7 +1630,7 @@ def cancel_reset(call):
     except Exception as e:
         print(f"❌ {e}")
 
-# ============ رسائل غير معروفة ============
+# ============ رسائل غير معروفة (fallback - آخر معالج) ============
 @bot.message_handler(func=lambda m: True)
 def unknown_message(message):
     try:
@@ -1645,7 +1653,7 @@ print("🎯 callback_query مسموح")
 print("⏳ العداد الحي مفعّل")
 print("⭐ عضوية FF مضاف")
 print("🔧 وضع المطور مضاف")
-print("⬅️ زر الرجوع في كل الخطوات")
+print("⬅️ زر الرجوع كأول معالج ✅")
 
 bot.infinity_polling(
     allowed_updates=[
