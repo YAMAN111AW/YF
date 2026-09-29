@@ -25,7 +25,8 @@ ORDERS_CLOSE_HOUR = 22
 PAYMENT_TIMEOUT_SECONDS = 300
 
 bot = telebot.TeleBot(BOT_TOKEN)
-USER_DATA = {}
+USER_DATA = {}   # بيانات جلسة المستخدم
+COUNTDOWNS = {}  # تتبع العدادات النشطة (order_id -> cancelled)
 
 import requests
 
@@ -534,6 +535,11 @@ def t(uid, key, **kwargs):
     text = TEXTS.get(lang, TEXTS["ar"]).get(key, "")
     return text.format(**kwargs) if kwargs else text
 
+def t_lang(lang, key, **kwargs):
+    """نفس t لكن باللغة المحددة مباشرة (أسرع للـ threads)"""
+    text = TEXTS.get(lang, TEXTS["ar"]).get(key, "")
+    return text.format(**kwargs) if kwargs else text
+
 def get_button_order():
     conn = db_connect()
     cur = conn.cursor()
@@ -606,11 +612,11 @@ def validate_game_id(game_id: str, game: str):
 
     return True, game_id
 
-# ============ العداد الحي ============
+# ============ العداد الحي — النسخة المُصلحة ============
 def format_remaining(seconds, lang):
+    m = seconds // 60
+    s = seconds % 60
     if lang == "en":
-        m = seconds // 60
-        s = seconds % 60
         if m > 0 and s > 0:
             return f"{m} min {s} sec"
         elif m > 0:
@@ -618,8 +624,6 @@ def format_remaining(seconds, lang):
         else:
             return f"{s} sec"
     else:
-        m = seconds // 60
-        s = seconds % 60
         if m > 0 and s > 0:
             return f"{m} دقيقة و {s} ثانية"
         elif m > 0:
@@ -663,21 +667,19 @@ def build_payment_steps(method, lang, price):
                 "5️⃣ Confirm ✅"
             ), "Sham Cash 📷"
 
-def start_countdown(chat_id, message_id, order_id, method, uid, total_seconds=300):
+
+def start_countdown(chat_id, message_id, order_id, method, uid, lang, price_str, total_seconds=300):
+    """
+    العداد الحي:
+    - يعدّل نفس الرسالة كل 60 ثانية
+    - يستخدم نصوص جاهزة (بدون استدعاء DB داخل الحلقة)
+    - أي خطأ في التعديل لا يوقف الـ thread
+    - يستمر حتى: انتهاء الوقت / قبول/رفض الأدمن
+    """
+    COUNTDOWNS[order_id] = False  # علامة إلغاء
+
     def run():
-        lang = get_lang(uid)
-        try:
-            conn = db_connect()
-            cur = conn.cursor()
-            cur.execute("SELECT price FROM orders WHERE order_id = %s", (order_id,))
-            row = cur.fetchone()
-            cur.close(); conn.close()
-            if not row:
-                return
-            price_str = row["price"]
-        except Exception as e:
-            print(f"❌ countdown db: {e}")
-            return
+        print(f"⏳ بدء العداد للطلب #{order_id} | المدة {total_seconds} ث | الدفع: {method}")
 
         steps_text, method_name = build_payment_steps(method, lang, price_str)
 
@@ -686,6 +688,13 @@ def start_countdown(chat_id, message_id, order_id, method, uid, total_seconds=30
             time.sleep(60)
             remaining -= 60
 
+            # تحقق من الإلغاء
+            if COUNTDOWNS.get(order_id) is True:
+                print(f"🛑 العداد #{order_id} أُلغي (قرار الأدمن)")
+                COUNTDOWNS.pop(order_id, None)
+                return
+
+            # تحقق من حالة الطلب في DB (مرة واحدة كل دقيقة)
             try:
                 conn = db_connect()
                 cur = conn.cursor()
@@ -693,27 +702,38 @@ def start_countdown(chat_id, message_id, order_id, method, uid, total_seconds=30
                 r = cur.fetchone()
                 cur.close(); conn.close()
                 if r and r["status"] != "pending":
+                    print(f"🛑 العداد #{order_id} توقف (status={r['status']})")
+                    COUNTDOWNS.pop(order_id, None)
                     return
             except Exception as e:
-                print(f"❌ countdown check: {e}")
+                print(f"⚠️ DB check #{order_id}: {e}")
 
             if remaining > 0:
                 remaining_text = format_remaining(remaining, lang)
+                text = t_lang(lang, "payment_with_timer",
+                              method=method_name,
+                              steps=steps_text,
+                              remaining=remaining_text,
+                              oid=order_id)
                 try:
                     bot.edit_message_text(
-                        t(uid, "payment_with_timer",
-                          method=method_name,
-                          steps=steps_text,
-                          remaining=remaining_text,
-                          oid=order_id),
+                        text,
                         chat_id=chat_id,
                         message_id=message_id,
                         parse_mode="HTML"
                     )
+                    print(f"✅ تم تعديل #{order_id} → المتبقي {remaining}ث")
                 except Exception as e:
-                    print(f"⚠️ edit_message: {e}")
-                    return
+                    err = str(e).lower()
+                    # إذا الرسالة محذوفة → نوقف
+                    if "message to edit not found" in err or "message can't be edited" in err:
+                        print(f"🛑 العداد #{order_id} توقف (الرسالة اختفت)")
+                        COUNTDOWNS.pop(order_id, None)
+                        return
+                    # أي خطأ آخر → نسجله ونكمل
+                    print(f"⚠️ تعديل #{order_id} فشل: {e}")
 
+        # انتهى الوقت
         try:
             conn = db_connect()
             cur = conn.cursor()
@@ -726,13 +746,13 @@ def start_countdown(chat_id, message_id, order_id, method, uid, total_seconds=30
 
                 try:
                     bot.edit_message_text(
-                        t(uid, "payment_expired", oid=order_id),
+                        t_lang(lang, "payment_expired", oid=order_id),
                         chat_id=chat_id,
                         message_id=message_id,
                         parse_mode="HTML"
                     )
                 except Exception as e:
-                    print(f"⚠️ edit expired: {e}")
+                    print(f"⚠️ تعديل انتهاء #{order_id}: {e}")
 
                 try:
                     bot.send_message(
@@ -743,8 +763,11 @@ def start_countdown(chat_id, message_id, order_id, method, uid, total_seconds=30
                 except: pass
             else:
                 cur.close(); conn.close()
+            COUNTDOWNS.pop(order_id, None)
+            print(f"⌛ العداد #{order_id} انتهى")
         except Exception as e:
             print(f"❌ countdown end: {e}")
+            COUNTDOWNS.pop(order_id, None)
 
     th = threading.Thread(target=run, daemon=True)
     th.start()
@@ -782,7 +805,6 @@ def main_keyboard(uid):
     return kb
 
 def back_keyboard(uid):
-    """لوحة فيها زر الرجوع + الأزرار الرئيسية كاملة"""
     lang = get_lang(uid)
     T = TEXTS[lang]
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -818,6 +840,7 @@ def show_subscription_message(chat_id, uid):
     bot.send_message(chat_id, t(uid, "subscribe_required"), parse_mode="HTML", reply_markup=kb)
 
 def show_packages_for_game(chat_id, uid, game_key):
+    """يعرض العروض + زر رجوع خلف الكيبورد. step=3"""
     lang = get_lang(uid)
     game_data = PACKAGES[game_key]
     game_title = game_data["title"][lang]
@@ -836,8 +859,12 @@ def show_packages_for_game(chat_id, uid, game_key):
         reply_markup=kb
     )
     bot.send_message(chat_id, "🔽", reply_markup=back_keyboard(uid))
+    # تحديث step إلى 3 (قائمة العروض)
+    USER_DATA.setdefault(uid, {})
+    USER_DATA[uid]["step"] = 3
 
 def show_ff_types(chat_id, uid):
+    """قائمة FF (جواهر / عضوية) + زر رجوع. step=2"""
     kb = types.InlineKeyboardMarkup(row_width=2)
     kb.add(
         types.InlineKeyboardButton(t(uid, "btn_ff_diamonds"), callback_data="ff_type|diamonds"),
@@ -850,38 +877,67 @@ def show_ff_types(chat_id, uid):
         reply_markup=kb
     )
     bot.send_message(chat_id, "🔽", reply_markup=back_keyboard(uid))
+    # تحديث step إلى 2
+    USER_DATA.setdefault(uid, {})
+    USER_DATA[uid]["step"] = 2
 
-# ============ زر الرجوع الذكي ============
+# ============ زر الرجوع الذكي — خطوات دقيقة ============
 def go_back(message):
+    """
+    خطوات المستخدم:
+        1 = القائمة الرئيسية
+        2 = اختيار نوع FF (جواهر/عضوية)  أو قائمة ألعاب أخرى
+        3 = قائمة العروض (جواهر أو عضوية أو ببجي أو جواكر)
+        4 = إدخال ID
+        5 = إدخال الاسم
+        6 = اختيار طريقة الدفع
+    """
     uid = message.from_user.id
     data = USER_DATA.get(uid, {})
     step = data.get("step", 1)
+    print(f"⬅️ go_back: uid={uid} step={step} data={data}")
 
-    if not data or step == 0:
-        bot.send_message(
-            message.chat.id,
-            t(uid, "back_done"),
-            reply_markup=main_keyboard(uid)
-        )
-        USER_DATA[uid] = {"step": 1}
-        return
-
-    if step <= 2:
+    # 1 أو أقل → القائمة الرئيسية
+    if step <= 1:
         bot.send_message(message.chat.id, t(uid, "back_done"),
                          reply_markup=main_keyboard(uid))
         USER_DATA[uid] = {"step": 1}
+        return
 
-    elif step == 3:
-        game = data.get("game", "ff")
+    # step=2 → القائمة الرئيسية
+    if step == 2:
+        bot.send_message(message.chat.id, t(uid, "back_done"),
+                         reply_markup=main_keyboard(uid))
+        USER_DATA[uid] = {"step": 1}
+        return
+
+    # step=3 → رجوع لخطوة اختيار نوع FF (إذا كانت اللعبة ff/ff_membership)
+    #            أو للقائمة الرئيسية (إذا كانت pubg/jawaker)
+    if step == 3:
+        game = data.get("game", "")
         if game in ("ff", "ff_membership"):
+            # نرجع لخطوة نوع FF
+            USER_DATA[uid] = {"game": "ff", "step": 2}
             show_ff_types(message.chat.id, uid)
         else:
-            show_packages_for_game(message.chat.id, uid, game)
-        USER_DATA[uid]["step"] = 2
+            # pubg/jawaker → القائمة الرئيسية
+            bot.send_message(message.chat.id, t(uid, "back_done"),
+                             reply_markup=main_keyboard(uid))
+            USER_DATA[uid] = {"step": 1}
+        return
 
-    elif step == 4:
+    # step=4 (إدخال ID) → رجوع لقائمة العروض (step=3)
+    if step == 4:
+        game = data.get("game", "ff")
+        USER_DATA[uid]["step"] = 3
+        show_packages_for_game(message.chat.id, uid, game)
+        return
+
+    # step=5 (إدخال الاسم) → رجوع لإدخال ID (step=4)
+    if step == 5:
         game = data.get("game", "ff")
         game_title = PACKAGES[game]["title"][get_lang(uid)]
+        USER_DATA[uid]["step"] = 4
         msg = bot.send_message(
             message.chat.id,
             t(uid, "chosen",
@@ -892,17 +948,24 @@ def go_back(message):
             reply_markup=back_keyboard(uid)
         )
         bot.register_next_step_handler(msg, get_game_id)
-        USER_DATA[uid]["step"] = 3
+        return
 
-    elif step == 5:
+    # step=6 (اختيار الدفع) → رجوع لإدخال الاسم (step=5)
+    if step == 6:
+        USER_DATA[uid]["step"] = 5
         msg = bot.send_message(
             message.chat.id, t(uid, "send_name"),
             parse_mode="HTML", reply_markup=back_keyboard(uid)
         )
         bot.register_next_step_handler(msg, get_player_name)
-        USER_DATA[uid]["step"] = 4
+        return
 
-# ============ 🎯 معالج زر الرجوع — أول معالج ============
+    # احتياط
+    bot.send_message(message.chat.id, t(uid, "back_done"),
+                     reply_markup=main_keyboard(uid))
+    USER_DATA[uid] = {"step": 1}
+
+# ============ 🎯 معالج زر الرجوع ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"]])
 def back_button_handler(message):
     try:
@@ -946,7 +1009,7 @@ def check_subscription(call):
     except Exception as e:
         print(f"❌ {e}")
 
-# ============ زر Free Fire ============
+# ============ زر Free Fire → step=2 ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_ff"], TEXTS["en"]["btn_ff"]])
 def show_ff(message):
     ensure_user(message)
@@ -963,15 +1026,15 @@ def show_ff(message):
             bot.send_message(message.chat.id, t(uid, "orders_closed"), parse_mode="HTML")
         return
 
+    # step=2 → عرض اختيار نوع FF
     USER_DATA[uid] = {"game": "ff", "step": 2}
     show_ff_types(message.chat.id, uid)
 
-# ============ زر PUBG ============
+# ============ PUBG / Jawaker → step=3 (قائمة العروض مباشرة) ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_pubg"], TEXTS["en"]["btn_pubg"]])
 def show_pubg(message):
     show_game_packages(message, "pubg")
 
-# ============ زر Jawaker ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_jawaker"], TEXTS["en"]["btn_jawaker"]])
 def show_jawaker(message):
     show_game_packages(message, "jawaker")
@@ -991,10 +1054,11 @@ def show_game_packages(message, game):
             bot.send_message(message.chat.id, t(uid, "orders_closed"), parse_mode="HTML")
         return
 
-    USER_DATA[uid] = {"game": game, "step": 2}
+    # step=3 → عرض قائمة العروض
+    USER_DATA[uid] = {"game": game, "step": 3}
     show_packages_for_game(message.chat.id, uid, game)
 
-# ============ اختيار نوع FF ============
+# ============ اختيار نوع FF → step=3 ============
 @bot.callback_query_handler(func=lambda c: c.data.startswith("ff_type|"))
 def choose_ff_type(call):
     try:
@@ -1004,15 +1068,15 @@ def choose_ff_type(call):
         bot.answer_callback_query(call.id, "✅")
 
         if ff_type == "diamonds":
-            USER_DATA[uid] = {"game": "ff", "step": 2}
+            USER_DATA[uid] = {"game": "ff", "step": 3}
             show_packages_for_game(call.message.chat.id, uid, "ff")
         else:
-            USER_DATA[uid] = {"game": "ff_membership", "step": 2}
+            USER_DATA[uid] = {"game": "ff_membership", "step": 3}
             show_packages_for_game(call.message.chat.id, uid, "ff_membership")
     except Exception as e:
         print(f"❌ ff_type: {e}")
 
-# ============ اختيار العرض ============
+# ============ اختيار العرض → step=4 ============
 @bot.callback_query_handler(func=lambda c: c.data.startswith("pkg|"))
 def choose_package(call):
     try:
@@ -1028,7 +1092,7 @@ def choose_package(call):
             "package_key": key,
             "package_name": item[lang],
             "price": item["price"],
-            "step": 3
+            "step": 4
         }
 
         game_title = PACKAGES[game]["title"][lang]
@@ -1045,7 +1109,7 @@ def choose_package(call):
             bot.answer_callback_query(call.id, "⚠️ خطأ، حاول من جديد")
         except: pass
 
-# ============ ID اللعبة ============
+# ============ ID → step=5 ============
 def get_game_id(message):
     uid = message.from_user.id
 
@@ -1075,7 +1139,7 @@ def get_game_id(message):
         return
 
     USER_DATA[uid]["game_id"] = result
-    USER_DATA[uid]["step"] = 4
+    USER_DATA[uid]["step"] = 5
 
     msg = bot.send_message(
         message.chat.id, t(uid, "send_name"),
@@ -1084,7 +1148,7 @@ def get_game_id(message):
     )
     bot.register_next_step_handler(msg, get_player_name)
 
-# ============ اسم اللاعب ============
+# ============ الاسم → step=6 ============
 def get_player_name(message):
     uid = message.from_user.id
 
@@ -1108,7 +1172,7 @@ def get_player_name(message):
         return
 
     USER_DATA[uid]["player_name"] = player_name
-    USER_DATA[uid]["step"] = 5
+    USER_DATA[uid]["step"] = 6
 
     kb = types.InlineKeyboardMarkup(row_width=2)
     kb.add(
@@ -1123,7 +1187,7 @@ def get_player_name(message):
     )
     bot.send_message(message.chat.id, "🔽", reply_markup=back_keyboard(uid))
 
-# ============ اختيار طريقة الدفع ============
+# ============ اختيار الدفع ============
 @bot.callback_query_handler(func=lambda c: c.data.startswith("pay|"))
 def choose_payment(call):
     try:
@@ -1163,26 +1227,30 @@ def choose_payment(call):
             except FileNotFoundError:
                 bot.send_message(call.message.chat.id, "⚠️ صورة sham.jpg غير موجودة")
 
+        # ✅ نبني الرسالة مرة واحدة ونرسلها
         steps_text, method_name = build_payment_steps(method, lang, data["price"])
         remaining_text = "5 دقائق" if lang == "ar" else "5 min"
 
         sent_msg = bot.send_message(
             call.message.chat.id,
-            t(uid, "payment_with_timer",
-              method=method_name,
-              steps=steps_text,
-              remaining=remaining_text,
-              oid=order_id),
+            t_lang(lang, "payment_with_timer",
+                   method=method_name,
+                   steps=steps_text,
+                   remaining=remaining_text,
+                   oid=order_id),
             parse_mode="HTML",
             reply_markup=main_keyboard(uid)
         )
 
+        # ✅ نمرر كل شيء جاهزًا للـ thread (بدون استدعاءات DB)
         start_countdown(
             chat_id=call.message.chat.id,
             message_id=sent_msg.message_id,
             order_id=order_id,
             method=method,
             uid=uid,
+            lang=lang,
+            price_str=data["price"],
             total_seconds=PAYMENT_TIMEOUT_SECONDS
         )
 
@@ -1223,6 +1291,9 @@ def handle_decision(call):
     try:
         action, oid = call.data.split("|")
         oid = int(oid)
+
+        # ✅ إلغاء العداد لهذا الطلب فورًا
+        COUNTDOWNS[oid] = True
 
         conn = db_connect()
         cur = conn.cursor()
@@ -1630,7 +1701,7 @@ def cancel_reset(call):
     except Exception as e:
         print(f"❌ {e}")
 
-# ============ رسائل غير معروفة (fallback - آخر معالج) ============
+# ============ رسائل غير معروفة ============
 @bot.message_handler(func=lambda m: True)
 def unknown_message(message):
     try:
@@ -1649,11 +1720,8 @@ def unknown_message(message):
 
 # ============ تشغيل ============
 print("🤖 البوت يعمل الآن...")
-print("🎯 callback_query مسموح")
-print("⏳ العداد الحي مفعّل")
-print("⭐ عضوية FF مضاف")
-print("🔧 وضع المطور مضاف")
-print("⬅️ زر الرجوع كأول معالج ✅")
+print("⬅️ زر الرجوع خطوة بخطوة ✅")
+print("⏳ العداد الحي مع logging كامل ✅")
 
 bot.infinity_polling(
     allowed_updates=[
