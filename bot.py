@@ -15,6 +15,7 @@ PAYMENT_NUMBER_SYRIATEL = "0984674400"
 SUPPORT_USERNAME = "@Yamen494"
 CHANNEL_USERNAME = "@YF494YF"
 CHANNEL_LINK = "https://t.me/YF494YF"
+CONTEST_LINK = "https://t.me/YF494Y"   # رابط المسابقة
 DATABASE_URL = os.environ.get("DATABASE_URL",
     "postgresql://postgres:FmMcTnFMJbldpynWXDwrFfXISsKbYKvt@postgres.railway.internal:5432/railway")
 
@@ -24,9 +25,11 @@ ORDERS_OPEN_HOUR = 12
 ORDERS_CLOSE_HOUR = 22
 PAYMENT_TIMEOUT_SECONDS = 300
 
+REQUIRED_SHARES = 5   # عدد المشاركات المطلوب
+
 bot = telebot.TeleBot(BOT_TOKEN)
-USER_DATA = {}   # بيانات جلسة المستخدم
-COUNTDOWNS = {}  # تتبع العدادات النشطة (order_id -> cancelled)
+USER_DATA = {}
+COUNTDOWNS = {}
 
 import requests
 
@@ -136,6 +139,8 @@ TEXTS = {
         "btn_settings": "⚙️ الإعدادات",
         "btn_back": "⬅️ رجوع",
         "btn_inbox": "📬 البريد الوارد",
+        "btn_contestants": "🏆 المتسابقين",
+        "btn_contest": "🎁 المسابقة",
         "check_success": "✅ تم التحقق بنجاح! أهلاً بك 🎉",
         "check_fail": "❌ لم تشترك في القناة بعد!",
         "orders_closed": (
@@ -217,26 +222,58 @@ TEXTS = {
             "🧾 <b>آخر عمليات الشراء:</b>\n{orders}"
         ),
         "no_orders": "لا يوجد أي عمليات شراء حتى الآن 😕",
-        "support": (
-            "🆘 <b>مركز الدعم الفني</b>\n\n"
-            f"👨‍💻 للتواصل: {SUPPORT_USERNAME}\n\n"
-            "📖 <b>طريقة الاستخدام:</b>\n"
-            "1️⃣ اختر اللعبة\n2️⃣ اختر عرض الشحن 💎\n"
-            "3️⃣ أرسل ID حسابك 🆔\n4️⃣ أرسل اسمك في اللعبة 📝\n"
-            "5️⃣ اختر طريقة الدفع\n6️⃣ حوّل المبلغ خلال 5 دقائق 💳\n"
-            "7️⃣ انتظر الموافقة ✅\n8️⃣ تصلك خلال 5 دقائق ⏳\n\n"
-            "⏰ <b>ساعات العمل:</b> 12 ظهرًا - 10 مساءً 🇸🇦\n\n"
-            "👇 يمكنك إرسال شكوى أو اقتراح عبر الزر بالأسفل:"
+        "contest_title": (
+            "🎁 <b>مسابقة البوت!</b>\n\n"
+            "🎯 <b>شروط المشاركة:</b>\n"
+            f"📢 شارك رابط القناة مع <b>{REQUIRED_SHARES} أشخاص</b>\n\n"
+            f"🔗 <b>رابط القناة:</b>\n<code>{CONTEST_LINK}</code>\n\n"
+            "📌 <b>الخطوات:</b>\n"
+            "1️⃣ انسخ الرابط بالأعلى ☝️\n"
+            "2️⃣ شاركه مع 5 أشخاص على الأقل\n"
+            "3️⃣ اضغط زر <b>✅ أكملت المشاركة</b>\n"
+            "4️⃣ انتظر تأكيد الإدارة لدخول السحب 🎉"
         ),
-        "btn_complaint": "✉️ إرسال شكوى / اقتراح",
-        "ask_message": (
-            "✉️ <b>أرسل رسالتك الآن</b>\n\n"
-            "📝 اكتب شكواك، اقتراحك، أو أي استفسار\n"
-            "سيتم إرسالها للإدارة مباشرة ✅\n\n"
-            "لإلغاء الإرسال اضغط زر الرجوع 👇"
+        "btn_share_done": "✅ أكملت المشاركة",
+        "btn_copy_link": "📋 انسخ الرابط",
+        "contest_registered": (
+            "🎉 <b>تم تسجيلك بنجاح!</b>\n\n"
+            "📩 طلبك الآن <b>قيد المراجعة</b> من قِبَل الإدارة.\n\n"
+            "🔔 سيتم إشعارك عند دخولك السحب الرسمي 🎊"
         ),
-        "message_sent": "✅ <b>تم إرسال رسالتك بنجاح!</b>\n\nسيتم الرد عليك في أقرب وقت 📩",
-        "message_too_short": "❌ الرسالة قصيرة جدًا! أرسل رسالة أطول:",
+        "contest_already": (
+            "✅ <b>أنت مسجل بالفعل في المسابقة!</b>\n\n"
+            "🕐 الحالة: {status}\n\n"
+            "🍀 حظًا موفقًا!"
+        ),
+        "contest_status_pending": "⏳ قيد المراجعة",
+        "contest_status_approved": "🏆 مؤهل للسحب",
+        "contest_status_rejected": "❌ مرفوض",
+        "contest_approved_msg": (
+            "🏆 <b>ألف مبروك!</b>\n\n"
+            "🎊 تم تأكيد دخولك في <b>سحب المسابقة</b> رسميًا!\n\n"
+            "🍀 حظًا موفقًا! سيتم إعلان الفائز قريبًا."
+        ),
+        "contest_rejected_msg": (
+            "❌ <b>عذرًا!</b>\n\n"
+            "لم يتم تأكيد مشاركتك في المسابقة.\n"
+            "تواصل مع الدعم إذا كنت تعتقد أن هناك خطأ 🆘"
+        ),
+        "contestants_title": (
+            "🏆 <b>قائمة المتسابقين</b>\n\n"
+            "📊 الإجمالي: <b>{total}</b>\n"
+            "✅ مؤهلون: <b>{approved}</b>\n"
+            "⏳ معلّقون: <b>{pending}</b>\n"
+            "❌ مرفوضون: <b>{rejected}</b>"
+        ),
+        "contestants_empty": "📭 لا يوجد متسابقون حتى الآن",
+        "contestant_item": (
+            "👤 <b>{name}</b>\n"
+            "🆔 <code>{uid}</code>\n"
+            "🌐 @{username}\n"
+            "🎯 الحالة: {status}\n"
+            "🕒 {time}"
+        ),
+        "contestant_notified": "✅ تم إشعار المتسابق",
         "inbox_title": "📬 <b>البريد الوارد</b>\n\n📥 آخر <b>{count}</b> رسالة",
         "inbox_empty": "📭 لا يوجد رسائل حتى الآن",
         "inbox_item": (
@@ -305,6 +342,8 @@ TEXTS = {
         "btn_settings": "⚙️ Settings",
         "btn_back": "⬅️ Back",
         "btn_inbox": "📬 Inbox",
+        "btn_contestants": "🏆 Contestants",
+        "btn_contest": "🎁 Contest",
         "check_success": "✅ Verified! Welcome 🎉",
         "check_fail": "❌ Not subscribed yet!",
         "orders_closed": "⛔ Orders closed.\n🕛 Working: 12 PM - 10 PM 🇸🇦",
@@ -370,26 +409,58 @@ TEXTS = {
             "📅 {joined}\n🌐 {lang}\n\n🧾 <b>Recent orders:</b>\n{orders}"
         ),
         "no_orders": "No orders yet 😕",
-        "support": (
-            "🆘 <b>Support Center</b>\n\n"
-            f"👨‍💻 {SUPPORT_USERNAME}\n\n"
-            "📖 <b>How to use:</b>\n"
-            "1️⃣ Choose game\n2️⃣ Choose package 💎\n"
-            "3️⃣ Send ID 🆔\n4️⃣ Send name 📝\n"
-            "5️⃣ Choose payment\n6️⃣ Pay within 5 min 💳\n"
-            "7️⃣ Wait ✅\n8️⃣ Receive in 5 min ⏳\n\n"
-            "⏰ <b>Working: 12 PM - 10 PM</b> 🇸🇦\n\n"
-            "👇 Send a complaint/suggestion:"
+        "contest_title": (
+            "🎁 <b>Bot Contest!</b>\n\n"
+            "🎯 <b>Participation rules:</b>\n"
+            f"📢 Share the channel link with <b>{REQUIRED_SHARES} people</b>\n\n"
+            f"🔗 <b>Channel link:</b>\n<code>{CONTEST_LINK}</code>\n\n"
+            "📌 <b>Steps:</b>\n"
+            "1️⃣ Copy the link above ☝️\n"
+            "2️⃣ Share with at least 5 people\n"
+            "3️⃣ Click <b>✅ Done sharing</b>\n"
+            "4️⃣ Wait for admin confirmation 🎉"
         ),
-        "btn_complaint": "✉️ Send complaint/suggestion",
-        "ask_message": (
-            "✉️ <b>Send your message</b>\n\n"
-            "📝 Complaint, suggestion, or inquiry\n"
-            "Will be sent directly ✅\n\n"
-            "To cancel, press Back 👇"
+        "btn_share_done": "✅ Done sharing",
+        "btn_copy_link": "📋 Copy link",
+        "contest_registered": (
+            "🎉 <b>Registered successfully!</b>\n\n"
+            "📩 Your request is <b>pending review</b>.\n\n"
+            "🔔 You'll be notified once approved 🎊"
         ),
-        "message_sent": "✅ <b>Message sent!</b>\n\nWe'll reply soon 📩",
-        "message_too_short": "❌ Too short!",
+        "contest_already": (
+            "✅ <b>You're already registered!</b>\n\n"
+            "🕐 Status: {status}\n\n"
+            "🍀 Good luck!"
+        ),
+        "contest_status_pending": "⏳ Pending",
+        "contest_status_approved": "🏆 Qualified",
+        "contest_status_rejected": "❌ Rejected",
+        "contest_approved_msg": (
+            "🏆 <b>Congratulations!</b>\n\n"
+            "🎊 You're officially in the <b>contest draw</b>!\n\n"
+            "🍀 Good luck!"
+        ),
+        "contest_rejected_msg": (
+            "❌ <b>Sorry!</b>\n\n"
+            "Your contest entry wasn't approved.\n"
+            "Contact support if you believe this is an error 🆘"
+        ),
+        "contestants_title": (
+            "🏆 <b>Contestants List</b>\n\n"
+            "📊 Total: <b>{total}</b>\n"
+            "✅ Approved: <b>{approved}</b>\n"
+            "⏳ Pending: <b>{pending}</b>\n"
+            "❌ Rejected: <b>{rejected}</b>"
+        ),
+        "contestants_empty": "📭 No contestants yet",
+        "contestant_item": (
+            "👤 <b>{name}</b>\n"
+            "🆔 <code>{uid}</code>\n"
+            "🌐 @{username}\n"
+            "🎯 Status: {status}\n"
+            "🕒 {time}"
+        ),
+        "contestant_notified": "✅ Contestant notified",
         "inbox_title": "📬 <b>Inbox</b>\n\n📥 Last <b>{count}</b> messages",
         "inbox_empty": "📭 No messages yet",
         "inbox_item": (
@@ -482,6 +553,17 @@ def init_db():
             created_at TEXT
         )
     """)
+    # ========== جدول المسابقة ==========
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS contest (
+            user_id BIGINT PRIMARY KEY,
+            username TEXT,
+            full_name TEXT,
+            status TEXT DEFAULT 'pending',
+            registered_at TEXT,
+            approved_at TEXT
+        )
+    """)
 
     cur.execute("SELECT value FROM settings WHERE key = 'button_order'")
     row = cur.fetchone()
@@ -536,7 +618,6 @@ def t(uid, key, **kwargs):
     return text.format(**kwargs) if kwargs else text
 
 def t_lang(lang, key, **kwargs):
-    """نفس t لكن باللغة المحددة مباشرة (أسرع للـ threads)"""
     text = TEXTS.get(lang, TEXTS["ar"]).get(key, "")
     return text.format(**kwargs) if kwargs else text
 
@@ -612,6 +693,69 @@ def validate_game_id(game_id: str, game: str):
 
     return True, game_id
 
+# ============ دوال المسابقة ============
+def get_contest_entry(uid):
+    """يرجّع بيانات المتسابق إذا موجود"""
+    conn = db_connect()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM contest WHERE user_id = %s", (uid,))
+    row = cur.fetchone()
+    cur.close(); conn.close()
+    return row
+
+def register_contest(message):
+    """تسجيل المستخدم في المسابقة (بحالة pending)"""
+    uid = message.from_user.id
+    conn = db_connect()
+    cur = conn.cursor()
+    cur.execute("SELECT user_id FROM contest WHERE user_id = %s", (uid,))
+    if cur.fetchone():
+        cur.close(); conn.close()
+        return False
+    cur.execute(
+        "INSERT INTO contest (user_id, username, full_name, status, registered_at) "
+        "VALUES (%s, %s, %s, 'pending', %s)",
+        (uid, message.from_user.username or "", message.from_user.full_name,
+         datetime.now().strftime("%Y-%m-%d %H:%M"))
+    )
+    conn.commit()
+    cur.close(); conn.close()
+    return True
+
+def approve_contest(uid):
+    conn = db_connect()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE contest SET status = 'approved', approved_at = %s WHERE user_id = %s",
+        (datetime.now().strftime("%Y-%m-%d %H:%M"), uid)
+    )
+    conn.commit()
+    cur.close(); conn.close()
+
+def reject_contest(uid):
+    conn = db_connect()
+    cur = conn.cursor()
+    cur.execute("UPDATE contest SET status = 'rejected' WHERE user_id = %s", (uid,))
+    conn.commit()
+    cur.close(); conn.close()
+
+def get_all_contestants():
+    conn = db_connect()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM contest ORDER BY registered_at DESC")
+    rows = cur.fetchall()
+    cur.close(); conn.close()
+    return rows
+
+def contest_status_text(uid, status):
+    lang = get_lang(uid)
+    if status == "pending":
+        return TEXTS[lang]["contest_status_pending"]
+    elif status == "approved":
+        return TEXTS[lang]["contest_status_approved"]
+    else:
+        return TEXTS[lang]["contest_status_rejected"]
+
 # ============ العداد الحي ============
 def format_remaining(seconds, lang):
     m = seconds // 60
@@ -673,7 +817,6 @@ def start_countdown(chat_id, message_id, order_id, method, uid, lang, price_str,
 
     def run():
         print(f"⏳ بدء العداد للطلب #{order_id} | المدة {total_seconds} ث | الدفع: {method}")
-
         steps_text, method_name = build_payment_steps(method, lang, price_str)
 
         remaining = total_seconds
@@ -787,6 +930,7 @@ def main_keyboard(uid):
 
     if uid == ADMIN_ID:
         kb.row(T["btn_support"], T["btn_inbox"])
+        kb.row(T["btn_contestants"])
     else:
         kb.row(T["btn_support"])
 
@@ -809,6 +953,7 @@ def back_keyboard(uid):
     kb.row(T["btn_info"], T["btn_settings"])
     if uid == ADMIN_ID:
         kb.row(T["btn_support"], T["btn_inbox"])
+        kb.row(T["btn_contestants"])
     else:
         kb.row(T["btn_support"])
 
@@ -1333,6 +1478,139 @@ def my_info(message):
           orders=orders_text),
         parse_mode="HTML"
     )
+    # ✅ إضافة زر المسابقة
+    kb = types.InlineKeyboardMarkup(row_width=1)
+    kb.add(types.InlineKeyboardButton(t(uid, "btn_contest"), callback_data="contest_show"))
+    bot.send_message(
+        message.chat.id,
+        "🎁 <b>هل تريد المشاركة في المسابقة؟</b>\n👇 اضغط الزر بالأسفل",
+        parse_mode="HTML",
+        reply_markup=kb
+    )
+
+# ============ زر المسابقة ============
+@bot.callback_query_handler(func=lambda c: c.data == "contest_show")
+def contest_show(call):
+    uid = call.from_user.id
+    bot.answer_callback_query(call.id)
+
+    # إذا مسجل من قبل
+    entry = get_contest_entry(uid)
+    if entry:
+        status = contest_status_text(uid, entry["status"])
+        bot.send_message(uid, t(uid, "contest_already", status=status), parse_mode="HTML")
+        return
+
+    kb = types.InlineKeyboardMarkup(row_width=1)
+    kb.add(types.InlineKeyboardButton(t(uid, "btn_copy_link"), url=CONTEST_LINK))
+    kb.add(types.InlineKeyboardButton(t(uid, "btn_share_done"), callback_data="contest_register"))
+
+    bot.send_message(uid, t(uid, "contest_title"), parse_mode="HTML", reply_markup=kb)
+
+@bot.callback_query_handler(func=lambda c: c.data == "contest_register")
+def contest_register(call):
+    uid = call.from_user.id
+    bot.answer_callback_query(call.id)
+
+    # إذا مسجل من قبل
+    entry = get_contest_entry(uid)
+    if entry:
+        status = contest_status_text(uid, entry["status"])
+        bot.send_message(uid, t(uid, "contest_already", status=status), parse_mode="HTML")
+        return
+
+    success = register_contest(call.message)
+    if success:
+        bot.send_message(uid, t(uid, "contest_registered"), parse_mode="HTML")
+
+        # إشعار الأدمن
+        admin_text = (
+            "🎁 <b>متسابق جديد في المسابقة!</b>\n\n"
+            f"👤 الاسم: {call.from_user.full_name}\n"
+            f"🆔 <code>{uid}</code>\n"
+            f"🌐 @{call.from_user.username or 'لا يوجد'}\n"
+            f"🕒 {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n"
+            "👇 راجع المشاركة وقرّر:"
+        )
+        kb = types.InlineKeyboardMarkup(row_width=2)
+        kb.add(
+            types.InlineKeyboardButton("✅ قبول", callback_data=f"contest_ok|{uid}"),
+            types.InlineKeyboardButton("❌ رفض", callback_data=f"contest_no|{uid}"),
+        )
+        bot.send_message(ADMIN_ID, admin_text, parse_mode="HTML", reply_markup=kb)
+    else:
+        bot.send_message(uid, "⚠️ أنت مسجل بالفعل!", parse_mode="HTML")
+
+# ============ المطور: قبول/رفض مشارك ============
+@bot.callback_query_handler(func=lambda c: c.data.startswith("contest_ok|") or c.data.startswith("contest_no|"))
+def contest_decision(call):
+    try:
+        action, uid_str = call.data.split("|")
+        target_uid = int(uid_str)
+
+        if call.from_user.id != ADMIN_ID:
+            bot.answer_callback_query(call.id, "🚫", show_alert=True)
+            return
+
+        if action == "contest_ok":
+            approve_contest(target_uid)
+            bot.answer_callback_query(call.id, "✅ تم القبول")
+            try:
+                bot.send_message(target_uid, t(target_uid, "contest_approved_msg"), parse_mode="HTML")
+            except: pass
+        else:
+            reject_contest(target_uid)
+            bot.answer_callback_query(call.id, "❌ تم الرفض")
+            try:
+                bot.send_message(target_uid, t(target_uid, "contest_rejected_msg"), parse_mode="HTML")
+            except: pass
+
+        try:
+            bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)
+        except: pass
+    except Exception as e:
+        print(f"❌ contest_decision: {e}")
+
+# ============ المطور: زر المتسابقين ============
+@bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_contestants"], TEXTS["en"]["btn_contestants"]] and m.from_user.id == ADMIN_ID)
+def show_contestants(message):
+    uid = message.from_user.id
+
+    contestants = get_all_contestants()
+
+    if not contestants:
+        bot.send_message(uid, t(uid, "contestants_empty"))
+        return
+
+    total = len(contestants)
+    approved = sum(1 for c in contestants if c["status"] == "approved")
+    pending = sum(1 for c in contestants if c["status"] == "pending")
+    rejected = sum(1 for c in contestants if c["status"] == "rejected")
+
+    bot.send_message(
+        uid,
+        t(uid, "contestants_title", total=total, approved=approved, pending=pending, rejected=rejected),
+        parse_mode="HTML"
+    )
+
+    for c in contestants:
+        status_txt = contest_status_text(uid, c["status"])
+        text = t(uid, "contestant_item",
+                 name=c["full_name"] or "-",
+                 uid=c["user_id"],
+                 username=c["username"] or "لا يوجد",
+                 status=status_txt,
+                 time=c["registered_at"] or "-")
+
+        kb = types.InlineKeyboardMarkup(row_width=2)
+        kb.add(types.InlineKeyboardButton("👤 فتح حساب", url=f"tg://user?id={c['user_id']}"))
+        if c["status"] == "pending":
+            kb.add(
+                types.InlineKeyboardButton("✅ قبول", callback_data=f"contest_ok|{c['user_id']}"),
+                types.InlineKeyboardButton("❌ رفض", callback_data=f"contest_no|{c['user_id']}")
+            )
+
+        bot.send_message(uid, text, parse_mode="HTML", reply_markup=kb)
 
 # ============ زر الدعم ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_support"], TEXTS["en"]["btn_support"]])
@@ -1680,7 +1958,7 @@ def unknown_message(message):
 
 # ============ تشغيل ============
 print("🤖 البوت يعمل الآن...")
-print("💎 أسعار عضوية فري فاير محدّثة: أسبوعية 340 ل.س | شهرية 1540 ل.س")
+print("🎁 نظام المسابقة مضاف")
 
 bot.infinity_polling(
     allowed_updates=[
@@ -1695,4 +1973,4 @@ bot.infinity_polling(
     skip_pending=True,
     timeout=30,
     long_polling_timeout=30
-    )
+)
