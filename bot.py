@@ -15,7 +15,6 @@ PAYMENT_NUMBER_SYRIATEL = "0984674400"
 SUPPORT_USERNAME = "@Yamen494"
 CHANNEL_USERNAME = "@YF494YF"
 CHANNEL_LINK = "https://t.me/YF494YF"
-CONTEST_LINK = "https://t.me/YF494Y"   # رابط المسابقة
 DATABASE_URL = os.environ.get("DATABASE_URL",
     "postgresql://postgres:FmMcTnFMJbldpynWXDwrFfXISsKbYKvt@postgres.railway.internal:5432/railway")
 
@@ -24,8 +23,7 @@ SHAM_IMAGE_PATH = "sham.jpg"
 ORDERS_OPEN_HOUR = 12
 ORDERS_CLOSE_HOUR = 22
 PAYMENT_TIMEOUT_SECONDS = 300
-
-REQUIRED_SHARES = 5   # عدد المشاركات المطلوب
+REQUIRED_JOINS = 5   # عدد المدعوين المطلوب
 
 bot = telebot.TeleBot(BOT_TOKEN)
 USER_DATA = {}
@@ -42,6 +40,7 @@ def fix_allowed_updates():
         )
         print(f"🔧 deleteWebhook: {r1.json()}")
 
+        # ✅ مهم: تفعيل chat_member لاستقبال إشعارات الانضمام للقناة
         r2 = requests.get(
             f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates",
             params={
@@ -60,11 +59,11 @@ def fix_allowed_updates():
         allowed = info.get("result", {}).get("allowed_updates", [])
         print(f"🔧 allowed_updates الآن: {allowed}")
 
-        if "callback_query" in allowed:
-            print("✅ callback_query مسموح — الأزرار ستشتغل!")
+        if "callback_query" in allowed and "chat_member" in allowed:
+            print("✅ callback_query + chat_member مسموحان!")
             return True
         else:
-            print("⚠️ callback_query لا يزال غير مسموح")
+            print("⚠️ بعض الأنواع غير مسموحة")
             return False
     except Exception as e:
         print(f"❌ خطأ في fix_allowed_updates: {e}")
@@ -72,6 +71,32 @@ def fix_allowed_updates():
 
 fix_allowed_updates()
 time.sleep(1)
+
+# ============ التحقق من صلاحيات البوت في القناة ============
+def check_bot_admin():
+    """يتأكد أن البوت مشرف في القناة"""
+    try:
+        me = bot.get_me()
+        member = bot.get_chat_member(CHANNEL_USERNAME, me.id)
+        status = member.status
+        print(f"🤖 حالة البوت في القناة: {status}")
+        if status not in ("administrator", "creator"):
+            print("⚠️⚠️⚠️ تحذير: البوت ليس مشرف في القناة!")
+            print("⚠️ روابط الدعوة الفريدة وحدث chat_member لن يعملا!")
+            return False
+        # نتأكد من صلاحية invite users
+        if status == "administrator":
+            can_invite = getattr(member, "can_invite_users", False)
+            print(f"🔑 صلاحية دعوة الأعضاء: {can_invite}")
+            if not can_invite:
+                print("⚠️ البوت يحتاج صلاحية 'invite users' في القناة!")
+                return False
+        return True
+    except Exception as e:
+        print(f"❌ خطأ في التحقق: {e}")
+        return False
+
+check_bot_admin()
 
 # ============ الأسعار ============
 PACKAGES = {
@@ -224,56 +249,57 @@ TEXTS = {
         "no_orders": "لا يوجد أي عمليات شراء حتى الآن 😕",
         "contest_title": (
             "🎁 <b>مسابقة البوت!</b>\n\n"
-            "🎯 <b>شروط المشاركة:</b>\n"
-            f"📢 شارك رابط القناة مع <b>{REQUIRED_SHARES} أشخاص</b>\n\n"
-            f"🔗 <b>رابط القناة:</b>\n<code>{CONTEST_LINK}</code>\n\n"
-            "📌 <b>الخطوات:</b>\n"
-            "1️⃣ انسخ الرابط بالأعلى ☝️\n"
-            "2️⃣ شاركه مع 5 أشخاص على الأقل\n"
-            "3️⃣ اضغط زر <b>✅ أكملت المشاركة</b>\n"
-            "4️⃣ انتظر تأكيد الإدارة لدخول السحب 🎉"
+            "🎯 <b>الشروط:</b>\n"
+            f"📢 اجلب <b>{REQUIRED_JOINS} أشخاص</b> يشتركوا في القناة عبر رابطك الخاص\n\n"
+            "🔗 <b>رابطك الخاص بالدعوة:</b>\n"
+            "<code>{link}</code>\n\n"
+            "📌 <b>كيف يعمل؟</b>\n"
+            "1️⃣ انسخ رابطك بالأعلى ☝️\n"
+            "2️⃣ شاركه مع أصحابك\n"
+            "3️⃣ كل من يشترك في القناة عبر رابطك = +1 تلقائيًا\n"
+            f"4️⃣ عند {REQUIRED_JOINS} مشتركين → تدخل السحب تلقائيًا 🎉\n\n"
+            "📊 <b>مدعوينك الحاليين:</b> <b>{count}/{required}</b>\n"
+            "🎯 الحالة: {status}"
         ),
-        "btn_share_done": "✅ أكملت المشاركة",
         "btn_copy_link": "📋 انسخ الرابط",
-        "contest_registered": (
-            "🎉 <b>تم تسجيلك بنجاح!</b>\n\n"
-            "📩 طلبك الآن <b>قيد المراجعة</b> من قِبَل الإدارة.\n\n"
-            "🔔 سيتم إشعارك عند دخولك السحب الرسمي 🎊"
+        "contest_loading": "⏳ جاري إنشاء رابطك الخاص...",
+        "contest_created": (
+            "🎉 <b>تم إنشاء رابطك الخاص!</b>\n\n"
+            "🔗 <b>رابطك:</b>\n<code>{link}</code>\n\n"
+            "📤 شاركه مع أصحابك:\n"
+            "📊 <b>مدعوينك:</b> <b>{count}/{required}</b>\n\n"
+            "🔔 كل شخص يشترك في القناة عبر رابطك يُحسب تلقائيًا!"
         ),
-        "contest_already": (
-            "✅ <b>أنت مسجل بالفعل في المسابقة!</b>\n\n"
-            "🕐 الحالة: {status}\n\n"
-            "🍀 حظًا موفقًا!"
-        ),
-        "contest_status_pending": "⏳ قيد المراجعة",
-        "contest_status_approved": "🏆 مؤهل للسحب",
+        "contest_status_active": "🎯 مسابقة نشطة",
+        "contest_status_qualified": "🏆 مؤهل للسحب",
         "contest_status_rejected": "❌ مرفوض",
-        "contest_approved_msg": (
-            "🏆 <b>ألف مبروك!</b>\n\n"
-            "🎊 تم تأكيد دخولك في <b>سحب المسابقة</b> رسميًا!\n\n"
-            "🍀 حظًا موفقًا! سيتم إعلان الفائز قريبًا."
+        "contestant_joined": (
+            "🎉 <b>مبروك!</b>\n\n"
+            "شخص جديد اشترك في القناة عبر رابطك!\n"
+            "👤 الاسم: <b>{name}</b>\n\n"
+            "📊 <b>مدعوينك الآن:</b> {count}/{required}\n"
+            "{extra}"
         ),
-        "contest_rejected_msg": (
-            "❌ <b>عذرًا!</b>\n\n"
-            "لم يتم تأكيد مشاركتك في المسابقة.\n"
-            "تواصل مع الدعم إذا كنت تعتقد أن هناك خطأ 🆘"
+        "contestant_complete": (
+            "🏆 <b>ألف مبروك!</b>\n\n"
+            f"🎊 لقد أكملت <b>{REQUIRED_JOINS} مدعوين</b> ودخلت <b>سحب المسابقة</b> تلقائيًا!\n\n"
+            "🍀 حظًا موفقًا! سيتم إعلان الفائز قريبًا."
         ),
         "contestants_title": (
             "🏆 <b>قائمة المتسابقين</b>\n\n"
             "📊 الإجمالي: <b>{total}</b>\n"
-            "✅ مؤهلون: <b>{approved}</b>\n"
-            "⏳ معلّقون: <b>{pending}</b>\n"
-            "❌ مرفوضون: <b>{rejected}</b>"
+            "✅ مؤهلون: <b>{qualified}</b>\n"
+            "🎯 نشطون: <b>{active}</b>"
         ),
         "contestants_empty": "📭 لا يوجد متسابقون حتى الآن",
         "contestant_item": (
             "👤 <b>{name}</b>\n"
             "🆔 <code>{uid}</code>\n"
             "🌐 @{username}\n"
+            "📊 المدعوين: <b>{count}/{required}</b>\n"
             "🎯 الحالة: {status}\n"
             "🕒 {time}"
         ),
-        "contestant_notified": "✅ تم إشعار المتسابق",
         "inbox_title": "📬 <b>البريد الوارد</b>\n\n📥 آخر <b>{count}</b> رسالة",
         "inbox_empty": "📭 لا يوجد رسائل حتى الآن",
         "inbox_item": (
@@ -285,7 +311,6 @@ TEXTS = {
         ),
         "settings_admin": "⚙️ <b>الإعدادات (أدمن)</b>\n\nاختر:",
         "settings_user": "⚙️ <b>الإعدادات</b>\n\nاختر:",
-        "settings_dev": "🔧 <b>وضع المطور</b>",
         "btn_change_lang": "🌐 تغيير اللغة",
         "btn_change_order": "🔀 ترتيب الأزرار (أدمن)",
         "btn_reset_data": "🗑️ تصفير بياناتي",
@@ -411,56 +436,57 @@ TEXTS = {
         "no_orders": "No orders yet 😕",
         "contest_title": (
             "🎁 <b>Bot Contest!</b>\n\n"
-            "🎯 <b>Participation rules:</b>\n"
-            f"📢 Share the channel link with <b>{REQUIRED_SHARES} people</b>\n\n"
-            f"🔗 <b>Channel link:</b>\n<code>{CONTEST_LINK}</code>\n\n"
-            "📌 <b>Steps:</b>\n"
-            "1️⃣ Copy the link above ☝️\n"
-            "2️⃣ Share with at least 5 people\n"
-            "3️⃣ Click <b>✅ Done sharing</b>\n"
-            "4️⃣ Wait for admin confirmation 🎉"
+            "🎯 <b>Requirements:</b>\n"
+            f"📢 Invite <b>{REQUIRED_JOINS} people</b> to join the channel via your link\n\n"
+            "🔗 <b>Your invite link:</b>\n"
+            "<code>{link}</code>\n\n"
+            "📌 <b>How it works:</b>\n"
+            "1️⃣ Copy your link above ☝️\n"
+            "2️⃣ Share with friends\n"
+            "3️⃣ Each join via your link = +1 auto\n"
+            f"4️⃣ At {REQUIRED_JOINS} joins → auto-entry to draw 🎉\n\n"
+            "📊 <b>Your invites:</b> <b>{count}/{required}</b>\n"
+            "🎯 Status: {status}"
         ),
-        "btn_share_done": "✅ Done sharing",
         "btn_copy_link": "📋 Copy link",
-        "contest_registered": (
-            "🎉 <b>Registered successfully!</b>\n\n"
-            "📩 Your request is <b>pending review</b>.\n\n"
-            "🔔 You'll be notified once approved 🎊"
+        "contest_loading": "⏳ Creating your invite link...",
+        "contest_created": (
+            "🎉 <b>Your invite link is ready!</b>\n\n"
+            "🔗 <b>Link:</b>\n<code>{link}</code>\n\n"
+            "📤 Share with friends:\n"
+            "📊 <b>Invites:</b> <b>{count}/{required}</b>\n\n"
+            "🔔 Each join via your link counts automatically!"
         ),
-        "contest_already": (
-            "✅ <b>You're already registered!</b>\n\n"
-            "🕐 Status: {status}\n\n"
-            "🍀 Good luck!"
-        ),
-        "contest_status_pending": "⏳ Pending",
-        "contest_status_approved": "🏆 Qualified",
+        "contest_status_active": "🎯 Active",
+        "contest_status_qualified": "🏆 Qualified",
         "contest_status_rejected": "❌ Rejected",
-        "contest_approved_msg": (
-            "🏆 <b>Congratulations!</b>\n\n"
-            "🎊 You're officially in the <b>contest draw</b>!\n\n"
-            "🍀 Good luck!"
+        "contestant_joined": (
+            "🎉 <b>Congrats!</b>\n\n"
+            "Someone joined the channel via your link!\n"
+            "👤 Name: <b>{name}</b>\n\n"
+            "📊 <b>Your invites:</b> {count}/{required}\n"
+            "{extra}"
         ),
-        "contest_rejected_msg": (
-            "❌ <b>Sorry!</b>\n\n"
-            "Your contest entry wasn't approved.\n"
-            "Contact support if you believe this is an error 🆘"
+        "contestant_complete": (
+            "🏆 <b>Congratulations!</b>\n\n"
+            f"🎊 You've completed <b>{REQUIRED_JOINS} invites</b> and entered the <b>contest draw</b>!\n\n"
+            "🍀 Good luck!"
         ),
         "contestants_title": (
-            "🏆 <b>Contestants List</b>\n\n"
+            "🏆 <b>Contestants</b>\n\n"
             "📊 Total: <b>{total}</b>\n"
-            "✅ Approved: <b>{approved}</b>\n"
-            "⏳ Pending: <b>{pending}</b>\n"
-            "❌ Rejected: <b>{rejected}</b>"
+            "✅ Qualified: <b>{qualified}</b>\n"
+            "🎯 Active: <b>{active}</b>"
         ),
         "contestants_empty": "📭 No contestants yet",
         "contestant_item": (
             "👤 <b>{name}</b>\n"
             "🆔 <code>{uid}</code>\n"
             "🌐 @{username}\n"
+            "📊 Invites: <b>{count}/{required}</b>\n"
             "🎯 Status: {status}\n"
             "🕒 {time}"
         ),
-        "contestant_notified": "✅ Contestant notified",
         "inbox_title": "📬 <b>Inbox</b>\n\n📥 Last <b>{count}</b> messages",
         "inbox_empty": "📭 No messages yet",
         "inbox_item": (
@@ -469,7 +495,6 @@ TEXTS = {
         ),
         "settings_admin": "⚙️ <b>Settings (Admin)</b>\n\nChoose:",
         "settings_user": "⚙️ <b>Settings</b>\n\nChoose:",
-        "settings_dev": "🔧 <b>Developer Mode</b>",
         "btn_change_lang": "🌐 Change language",
         "btn_change_order": "🔀 Button order (Admin)",
         "btn_reset_data": "🗑️ Reset my data",
@@ -553,15 +578,27 @@ def init_db():
             created_at TEXT
         )
     """)
-    # ========== جدول المسابقة ==========
+    # جدول المسابقة
     cur.execute("""
         CREATE TABLE IF NOT EXISTS contest (
             user_id BIGINT PRIMARY KEY,
             username TEXT,
             full_name TEXT,
-            status TEXT DEFAULT 'pending',
-            registered_at TEXT,
-            approved_at TEXT
+            invite_link TEXT UNIQUE,
+            invite_link_name TEXT,
+            joins_count INT DEFAULT 0,
+            status TEXT DEFAULT 'active',
+            created_at TEXT
+        )
+    """)
+    # جدول الإحالات
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS referrals (
+            id SERIAL PRIMARY KEY,
+            referrer_id BIGINT,
+            referred_id BIGINT UNIQUE,
+            invite_link TEXT,
+            joined_at TEXT
         )
     """)
 
@@ -693,9 +730,23 @@ def validate_game_id(game_id: str, game: str):
 
     return True, game_id
 
-# ============ دوال المسابقة ============
+# ============ المسابقة ============
+def create_user_invite_link(uid):
+    """ينشئ رابط دعوة فريد للمستخدم"""
+    try:
+        link_name = f"ref_{uid}_{int(time.time())}"
+        result = bot.create_chat_invite_link(
+            chat_id=CHANNEL_USERNAME,
+            name=link_name,
+            member_limit=0,  # 0 = غير محدود (يرجى تغييره حسب الحاجة)
+            creates_join_request=False
+        )
+        return result.invite_link, link_name
+    except Exception as e:
+        print(f"❌ create_user_invite_link: {e}")
+        return None, None
+
 def get_contest_entry(uid):
-    """يرجّع بيانات المتسابق إذا موجود"""
     conn = db_connect()
     cur = conn.cursor()
     cur.execute("SELECT * FROM contest WHERE user_id = %s", (uid,))
@@ -703,58 +754,39 @@ def get_contest_entry(uid):
     cur.close(); conn.close()
     return row
 
-def register_contest(message):
-    """تسجيل المستخدم في المسابقة (بحالة pending)"""
-    uid = message.from_user.id
+def register_contest_user(uid, username, full_name):
+    """ينشئ حساب في المسابقة"""
+    invite_link, link_name = create_user_invite_link(uid)
+    if not invite_link:
+        return None
     conn = db_connect()
     cur = conn.cursor()
-    cur.execute("SELECT user_id FROM contest WHERE user_id = %s", (uid,))
-    if cur.fetchone():
-        cur.close(); conn.close()
-        return False
     cur.execute(
-        "INSERT INTO contest (user_id, username, full_name, status, registered_at) "
-        "VALUES (%s, %s, %s, 'pending', %s)",
-        (uid, message.from_user.username or "", message.from_user.full_name,
+        "INSERT INTO contest (user_id, username, full_name, invite_link, invite_link_name, created_at) "
+        "VALUES (%s, %s, %s, %s, %s, %s) RETURNING *",
+        (uid, username, full_name, invite_link, link_name,
          datetime.now().strftime("%Y-%m-%d %H:%M"))
     )
+    row = cur.fetchone()
     conn.commit()
     cur.close(); conn.close()
-    return True
-
-def approve_contest(uid):
-    conn = db_connect()
-    cur = conn.cursor()
-    cur.execute(
-        "UPDATE contest SET status = 'approved', approved_at = %s WHERE user_id = %s",
-        (datetime.now().strftime("%Y-%m-%d %H:%M"), uid)
-    )
-    conn.commit()
-    cur.close(); conn.close()
-
-def reject_contest(uid):
-    conn = db_connect()
-    cur = conn.cursor()
-    cur.execute("UPDATE contest SET status = 'rejected' WHERE user_id = %s", (uid,))
-    conn.commit()
-    cur.close(); conn.close()
+    return row
 
 def get_all_contestants():
     conn = db_connect()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM contest ORDER BY registered_at DESC")
+    cur.execute("SELECT * FROM contest ORDER BY joins_count DESC, created_at DESC")
     rows = cur.fetchall()
     cur.close(); conn.close()
     return rows
 
-def contest_status_text(uid, status):
-    lang = get_lang(uid)
-    if status == "pending":
-        return TEXTS[lang]["contest_status_pending"]
-    elif status == "approved":
-        return TEXTS[lang]["contest_status_approved"]
-    else:
+def contest_status_text(lang, status):
+    if status == "qualified":
+        return TEXTS[lang]["contest_status_qualified"]
+    elif status == "rejected":
         return TEXTS[lang]["contest_status_rejected"]
+    else:
+        return TEXTS[lang]["contest_status_active"]
 
 # ============ العداد الحي ============
 def format_remaining(seconds, lang):
@@ -816,7 +848,7 @@ def start_countdown(chat_id, message_id, order_id, method, uid, lang, price_str,
     COUNTDOWNS[order_id] = False
 
     def run():
-        print(f"⏳ بدء العداد للطلب #{order_id} | المدة {total_seconds} ث | الدفع: {method}")
+        print(f"⏳ بدء العداد للطلب #{order_id}")
         steps_text, method_name = build_payment_steps(method, lang, price_str)
 
         remaining = total_seconds
@@ -825,7 +857,6 @@ def start_countdown(chat_id, message_id, order_id, method, uid, lang, price_str,
             remaining -= 60
 
             if COUNTDOWNS.get(order_id) is True:
-                print(f"🛑 العداد #{order_id} أُلغي (قرار الأدمن)")
                 COUNTDOWNS.pop(order_id, None)
                 return
 
@@ -836,7 +867,6 @@ def start_countdown(chat_id, message_id, order_id, method, uid, lang, price_str,
                 r = cur.fetchone()
                 cur.close(); conn.close()
                 if r and r["status"] != "pending":
-                    print(f"🛑 العداد #{order_id} توقف (status={r['status']})")
                     COUNTDOWNS.pop(order_id, None)
                     return
             except Exception as e:
@@ -851,16 +881,12 @@ def start_countdown(chat_id, message_id, order_id, method, uid, lang, price_str,
                               oid=order_id)
                 try:
                     bot.edit_message_text(
-                        text,
-                        chat_id=chat_id,
-                        message_id=message_id,
-                        parse_mode="HTML"
+                        text, chat_id=chat_id, message_id=message_id, parse_mode="HTML"
                     )
-                    print(f"✅ تم تعديل #{order_id} → المتبقي {remaining}ث")
+                    print(f"✅ تعديل #{order_id} → {remaining}ث")
                 except Exception as e:
                     err = str(e).lower()
                     if "message to edit not found" in err or "message can't be edited" in err:
-                        print(f"🛑 العداد #{order_id} توقف (الرسالة اختفت)")
                         COUNTDOWNS.pop(order_id, None)
                         return
                     print(f"⚠️ تعديل #{order_id} فشل: {e}")
@@ -874,28 +900,22 @@ def start_countdown(chat_id, message_id, order_id, method, uid, lang, price_str,
                 cur.execute("UPDATE orders SET status = 'expired' WHERE order_id = %s", (order_id,))
                 conn.commit()
                 cur.close(); conn.close()
-
                 try:
                     bot.edit_message_text(
                         t_lang(lang, "payment_expired", oid=order_id),
-                        chat_id=chat_id,
-                        message_id=message_id,
-                        parse_mode="HTML"
+                        chat_id=chat_id, message_id=message_id, parse_mode="HTML"
                     )
-                except Exception as e:
-                    print(f"⚠️ تعديل انتهاء #{order_id}: {e}")
-
+                except: pass
                 try:
                     bot.send_message(
                         ADMIN_ID,
-                        f"⌛ <b>طلب #{order_id} انتهى وقته</b> (لم يُسدَّد خلال 5 دقائق)",
+                        f"⌛ <b>طلب #{order_id} انتهى وقته</b>",
                         parse_mode="HTML"
                     )
                 except: pass
             else:
                 cur.close(); conn.close()
             COUNTDOWNS.pop(order_id, None)
-            print(f"⌛ العداد #{order_id} انتهى")
         except Exception as e:
             print(f"❌ countdown end: {e}")
             COUNTDOWNS.pop(order_id, None)
@@ -985,10 +1005,8 @@ def show_packages_for_game(chat_id, uid, game_key):
         ))
 
     bot.send_message(
-        chat_id,
-        t(uid, "choose_package", game=game_title),
-        parse_mode="HTML",
-        reply_markup=kb
+        chat_id, t(uid, "choose_package", game=game_title),
+        parse_mode="HTML", reply_markup=kb
     )
     bot.send_message(chat_id, "🔽", reply_markup=back_keyboard(uid))
     USER_DATA.setdefault(uid, {})
@@ -1001,21 +1019,18 @@ def show_ff_types(chat_id, uid):
         types.InlineKeyboardButton(t(uid, "btn_ff_membership"), callback_data="ff_type|membership"),
     )
     bot.send_message(
-        chat_id,
-        t(uid, "choose_ff_type"),
-        parse_mode="HTML",
-        reply_markup=kb
+        chat_id, t(uid, "choose_ff_type"),
+        parse_mode="HTML", reply_markup=kb
     )
     bot.send_message(chat_id, "🔽", reply_markup=back_keyboard(uid))
     USER_DATA.setdefault(uid, {})
     USER_DATA[uid]["step"] = 2
 
-# ============ زر الرجوع الذكي ============
+# ============ زر الرجوع ============
 def go_back(message):
     uid = message.from_user.id
     data = USER_DATA.get(uid, {})
     step = data.get("step", 1)
-    print(f"⬅️ go_back: uid={uid} step={step} data={data}")
 
     if step <= 1:
         bot.send_message(message.chat.id, t(uid, "back_done"),
@@ -1075,7 +1090,6 @@ def go_back(message):
                      reply_markup=main_keyboard(uid))
     USER_DATA[uid] = {"step": 1}
 
-# ============ 🎯 معالج زر الرجوع ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"]])
 def back_button_handler(message):
     try:
@@ -1119,27 +1133,121 @@ def check_subscription(call):
     except Exception as e:
         print(f"❌ {e}")
 
+# ============ 🎉 حدث انضمام عضو جديد للقناة ============
+@bot.chat_member_handler()
+def on_chat_member(update):
+    """يُستدعى عندما ينضم عضو جديد للقناة"""
+    try:
+        new_member = update.new_chat_member
+        old_member = update.old_chat_member
+
+        # نتأكد أنه انضم فعلاً (كان left وصار member)
+        if not (old_member.status in ("left", "kicked") and
+                new_member.status == "member"):
+            return
+
+        invite_link = update.invite_link
+        if not invite_link:
+            print("⚠️ انضم بدون رابط دعوة")
+            return
+
+        used_link = invite_link.invite_link
+        new_user_id = new_member.user.id
+        new_user_name = new_member.user.full_name
+
+        print(f"🎉 عضو جديد: {new_user_name} | رابط: {used_link}")
+
+        # نبحث عن الداعي
+        conn = db_connect()
+        cur = conn.cursor()
+        cur.execute("SELECT user_id, joins_count FROM contest WHERE invite_link = %s", (used_link,))
+        row = cur.fetchone()
+        if not row:
+            cur.close(); conn.close()
+            print("⚠️ الرابط غير مرتبط بأي متسابق")
+            return
+
+        referrer_id = row["user_id"]
+
+        # نتأكد ما انحسب من قبل
+        cur.execute("SELECT id FROM referrals WHERE referred_id = %s", (new_user_id,))
+        if cur.fetchone():
+            cur.close(); conn.close()
+            print("⚠️ هذا العضو محسوب من قبل")
+            return
+
+        # نسجل الإحالة
+        cur.execute(
+            "INSERT INTO referrals (referrer_id, referred_id, invite_link, joined_at) "
+            "VALUES (%s, %s, %s, %s)",
+            (referrer_id, new_user_id, used_link,
+             datetime.now().strftime("%Y-%m-%d %H:%M"))
+        )
+
+        # نزيد عدّاد الداعي
+        cur.execute(
+            "UPDATE contest SET joins_count = joins_count + 1 WHERE user_id = %s RETURNING joins_count",
+            (referrer_id,)
+        )
+        new_count = cur.fetchone()["joins_count"]
+        conn.commit()
+        cur.close(); conn.close()
+
+        # نُعلم الداعي
+        try:
+            extra = ""
+            if new_count >= REQUIRED_JOINS:
+                extra = TEXTS[get_lang(referrer_id)]["contestant_complete"]
+            bot.send_message(
+                referrer_id,
+                t(referrer_id, "contestant_joined",
+                  name=new_user_name, count=new_count,
+                  required=REQUIRED_JOINS, extra=extra),
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            print(f"⚠️ فشل إعلام الداعي: {e}")
+
+        # إذا وصل للعدد → يدخل السحب تلقائياً
+        if new_count >= REQUIRED_JOINS:
+            conn = db_connect()
+            cur = conn.cursor()
+            cur.execute(
+                "UPDATE contest SET status = 'qualified' WHERE user_id = %s",
+                (referrer_id,)
+            )
+            conn.commit()
+            cur.close(); conn.close()
+
+            try:
+                bot.send_message(
+                    ADMIN_ID,
+                    f"🏆 <b>متسابق جديد مؤهل!</b>\n\n"
+                    f"🆔 <code>{referrer_id}</code>\n"
+                    f"📊 {new_count} مدعوين",
+                    parse_mode="HTML"
+                )
+            except: pass
+
+    except Exception as e:
+        print(f"❌ on_chat_member: {e}")
+
 # ============ زر Free Fire ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_ff"], TEXTS["en"]["btn_ff"]])
 def show_ff(message):
     ensure_user(message)
     uid = message.from_user.id
-
     if not is_subscribed(uid):
-        show_subscription_message(message.chat.id, uid)
-        return
-
+        show_subscription_message(message.chat.id, uid); return
     if not is_orders_open():
         if get_setting("dev_mode", "off") == "on":
             bot.send_message(message.chat.id, t(uid, "orders_closed_dev"), parse_mode="HTML")
         else:
             bot.send_message(message.chat.id, t(uid, "orders_closed"), parse_mode="HTML")
         return
-
     USER_DATA[uid] = {"game": "ff", "step": 2}
     show_ff_types(message.chat.id, uid)
 
-# ============ PUBG / Jawaker ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_pubg"], TEXTS["en"]["btn_pubg"]])
 def show_pubg(message):
     show_game_packages(message, "pubg")
@@ -1151,30 +1259,23 @@ def show_jawaker(message):
 def show_game_packages(message, game):
     ensure_user(message)
     uid = message.from_user.id
-
     if not is_subscribed(uid):
-        show_subscription_message(message.chat.id, uid)
-        return
-
+        show_subscription_message(message.chat.id, uid); return
     if not is_orders_open():
         if get_setting("dev_mode", "off") == "on":
             bot.send_message(message.chat.id, t(uid, "orders_closed_dev"), parse_mode="HTML")
         else:
             bot.send_message(message.chat.id, t(uid, "orders_closed"), parse_mode="HTML")
         return
-
     USER_DATA[uid] = {"game": game, "step": 3}
     show_packages_for_game(message.chat.id, uid, game)
 
-# ============ اختيار نوع FF ============
 @bot.callback_query_handler(func=lambda c: c.data.startswith("ff_type|"))
 def choose_ff_type(call):
     try:
         ff_type = call.data.split("|")[1]
         uid = call.from_user.id
-
         bot.answer_callback_query(call.id, "✅")
-
         if ff_type == "diamonds":
             USER_DATA[uid] = {"game": "ff", "step": 3}
             show_packages_for_game(call.message.chat.id, uid, "ff")
@@ -1184,7 +1285,6 @@ def choose_ff_type(call):
     except Exception as e:
         print(f"❌ ff_type: {e}")
 
-# ============ اختيار العرض ============
 @bot.callback_query_handler(func=lambda c: c.data.startswith("pkg|"))
 def choose_package(call):
     try:
@@ -1192,110 +1292,75 @@ def choose_package(call):
         uid = call.from_user.id
         lang = get_lang(uid)
         item = PACKAGES[game]["items"][key]
-
         bot.answer_callback_query(call.id, "✅")
-
         USER_DATA[uid] = {
-            "game": game,
-            "package_key": key,
-            "package_name": item[lang],
-            "price": item["price"],
-            "step": 4
+            "game": game, "package_key": key,
+            "package_name": item[lang], "price": item["price"], "step": 4
         }
-
         game_title = PACKAGES[game]["title"][lang]
         msg = bot.send_message(
             call.message.chat.id,
             t(uid, "chosen", item=item[lang], price=item["price"], game=game_title),
-            parse_mode="HTML",
-            reply_markup=back_keyboard(uid)
+            parse_mode="HTML", reply_markup=back_keyboard(uid)
         )
         bot.register_next_step_handler(msg, get_game_id)
     except Exception as e:
-        print(f"❌ خطأ في choose_package: {e}")
-        try:
-            bot.answer_callback_query(call.id, "⚠️ خطأ، حاول من جديد")
+        print(f"❌ choose_package: {e}")
+        try: bot.answer_callback_query(call.id, "⚠️ خطأ")
         except: pass
 
-# ============ ID ============
 def get_game_id(message):
     uid = message.from_user.id
-
     if message.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"]]:
-        go_back(message)
-        return
-
+        go_back(message); return
     data = USER_DATA.get(uid)
     if not data:
         bot.send_message(message.chat.id, "⚠️ اضغط /start من جديد.",
-                         reply_markup=main_keyboard(uid))
-        return
-
+                         reply_markup=main_keyboard(uid)); return
     game = data.get("game", "ff")
     game_id = message.text.strip() if message.text else ""
     valid, result = validate_game_id(game_id, game)
-
     if not valid:
         key = "invalid_id_ff" if game in ("ff", "ff_membership") else ("invalid_id_pubg" if game == "pubg" else "invalid_id_jawaker")
         msg = bot.send_message(
-            message.chat.id,
-            t(uid, key, reason=result),
-            parse_mode="HTML",
-            reply_markup=back_keyboard(uid)
+            message.chat.id, t(uid, key, reason=result),
+            parse_mode="HTML", reply_markup=back_keyboard(uid)
         )
-        bot.register_next_step_handler(msg, get_game_id)
-        return
-
+        bot.register_next_step_handler(msg, get_game_id); return
     USER_DATA[uid]["game_id"] = result
     USER_DATA[uid]["step"] = 5
-
     msg = bot.send_message(
         message.chat.id, t(uid, "send_name"),
-        parse_mode="HTML",
-        reply_markup=back_keyboard(uid)
+        parse_mode="HTML", reply_markup=back_keyboard(uid)
     )
     bot.register_next_step_handler(msg, get_player_name)
 
-# ============ الاسم ============
 def get_player_name(message):
     uid = message.from_user.id
-
     if message.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"]]:
-        go_back(message)
-        return
-
+        go_back(message); return
     data = USER_DATA.get(uid)
     if not data:
         bot.send_message(message.chat.id, "⚠️ اضغط /start من جديد.",
-                         reply_markup=main_keyboard(uid))
-        return
-
+                         reply_markup=main_keyboard(uid)); return
     player_name = message.text.strip() if message.text else ""
     if len(player_name) < 2:
         msg = bot.send_message(
             message.chat.id, t(uid, "invalid_name"),
             reply_markup=back_keyboard(uid)
         )
-        bot.register_next_step_handler(msg, get_player_name)
-        return
-
+        bot.register_next_step_handler(msg, get_player_name); return
     USER_DATA[uid]["player_name"] = player_name
     USER_DATA[uid]["step"] = 6
-
     kb = types.InlineKeyboardMarkup(row_width=2)
     kb.add(
         types.InlineKeyboardButton(t(uid, "btn_syriatel"), callback_data="pay|syriatel"),
         types.InlineKeyboardButton(t(uid, "btn_sham"), callback_data="pay|sham"),
     )
-    bot.send_message(
-        message.chat.id,
-        t(uid, "choose_payment"),
-        parse_mode="HTML",
-        reply_markup=kb
-    )
+    bot.send_message(message.chat.id, t(uid, "choose_payment"),
+                     parse_mode="HTML", reply_markup=kb)
     bot.send_message(message.chat.id, "🔽", reply_markup=back_keyboard(uid))
 
-# ============ اختيار الدفع ============
 @bot.callback_query_handler(func=lambda c: c.data.startswith("pay|"))
 def choose_payment(call):
     try:
@@ -1303,9 +1368,7 @@ def choose_payment(call):
         uid = call.from_user.id
         data = USER_DATA.get(uid)
         if not data or "game_id" not in data:
-            bot.answer_callback_query(call.id, "⚠️ اضغط /start من جديد", show_alert=True)
-            return
-
+            bot.answer_callback_query(call.id, "⚠️ اضغط /start", show_alert=True); return
         bot.answer_callback_query(call.id, "✅")
 
         conn = db_connect()
@@ -1322,16 +1385,12 @@ def choose_payment(call):
         cur.close(); conn.close()
 
         lang = get_lang(uid)
-
         if method == "sham":
             try:
                 with open(SHAM_IMAGE_PATH, "rb") as photo:
-                    bot.send_photo(
-                        call.message.chat.id,
-                        photo,
-                        caption=t(uid, "sham_image_caption", price=data["price"]),
-                        parse_mode="HTML"
-                    )
+                    bot.send_photo(call.message.chat.id, photo,
+                                   caption=t(uid, "sham_image_caption", price=data["price"]),
+                                   parse_mode="HTML")
             except FileNotFoundError:
                 bot.send_message(call.message.chat.id, "⚠️ صورة sham.jpg غير موجودة")
 
@@ -1341,40 +1400,29 @@ def choose_payment(call):
         sent_msg = bot.send_message(
             call.message.chat.id,
             t_lang(lang, "payment_with_timer",
-                   method=method_name,
-                   steps=steps_text,
-                   remaining=remaining_text,
-                   oid=order_id),
-            parse_mode="HTML",
-            reply_markup=main_keyboard(uid)
+                   method=method_name, steps=steps_text,
+                   remaining=remaining_text, oid=order_id),
+            parse_mode="HTML", reply_markup=main_keyboard(uid)
         )
 
         start_countdown(
-            chat_id=call.message.chat.id,
-            message_id=sent_msg.message_id,
-            order_id=order_id,
-            method=method,
-            uid=uid,
-            lang=lang,
-            price_str=data["price"],
-            total_seconds=PAYMENT_TIMEOUT_SECONDS
+            chat_id=call.message.chat.id, message_id=sent_msg.message_id,
+            order_id=order_id, method=method, uid=uid, lang=lang,
+            price_str=data["price"], total_seconds=PAYMENT_TIMEOUT_SECONDS
         )
 
         method_label = "💳 سيرياتيل كاش" if method == "syriatel" else "📷 شام كاش"
         admin_text = (
             "🔔 <b>طلب شراء جديد!</b>\n\n"
             f"🔖 رقم الطلب: <b>#{order_id}</b>\n"
-            f"👤 المستخدم: {call.from_user.full_name}\n"
-            f"🆔 يوزر: @{call.from_user.username or 'لا يوجد'}\n"
-            f"🆔 تلغرام آيدي: <code>{uid}</code>\n\n"
-            f"🎮 اللعبة: <b>{data['game'].upper()}</b>\n"
-            f"💎 العرض: <b>{data['package_name']}</b>\n"
-            f"💰 السعر: <b>{data['price']}</b>\n"
-            f"🎮 ID اللعبة: <code>{data['game_id']}</code>\n"
-            f"📝 اسم اللاعب: <b>{data['player_name']}</b>\n"
-            f"💳 طريقة الدفع: <b>{method_label}</b>\n"
-            f"⏳ <b>مهلة التسديد: 5 دقائق</b>\n\n"
-            "اضغط زر الموافقة بعد التأكد:"
+            f"👤 {call.from_user.full_name}\n"
+            f"🆔 <code>{uid}</code>\n\n"
+            f"🎮 {data['game'].upper()}\n"
+            f"💎 <b>{data['package_name']}</b>\n"
+            f"💰 <b>{data['price']}</b>\n"
+            f"🎮 ID: <code>{data['game_id']}</code>\n"
+            f"📝 <b>{data['player_name']}</b>\n"
+            f"💳 <b>{method_label}</b>"
         )
         kb = types.InlineKeyboardMarkup()
         kb.add(
@@ -1382,35 +1430,23 @@ def choose_payment(call):
             types.InlineKeyboardButton("❌ رفض", callback_data=f"reject|{order_id}")
         )
         bot.send_message(ADMIN_ID, admin_text, parse_mode="HTML", reply_markup=kb)
-
         USER_DATA.pop(uid, None)
-
     except Exception as e:
-        print(f"❌ خطأ في choose_payment: {e}")
-        try:
-            bot.answer_callback_query(call.id, "⚠️ خطأ، حاول مرة أخرى")
-        except: pass
+        print(f"❌ choose_payment: {e}")
 
-# ============ قبول / رفض ============
 @bot.callback_query_handler(func=lambda c: c.data.startswith("accept|") or c.data.startswith("reject|"))
 def handle_decision(call):
     try:
         action, oid = call.data.split("|")
         oid = int(oid)
-
         COUNTDOWNS[oid] = True
-
         conn = db_connect()
         cur = conn.cursor()
         cur.execute("SELECT user_id, package FROM orders WHERE order_id = %s", (oid,))
         row = cur.fetchone()
         if not row:
-            bot.answer_callback_query(call.id, "⚠️ غير موجود")
-            cur.close(); conn.close(); return
-
-        user_id = row["user_id"]
-        package = row["package"]
-
+            bot.answer_callback_query(call.id, "⚠️"); cur.close(); conn.close(); return
+        user_id = row["user_id"]; package = row["package"]
         if action == "accept":
             cur.execute("UPDATE orders SET status = 'accepted' WHERE order_id = %s", (oid,))
             conn.commit()
@@ -1421,10 +1457,8 @@ def handle_decision(call):
             conn.commit()
             bot.send_message(user_id, t(user_id, "rejected"), parse_mode="HTML")
             bot.answer_callback_query(call.id, "❌")
-
         cur.close(); conn.close()
-        try:
-            bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)
+        try: bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)
         except: pass
     except Exception as e:
         print(f"❌ {e}")
@@ -1434,14 +1468,10 @@ def handle_decision(call):
 def my_info(message):
     ensure_user(message)
     uid = message.from_user.id
-
     if not is_subscribed(uid):
-        show_subscription_message(message.chat.id, uid)
-        return
-
+        show_subscription_message(message.chat.id, uid); return
     u = get_user(uid)
     lang = get_lang(uid)
-
     conn = db_connect()
     cur = conn.cursor()
     cur.execute(
@@ -1450,14 +1480,12 @@ def my_info(message):
     )
     orders = cur.fetchall()
     cur.close(); conn.close()
-
     status_map = {
         "pending": "⏳ قيد المراجعة" if lang == "ar" else "⏳ Pending",
         "accepted": "✅ مقبول" if lang == "ar" else "✅ Accepted",
         "rejected": "❌ مرفوض" if lang == "ar" else "❌ Rejected",
         "expired": "⌛ انتهى الوقت" if lang == "ar" else "⌛ Expired",
     }
-
     if not orders:
         orders_text = t(uid, "no_orders")
     else:
@@ -1467,7 +1495,6 @@ def my_info(message):
                 f"\n🔖 #{o['order_id']} — {o['package']} ({o['price']})\n"
                 f"   {status_map.get(o['status'], o['status'])} | {o['created_at']}\n"
             )
-
     bot.send_message(
         message.chat.id,
         t(uid, "my_info",
@@ -1478,138 +1505,93 @@ def my_info(message):
           orders=orders_text),
         parse_mode="HTML"
     )
-    # ✅ إضافة زر المسابقة
     kb = types.InlineKeyboardMarkup(row_width=1)
     kb.add(types.InlineKeyboardButton(t(uid, "btn_contest"), callback_data="contest_show"))
     bot.send_message(
         message.chat.id,
         "🎁 <b>هل تريد المشاركة في المسابقة؟</b>\n👇 اضغط الزر بالأسفل",
-        parse_mode="HTML",
-        reply_markup=kb
+        parse_mode="HTML", reply_markup=kb
     )
 
-# ============ زر المسابقة ============
+# ============ المسابقة ============
 @bot.callback_query_handler(func=lambda c: c.data == "contest_show")
 def contest_show(call):
     uid = call.from_user.id
     bot.answer_callback_query(call.id)
 
-    # إذا مسجل من قبل
     entry = get_contest_entry(uid)
+    lang = get_lang(uid)
+
     if entry:
-        status = contest_status_text(uid, entry["status"])
-        bot.send_message(uid, t(uid, "contest_already", status=status), parse_mode="HTML")
-        return
-
-    kb = types.InlineKeyboardMarkup(row_width=1)
-    kb.add(types.InlineKeyboardButton(t(uid, "btn_copy_link"), url=CONTEST_LINK))
-    kb.add(types.InlineKeyboardButton(t(uid, "btn_share_done"), callback_data="contest_register"))
-
-    bot.send_message(uid, t(uid, "contest_title"), parse_mode="HTML", reply_markup=kb)
-
-@bot.callback_query_handler(func=lambda c: c.data == "contest_register")
-def contest_register(call):
-    uid = call.from_user.id
-    bot.answer_callback_query(call.id)
-
-    # إذا مسجل من قبل
-    entry = get_contest_entry(uid)
-    if entry:
-        status = contest_status_text(uid, entry["status"])
-        bot.send_message(uid, t(uid, "contest_already", status=status), parse_mode="HTML")
-        return
-
-    success = register_contest(call.message)
-    if success:
-        bot.send_message(uid, t(uid, "contest_registered"), parse_mode="HTML")
-
-        # إشعار الأدمن
-        admin_text = (
-            "🎁 <b>متسابق جديد في المسابقة!</b>\n\n"
-            f"👤 الاسم: {call.from_user.full_name}\n"
-            f"🆔 <code>{uid}</code>\n"
-            f"🌐 @{call.from_user.username or 'لا يوجد'}\n"
-            f"🕒 {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n"
-            "👇 راجع المشاركة وقرّر:"
-        )
-        kb = types.InlineKeyboardMarkup(row_width=2)
-        kb.add(
-            types.InlineKeyboardButton("✅ قبول", callback_data=f"contest_ok|{uid}"),
-            types.InlineKeyboardButton("❌ رفض", callback_data=f"contest_no|{uid}"),
-        )
-        bot.send_message(ADMIN_ID, admin_text, parse_mode="HTML", reply_markup=kb)
+        status = contest_status_text(lang, entry["status"])
+        text = t(uid, "contest_title",
+                 link=entry["invite_link"],
+                 count=entry["joins_count"],
+                 required=REQUIRED_JOINS,
+                 status=status)
+        kb = types.InlineKeyboardMarkup(row_width=1)
+        kb.add(types.InlineKeyboardButton(t(uid, "btn_copy_link"), url=entry["invite_link"]))
+        bot.send_message(uid, text, parse_mode="HTML", reply_markup=kb)
     else:
-        bot.send_message(uid, "⚠️ أنت مسجل بالفعل!", parse_mode="HTML")
+        msg = bot.send_message(uid, t(uid, "contest_loading"))
+        try:
+            bot.delete_message(uid, msg.message_id)
+        except: pass
 
-# ============ المطور: قبول/رفض مشارك ============
-@bot.callback_query_handler(func=lambda c: c.data.startswith("contest_ok|") or c.data.startswith("contest_no|"))
-def contest_decision(call):
-    try:
-        action, uid_str = call.data.split("|")
-        target_uid = int(uid_str)
+        new_entry = register_contest_user(
+            uid,
+            call.from_user.username or "",
+            call.from_user.full_name
+        )
 
-        if call.from_user.id != ADMIN_ID:
-            bot.answer_callback_query(call.id, "🚫", show_alert=True)
+        if not new_entry:
+            bot.send_message(uid, "⚠️ حدث خطأ في إنشاء الرابط. تأكد أن البوت مشرف في القناة.")
             return
 
-        if action == "contest_ok":
-            approve_contest(target_uid)
-            bot.answer_callback_query(call.id, "✅ تم القبول")
-            try:
-                bot.send_message(target_uid, t(target_uid, "contest_approved_msg"), parse_mode="HTML")
-            except: pass
-        else:
-            reject_contest(target_uid)
-            bot.answer_callback_query(call.id, "❌ تم الرفض")
-            try:
-                bot.send_message(target_uid, t(target_uid, "contest_rejected_msg"), parse_mode="HTML")
-            except: pass
+        text = t(uid, "contest_created",
+                 link=new_entry["invite_link"],
+                 count=0, required=REQUIRED_JOINS)
+        kb = types.InlineKeyboardMarkup(row_width=1)
+        kb.add(types.InlineKeyboardButton(t(uid, "btn_copy_link"), url=new_entry["invite_link"]))
+        bot.send_message(uid, text, parse_mode="HTML", reply_markup=kb)
 
-        try:
-            bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)
-        except: pass
-    except Exception as e:
-        print(f"❌ contest_decision: {e}")
+        bot.send_message(
+            ADMIN_ID,
+            f"🎁 <b>متسابق جديد!</b>\n\n"
+            f"👤 {call.from_user.full_name}\n"
+            f"🆔 <code>{uid}</code>\n"
+            f"🌐 @{call.from_user.username or 'لا يوجد'}\n"
+            f"🔗 {new_entry['invite_link']}",
+            parse_mode="HTML"
+        )
 
-# ============ المطور: زر المتسابقين ============
+# ============ المطور: قائمة المتسابقين ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_contestants"], TEXTS["en"]["btn_contestants"]] and m.from_user.id == ADMIN_ID)
 def show_contestants(message):
     uid = message.from_user.id
-
     contestants = get_all_contestants()
-
     if not contestants:
-        bot.send_message(uid, t(uid, "contestants_empty"))
-        return
-
+        bot.send_message(uid, t(uid, "contestants_empty")); return
     total = len(contestants)
-    approved = sum(1 for c in contestants if c["status"] == "approved")
-    pending = sum(1 for c in contestants if c["status"] == "pending")
-    rejected = sum(1 for c in contestants if c["status"] == "rejected")
-
+    qualified = sum(1 for c in contestants if c["status"] == "qualified")
+    active = sum(1 for c in contestants if c["status"] == "active")
     bot.send_message(
         uid,
-        t(uid, "contestants_title", total=total, approved=approved, pending=pending, rejected=rejected),
+        t(uid, "contestants_title", total=total, qualified=qualified, active=active),
         parse_mode="HTML"
     )
-
     for c in contestants:
-        status_txt = contest_status_text(uid, c["status"])
+        status_txt = contest_status_text(get_lang(uid), c["status"])
         text = t(uid, "contestant_item",
                  name=c["full_name"] or "-",
                  uid=c["user_id"],
                  username=c["username"] or "لا يوجد",
+                 count=c["joins_count"],
+                 required=REQUIRED_JOINS,
                  status=status_txt,
-                 time=c["registered_at"] or "-")
-
+                 time=c["created_at"] or "-")
         kb = types.InlineKeyboardMarkup(row_width=2)
         kb.add(types.InlineKeyboardButton("👤 فتح حساب", url=f"tg://user?id={c['user_id']}"))
-        if c["status"] == "pending":
-            kb.add(
-                types.InlineKeyboardButton("✅ قبول", callback_data=f"contest_ok|{c['user_id']}"),
-                types.InlineKeyboardButton("❌ رفض", callback_data=f"contest_no|{c['user_id']}")
-            )
-
         bot.send_message(uid, text, parse_mode="HTML", reply_markup=kb)
 
 # ============ زر الدعم ============
@@ -1617,25 +1599,19 @@ def show_contestants(message):
 def support(message):
     uid = message.from_user.id
     if not is_subscribed(uid):
-        show_subscription_message(message.chat.id, uid)
-        return
-
+        show_subscription_message(message.chat.id, uid); return
     kb = types.InlineKeyboardMarkup(row_width=1)
     kb.add(types.InlineKeyboardButton(t(uid, "btn_complaint"), callback_data="send_complaint"))
-
     bot.send_message(message.chat.id, t(uid, "support"), parse_mode="HTML", reply_markup=kb)
 
-# ============ إرسال شكوى ============
 @bot.callback_query_handler(func=lambda c: c.data == "send_complaint")
 def ask_complaint(call):
     try:
         uid = call.from_user.id
         bot.answer_callback_query(call.id)
         msg = bot.send_message(
-            call.message.chat.id,
-            t(uid, "ask_message"),
-            parse_mode="HTML",
-            reply_markup=back_keyboard(uid)
+            call.message.chat.id, t(uid, "ask_message"),
+            parse_mode="HTML", reply_markup=back_keyboard(uid)
         )
         bot.register_next_step_handler(msg, receive_complaint)
     except Exception as e:
@@ -1643,20 +1619,16 @@ def ask_complaint(call):
 
 def receive_complaint(message):
     uid = message.from_user.id
-
     if message.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"]]:
         bot.send_message(message.chat.id, t(uid, "back_done"), reply_markup=main_keyboard(uid))
         return
-
     text = message.text.strip() if message.text else ""
     if len(text) < 5:
         msg = bot.send_message(
             message.chat.id, t(uid, "message_too_short"),
             reply_markup=back_keyboard(uid)
         )
-        bot.register_next_step_handler(msg, receive_complaint)
-        return
-
+        bot.register_next_step_handler(msg, receive_complaint); return
     conn = db_connect()
     cur = conn.cursor()
     cur.execute(
@@ -1666,47 +1638,35 @@ def receive_complaint(message):
          text, datetime.now().strftime("%Y-%m-%d %H:%M"))
     )
     msg_id = cur.fetchone()["id"]
-    conn.commit()
-    cur.close(); conn.close()
-
+    conn.commit(); cur.close(); conn.close()
     bot.send_message(message.chat.id, t(uid, "message_sent"), parse_mode="HTML",
                      reply_markup=main_keyboard(uid))
-
-    admin_text = (
-        "📩 <b>رسالة جديدة من المستخدمين!</b>\n\n"
-        f"🔖 رقم: #{msg_id}\n"
-        f"👤 من: {message.from_user.full_name}\n"
-        f"🆔 <code>{uid}</code>\n"
-        f"🌐 @{message.from_user.username or 'لا يوجد'}\n\n"
-        f"💬 <b>الرسالة:</b>\n{text}"
+    bot.send_message(
+        ADMIN_ID,
+        f"📩 <b>رسالة جديدة!</b>\n\n"
+        f"🔖 #{msg_id}\n👤 {message.from_user.full_name}\n"
+        f"🆔 <code>{uid}</code>\n🌐 @{message.from_user.username or 'لا يوجد'}\n\n"
+        f"💬 {text}",
+        parse_mode="HTML"
     )
-    bot.send_message(ADMIN_ID, admin_text, parse_mode="HTML")
 
-# ============ البريد الوارد ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_inbox"], TEXTS["en"]["btn_inbox"]] and m.from_user.id == ADMIN_ID)
 def show_inbox(message):
     uid = message.from_user.id
-
     conn = db_connect()
     cur = conn.cursor()
     cur.execute("SELECT * FROM messages ORDER BY id DESC LIMIT 10")
     msgs = cur.fetchall()
     cur.close(); conn.close()
-
     if not msgs:
-        bot.send_message(message.chat.id, t(uid, "inbox_empty"))
-        return
-
+        bot.send_message(message.chat.id, t(uid, "inbox_empty")); return
     bot.send_message(message.chat.id, t(uid, "inbox_title", count=len(msgs)), parse_mode="HTML")
-
     for m in msgs:
         text = t(uid, "inbox_item",
                  n=m["id"], name=m["full_name"], uid=m["user_id"],
                  time=m["created_at"], msg=m["message"])
         kb = types.InlineKeyboardMarkup()
-        kb.add(types.InlineKeyboardButton(
-            "👤 الرد على المستخدم", url=f"tg://user?id={m['user_id']}"
-        ))
+        kb.add(types.InlineKeyboardButton("👤 الرد", url=f"tg://user?id={m['user_id']}"))
         bot.send_message(message.chat.id, text, parse_mode="HTML", reply_markup=kb)
 
 # ============ الإعدادات ============
@@ -1714,20 +1674,15 @@ def show_inbox(message):
 def settings_menu(message):
     uid = message.from_user.id
     ensure_user(message)
-
     if not is_subscribed(uid):
-        show_subscription_message(message.chat.id, uid)
-        return
-
+        show_subscription_message(message.chat.id, uid); return
     is_admin = (uid == ADMIN_ID)
-
     kb = types.InlineKeyboardMarkup(row_width=1)
     kb.add(types.InlineKeyboardButton(t(uid, "btn_change_lang"), callback_data="cfg_lang"))
     if is_admin:
         kb.add(types.InlineKeyboardButton(t(uid, "btn_change_order"), callback_data="cfg_order"))
         kb.add(types.InlineKeyboardButton(t(uid, "btn_dev_mode"), callback_data="cfg_dev"))
     kb.add(types.InlineKeyboardButton(t(uid, "btn_reset_data"), callback_data="cfg_reset"))
-
     title = t(uid, "settings_admin") if is_admin else t(uid, "settings_user")
     bot.send_message(message.chat.id, title, parse_mode="HTML", reply_markup=kb)
 
@@ -1740,23 +1695,17 @@ def cfg_lang(call):
             types.InlineKeyboardButton("🇸🇦 العربية", callback_data="set_lang|ar"),
             types.InlineKeyboardButton("🇬🇧 English", callback_data="set_lang|en"),
         )
-        bot.edit_message_text(
-            t(uid, "lang_pick"),
-            call.message.chat.id, call.message.message_id,
-            reply_markup=kb
-        )
+        bot.edit_message_text(t(uid, "lang_pick"),
+                              call.message.chat.id, call.message.message_id, reply_markup=kb)
         bot.answer_callback_query(call.id)
-    except Exception as e:
-        print(f"❌ {e}")
+    except Exception as e: print(f"❌ {e}")
 
 @bot.callback_query_handler(func=lambda c: c.data == "cfg_order")
 def cfg_order(call):
     try:
         uid = call.from_user.id
         if uid != ADMIN_ID:
-            bot.answer_callback_query(call.id, "🚫", show_alert=True)
-            return
-
+            bot.answer_callback_query(call.id, "🚫", show_alert=True); return
         current = get_button_order()
         order_display = {
             "ff,pubg,jawaker": "1️⃣ FF → PUBG → Jawaker",
@@ -1764,88 +1713,60 @@ def cfg_order(call):
             "pubg,jawaker,ff": "3️⃣ PUBG → Jawaker → FF",
         }
         order_str = order_display.get(current, current)
-
         kb = types.InlineKeyboardMarkup(row_width=1)
         kb.add(types.InlineKeyboardButton(t(uid, "btn_order_1"), callback_data="set_order|ff,pubg,jawaker"))
         kb.add(types.InlineKeyboardButton(t(uid, "btn_order_2"), callback_data="set_order|jawaker,ff,pubg"))
         kb.add(types.InlineKeyboardButton(t(uid, "btn_order_3"), callback_data="set_order|pubg,jawaker,ff"))
-
-        bot.edit_message_text(
-            t(uid, "order_current", order=order_str),
-            call.message.chat.id, call.message.message_id,
-            parse_mode="HTML", reply_markup=kb
-        )
+        bot.edit_message_text(t(uid, "order_current", order=order_str),
+                              call.message.chat.id, call.message.message_id,
+                              parse_mode="HTML", reply_markup=kb)
         bot.answer_callback_query(call.id)
-    except Exception as e:
-        print(f"❌ {e}")
+    except Exception as e: print(f"❌ {e}")
 
 @bot.callback_query_handler(func=lambda c: c.data == "cfg_dev")
 def cfg_dev(call):
     try:
         uid = call.from_user.id
         if uid != ADMIN_ID:
-            bot.answer_callback_query(call.id, "🚫", show_alert=True)
-            return
-
+            bot.answer_callback_query(call.id, "🚫", show_alert=True); return
         current = get_setting("dev_mode", "off")
         if current == "on":
-            text = t(uid, "dev_mode_current_on")
-            btn = t(uid, "btn_dev_off")
-            cb = "dev|off"
+            text = t(uid, "dev_mode_current_on"); btn = t(uid, "btn_dev_off"); cb = "dev|off"
         else:
-            text = t(uid, "dev_mode_current_off")
-            btn = t(uid, "btn_dev_on")
-            cb = "dev|on"
-
+            text = t(uid, "dev_mode_current_off"); btn = t(uid, "btn_dev_on"); cb = "dev|on"
         kb = types.InlineKeyboardMarkup(row_width=1)
         kb.add(types.InlineKeyboardButton(btn, callback_data=cb))
-
-        bot.edit_message_text(
-            text,
-            call.message.chat.id, call.message.message_id,
-            parse_mode="HTML", reply_markup=kb
-        )
+        bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
+                              parse_mode="HTML", reply_markup=kb)
         bot.answer_callback_query(call.id)
-    except Exception as e:
-        print(f"❌ {e}")
+    except Exception as e: print(f"❌ {e}")
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("dev|"))
 def dev_toggle(call):
     try:
         uid = call.from_user.id
         if uid != ADMIN_ID:
-            bot.answer_callback_query(call.id, "🚫", show_alert=True)
-            return
-
+            bot.answer_callback_query(call.id, "🚫", show_alert=True); return
         action = call.data.split("|")[1]
         if action == "on":
             set_setting("dev_mode", "on")
             bot.answer_callback_query(call.id, t(uid, "dev_mode_enabled"), show_alert=True)
             try:
-                bot.edit_message_text(
-                    t(uid, "dev_mode_current_on"),
-                    call.message.chat.id, call.message.message_id,
-                    parse_mode="HTML",
+                bot.edit_message_text(t(uid, "dev_mode_current_on"),
+                    call.message.chat.id, call.message.message_id, parse_mode="HTML",
                     reply_markup=types.InlineKeyboardMarkup().add(
-                        types.InlineKeyboardButton(t(uid, "btn_dev_off"), callback_data="dev|off")
-                    )
-                )
+                        types.InlineKeyboardButton(t(uid, "btn_dev_off"), callback_data="dev|off")))
             except: pass
         else:
             set_setting("dev_mode", "off")
             bot.answer_callback_query(call.id, t(uid, "dev_mode_disabled"), show_alert=True)
             try:
-                bot.edit_message_text(
-                    t(uid, "dev_mode_current_off"),
-                    call.message.chat.id, call.message.message_id,
-                    parse_mode="HTML",
+                bot.edit_message_text(t(uid, "dev_mode_current_off"),
+                    call.message.chat.id, call.message.message_id, parse_mode="HTML",
                     reply_markup=types.InlineKeyboardMarkup().add(
-                        types.InlineKeyboardButton(t(uid, "btn_dev_on"), callback_data="dev|on")
-                    )
-                )
+                        types.InlineKeyboardButton(t(uid, "btn_dev_on"), callback_data="dev|on")))
             except: pass
-    except Exception as e:
-        print(f"❌ dev_toggle: {e}")
+    except Exception as e: print(f"❌ {e}")
 
 @bot.callback_query_handler(func=lambda c: c.data == "cfg_reset")
 def cfg_reset(call):
@@ -1856,88 +1777,66 @@ def cfg_reset(call):
             types.InlineKeyboardButton(t(uid, "btn_yes"), callback_data="do_reset"),
             types.InlineKeyboardButton(t(uid, "btn_no"), callback_data="cancel_reset"),
         )
-        bot.edit_message_text(
-            t(uid, "reset_confirm"),
-            call.message.chat.id, call.message.message_id,
-            reply_markup=kb
-        )
+        bot.edit_message_text(t(uid, "reset_confirm"),
+                              call.message.chat.id, call.message.message_id, reply_markup=kb)
         bot.answer_callback_query(call.id)
-    except Exception as e:
-        print(f"❌ {e}")
+    except Exception as e: print(f"❌ {e}")
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("set_lang|"))
 def set_lang(call):
     try:
         uid = call.from_user.id
         new_lang = call.data.split("|")[1]
-
         conn = db_connect()
         cur = conn.cursor()
         cur.execute("UPDATE users SET language = %s WHERE user_id = %s", (new_lang, uid))
-        conn.commit()
-        cur.close(); conn.close()
-
+        conn.commit(); cur.close(); conn.close()
         bot.answer_callback_query(call.id, t(uid, "lang_changed"))
-        try:
-            bot.delete_message(call.message.chat.id, call.message.message_id)
+        try: bot.delete_message(call.message.chat.id, call.message.message_id)
         except: pass
         bot.send_message(call.message.chat.id, t(uid, "lang_changed"),
                          reply_markup=main_keyboard(uid))
-    except Exception as e:
-        print(f"❌ {e}")
+    except Exception as e: print(f"❌ {e}")
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("set_order|"))
 def set_order(call):
     try:
         uid = call.from_user.id
         if uid != ADMIN_ID:
-            bot.answer_callback_query(call.id, "🚫", show_alert=True)
-            return
-
+            bot.answer_callback_query(call.id, "🚫", show_alert=True); return
         new_order = call.data.split("|")[1]
         set_button_order(new_order)
-
         bot.answer_callback_query(call.id, t(uid, "order_changed"))
-        try:
-            bot.delete_message(call.message.chat.id, call.message.message_id)
+        try: bot.delete_message(call.message.chat.id, call.message.message_id)
         except: pass
         bot.send_message(call.message.chat.id, t(uid, "order_changed"),
                          reply_markup=main_keyboard(uid))
-    except Exception as e:
-        print(f"❌ {e}")
+    except Exception as e: print(f"❌ {e}")
 
 @bot.callback_query_handler(func=lambda c: c.data == "do_reset")
 def do_reset(call):
     try:
         uid = call.from_user.id
-
         conn = db_connect()
         cur = conn.cursor()
         cur.execute("DELETE FROM orders WHERE user_id = %s", (uid,))
         cur.execute("DELETE FROM users WHERE user_id = %s", (uid,))
-        conn.commit()
-        cur.close(); conn.close()
-
+        conn.commit(); cur.close(); conn.close()
         bot.answer_callback_query(call.id, "🗑️")
-        try:
-            bot.delete_message(call.message.chat.id, call.message.message_id)
+        try: bot.delete_message(call.message.chat.id, call.message.message_id)
         except: pass
-
         bot.send_message(call.message.chat.id, t(uid, "reset_done"))
         USER_DATA.pop(uid, None)
         cmd_start(call.message)
-    except Exception as e:
-        print(f"❌ {e}")
+    except Exception as e: print(f"❌ {e}")
 
 @bot.callback_query_handler(func=lambda c: c.data == "cancel_reset")
 def cancel_reset(call):
     try:
         bot.answer_callback_query(call.id, "✅")
-        try:
-            bot.delete_message(call.message.chat.id, call.message.message_id)
+        try: bot.delete_message(call.message.chat.id, call.message.message_id)
         except: pass
-    except Exception as e:
-        print(f"❌ {e}")
+    except Exception as e: print(f"❌ {e}")
 
 # ============ رسائل غير معروفة ============
 @bot.message_handler(func=lambda m: True)
@@ -1946,19 +1845,15 @@ def unknown_message(message):
         uid = message.from_user.id
         ensure_user(message)
         if is_subscribed(uid):
-            bot.send_message(
-                message.chat.id,
-                t(uid, "unknown_msg"),
-                reply_markup=main_keyboard(uid)
-            )
+            bot.send_message(message.chat.id, t(uid, "unknown_msg"),
+                             reply_markup=main_keyboard(uid))
         else:
             show_subscription_message(message.chat.id, uid)
-    except Exception as e:
-        print(f"❌ {e}")
+    except Exception as e: print(f"❌ {e}")
 
 # ============ تشغيل ============
 print("🤖 البوت يعمل الآن...")
-print("🎁 نظام المسابقة مضاف")
+print("🎁 نظام المسابقة (إحالة حقيقية) مفعّل")
 
 bot.infinity_polling(
     allowed_updates=[
@@ -1968,7 +1863,10 @@ bot.infinity_polling(
         "inline_query",
         "chosen_inline_result",
         "channel_post",
-        "edited_channel_post"
+        "edited_channel_post",
+        "chat_member",         # ← مهم جداً
+        "my_chat_member",
+        "chat_join_request"
     ],
     skip_pending=True,
     timeout=30,
