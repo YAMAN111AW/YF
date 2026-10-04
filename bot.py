@@ -23,7 +23,7 @@ SHAM_IMAGE_PATH = "sham.jpg"
 ORDERS_OPEN_HOUR = 12
 ORDERS_CLOSE_HOUR = 22
 PAYMENT_TIMEOUT_SECONDS = 300
-REQUIRED_JOINS = 5   # عدد المدعوين المطلوب
+REQUIRED_JOINS = 5
 
 bot = telebot.TeleBot(BOT_TOKEN)
 USER_DATA = {}
@@ -40,7 +40,6 @@ def fix_allowed_updates():
         )
         print(f"🔧 deleteWebhook: {r1.json()}")
 
-        # ✅ مهم: تفعيل chat_member لاستقبال إشعارات الانضمام للقناة
         r2 = requests.get(
             f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates",
             params={
@@ -72,24 +71,20 @@ def fix_allowed_updates():
 fix_allowed_updates()
 time.sleep(1)
 
-# ============ التحقق من صلاحيات البوت في القناة ============
 def check_bot_admin():
-    """يتأكد أن البوت مشرف في القناة"""
     try:
         me = bot.get_me()
         member = bot.get_chat_member(CHANNEL_USERNAME, me.id)
         status = member.status
         print(f"🤖 حالة البوت في القناة: {status}")
         if status not in ("administrator", "creator"):
-            print("⚠️⚠️⚠️ تحذير: البوت ليس مشرف في القناة!")
-            print("⚠️ روابط الدعوة الفريدة وحدث chat_member لن يعملا!")
+            print("⚠️⚠️⚠️ البوت ليس مشرف في القناة!")
             return False
-        # نتأكد من صلاحية invite users
         if status == "administrator":
             can_invite = getattr(member, "can_invite_users", False)
             print(f"🔑 صلاحية دعوة الأعضاء: {can_invite}")
             if not can_invite:
-                print("⚠️ البوت يحتاج صلاحية 'invite users' في القناة!")
+                print("⚠️ البوت يحتاج صلاحية 'invite users'!")
                 return False
         return True
     except Exception as e:
@@ -289,17 +284,48 @@ TEXTS = {
             "🏆 <b>قائمة المتسابقين</b>\n\n"
             "📊 الإجمالي: <b>{total}</b>\n"
             "✅ مؤهلون: <b>{qualified}</b>\n"
-            "🎯 نشطون: <b>{active}</b>"
+            "🎯 نشطون: <b>{active}</b>\n\n"
+            "👇 تفاصيل كل متسابق:"
         ),
         "contestants_empty": "📭 لا يوجد متسابقون حتى الآن",
         "contestant_item": (
+            "━━━━━━━━━━━━━━━━━━\n"
             "👤 <b>{name}</b>\n"
-            "🆔 <code>{uid}</code>\n"
-            "🌐 @{username}\n"
-            "📊 المدعوين: <b>{count}/{required}</b>\n"
+            "🆔 تلغرام آيدي: <code>{uid}</code>\n"
+            "🌐 يوزر: @{username}\n"
+            "📊 <b>المدعوين: {count}/{required}</b>\n"
             "🎯 الحالة: {status}\n"
-            "🕒 {time}"
+            "🕒 <b>بدأ المسابقة:</b> {time}\n"
+            "🕐 <b>آخر مدعو:</b> {last}\n"
+            "🔗 <b>رابطه:</b> <code>{link}</code>\n"
+            "━━━━━━━━━━━━━━━━━━"
         ),
+        "contestant_no_last": "لا يوجد بعد",
+        "btn_view_details": "📋 تفاصيل كاملة",
+        "btn_view_user": "👤 فتح حساب",
+        "contestant_full_details": (
+            "━━━━━━━━━━━━━━━━━━\n"
+            "📋 <b>تفاصيل المتسابق</b>\n"
+            "━━━━━━━━━━━━━━━━━━\n\n"
+            "👤 <b>الاسم:</b> {name}\n"
+            "🆔 <b>تلغرام آيدي:</b> <code>{uid}</code>\n"
+            "🌐 <b>يوزر:</b> @{username}\n"
+            "🔗 <b>رابط الحساب:</b> <a href=\"tg://user?id={uid}\">اضغط هنا</a>\n\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            "🎁 <b>بيانات المسابقة</b>\n"
+            "━━━━━━━━━━━━━━━━━━\n\n"
+            "📊 <b>المدعوين:</b> <b>{count}/{required}</b>\n"
+            "🎯 <b>الحالة:</b> {status}\n"
+            "🕒 <b>بدأ المسابقة:</b> {created}\n"
+            "🕐 <b>آخر مدعو:</b> {last}\n\n"
+            "🔗 <b>رابط الدعوة الخاص:</b>\n"
+            "<code>{link}</code>\n\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            "👥 <b>قائمة المدعوين ({count}):</b>\n"
+            "{referrals_list}"
+        ),
+        "referral_item": "   {n}. 👤 {name} — <code>{uid}</code> — {time}\n",
+        "no_referrals_yet": "   لم يدعُ أحدًا بعد",
         "inbox_title": "📬 <b>البريد الوارد</b>\n\n📥 آخر <b>{count}</b> رسالة",
         "inbox_empty": "📭 لا يوجد رسائل حتى الآن",
         "inbox_item": (
@@ -342,6 +368,14 @@ TEXTS = {
         "btn_order_3": "3️⃣ PUBG → Jawaker → FF",
         "back_done": "⬅️ رجعنا للخطوة السابقة",
         "unknown_msg": "🤔 لم أفهم رسالتك. استخدم الأزرار بالأسفل 👇",
+        "ask_message": (
+            "✉️ <b>أرسل رسالتك الآن</b>\n\n"
+            "📝 اكتب شكواك، اقتراحك، أو أي استفسار\n"
+            "سيتم إرسالها للإدارة مباشرة ✅\n\n"
+            "لإلغاء الإرسال اضغط زر الرجوع 👇"
+        ),
+        "message_sent": "✅ <b>تم إرسال رسالتك بنجاح!</b>\n\nسيتم الرد عليك في أقرب وقت 📩",
+        "message_too_short": "❌ الرسالة قصيرة جدًا! أرسل رسالة أطول:",
     },
     "en": {
         "welcome": (
@@ -476,17 +510,48 @@ TEXTS = {
             "🏆 <b>Contestants</b>\n\n"
             "📊 Total: <b>{total}</b>\n"
             "✅ Qualified: <b>{qualified}</b>\n"
-            "🎯 Active: <b>{active}</b>"
+            "🎯 Active: <b>{active}</b>\n\n"
+            "👇 Details:"
         ),
         "contestants_empty": "📭 No contestants yet",
         "contestant_item": (
+            "━━━━━━━━━━━━━━━━━━\n"
             "👤 <b>{name}</b>\n"
-            "🆔 <code>{uid}</code>\n"
-            "🌐 @{username}\n"
-            "📊 Invites: <b>{count}/{required}</b>\n"
+            "🆔 Telegram ID: <code>{uid}</code>\n"
+            "🌐 Username: @{username}\n"
+            "📊 <b>Invites: {count}/{required}</b>\n"
             "🎯 Status: {status}\n"
-            "🕒 {time}"
+            "🕒 <b>Started:</b> {time}\n"
+            "🕐 <b>Last invite:</b> {last}\n"
+            "🔗 <b>Link:</b> <code>{link}</code>\n"
+            "━━━━━━━━━━━━━━━━━━"
         ),
+        "contestant_no_last": "No invites yet",
+        "btn_view_details": "📋 Full details",
+        "btn_view_user": "👤 Open account",
+        "contestant_full_details": (
+            "━━━━━━━━━━━━━━━━━━\n"
+            "📋 <b>Contestant Details</b>\n"
+            "━━━━━━━━━━━━━━━━━━\n\n"
+            "👤 <b>Name:</b> {name}\n"
+            "🆔 <b>Telegram ID:</b> <code>{uid}</code>\n"
+            "🌐 <b>Username:</b> @{username}\n"
+            "🔗 <b>Account link:</b> <a href=\"tg://user?id={uid}\">Click here</a>\n\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            "🎁 <b>Contest Data</b>\n"
+            "━━━━━━━━━━━━━━━━━━\n\n"
+            "📊 <b>Invites:</b> <b>{count}/{required}</b>\n"
+            "🎯 <b>Status:</b> {status}\n"
+            "🕒 <b>Started:</b> {created}\n"
+            "🕐 <b>Last invite:</b> {last}\n\n"
+            "🔗 <b>Invite link:</b>\n"
+            "<code>{link}</code>\n\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            "👥 <b>Invited people ({count}):</b>\n"
+            "{referrals_list}"
+        ),
+        "referral_item": "   {n}. 👤 {name} — <code>{uid}</code> — {time}\n",
+        "no_referrals_yet": "   No invites yet",
         "inbox_title": "📬 <b>Inbox</b>\n\n📥 Last <b>{count}</b> messages",
         "inbox_empty": "📭 No messages yet",
         "inbox_item": (
@@ -526,6 +591,14 @@ TEXTS = {
         "btn_order_3": "3️⃣ PUBG → Jawaker → FF",
         "back_done": "⬅️ Back",
         "unknown_msg": "🤔 I didn't understand. Use the buttons below 👇",
+        "ask_message": (
+            "✉️ <b>Send your message</b>\n\n"
+            "📝 Complaint, suggestion, or inquiry\n"
+            "Will be sent directly ✅\n\n"
+            "To cancel, press Back 👇"
+        ),
+        "message_sent": "✅ <b>Message sent!</b>\n\nWe'll reply soon 📩",
+        "message_too_short": "❌ Too short!",
     }
 }
 
@@ -578,7 +651,8 @@ def init_db():
             created_at TEXT
         )
     """)
-    # جدول المسابقة
+
+    # ========== جدول المسابقة ==========
     cur.execute("""
         CREATE TABLE IF NOT EXISTS contest (
             user_id BIGINT PRIMARY KEY,
@@ -591,7 +665,17 @@ def init_db():
             created_at TEXT
         )
     """)
-    # جدول الإحالات
+
+    # ✅ ضمان وجود كل الأعمدة (حتى لو الجدول موجود من قبل)
+    cur.execute("ALTER TABLE contest ADD COLUMN IF NOT EXISTS username TEXT")
+    cur.execute("ALTER TABLE contest ADD COLUMN IF NOT EXISTS full_name TEXT")
+    cur.execute("ALTER TABLE contest ADD COLUMN IF NOT EXISTS invite_link TEXT")
+    cur.execute("ALTER TABLE contest ADD COLUMN IF NOT EXISTS invite_link_name TEXT")
+    cur.execute("ALTER TABLE contest ADD COLUMN IF NOT EXISTS joins_count INT DEFAULT 0")
+    cur.execute("ALTER TABLE contest ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active'")
+    cur.execute("ALTER TABLE contest ADD COLUMN IF NOT EXISTS created_at TEXT")
+
+    # ========== جدول الإحالات ==========
     cur.execute("""
         CREATE TABLE IF NOT EXISTS referrals (
             id SERIAL PRIMARY KEY,
@@ -601,13 +685,16 @@ def init_db():
             joined_at TEXT
         )
     """)
+    cur.execute("ALTER TABLE referrals ADD COLUMN IF NOT EXISTS referrer_id BIGINT")
+    cur.execute("ALTER TABLE referrals ADD COLUMN IF NOT EXISTS referred_id BIGINT")
+    cur.execute("ALTER TABLE referrals ADD COLUMN IF NOT EXISTS invite_link TEXT")
+    cur.execute("ALTER TABLE referrals ADD COLUMN IF NOT EXISTS joined_at TEXT")
 
     cur.execute("SELECT value FROM settings WHERE key = 'button_order'")
     row = cur.fetchone()
     if row:
         if "jawaker" not in row["value"]:
             cur.execute("UPDATE settings SET value = 'ff,pubg,jawaker' WHERE key = 'button_order'")
-            print("🔧 تحديث ترتيب الأزرار: ff,pubg,jawaker")
     else:
         cur.execute("INSERT INTO settings VALUES ('button_order', 'ff,pubg,jawaker')")
 
@@ -615,6 +702,7 @@ def init_db():
 
     conn.commit()
     cur.close(); conn.close()
+    print("✅ قاعدة البيانات جاهزة")
 
 init_db()
 
@@ -713,32 +801,25 @@ def validate_game_id(game_id: str, game: str):
         return False, "لا يبدأ بـ 0"
 
     if game in ("ff", "ff_membership"):
-        if len(game_id) < 5:
-            return False, "ID فري فاير أقل من 5 أرقام"
-        if len(game_id) > 15:
-            return False, "ID فري فاير أكثر من 15 رقم"
+        if len(game_id) < 5: return False, "ID فري فاير أقل من 5 أرقام"
+        if len(game_id) > 15: return False, "ID فري فاير أكثر من 15 رقم"
     elif game == "pubg":
-        if len(game_id) < 9:
-            return False, "ID ببجي أقل من 9 أرقام"
-        if len(game_id) > 12:
-            return False, "ID ببجي أكثر من 12 رقم"
+        if len(game_id) < 9: return False, "ID ببجي أقل من 9 أرقام"
+        if len(game_id) > 12: return False, "ID ببجي أكثر من 12 رقم"
     elif game == "jawaker":
-        if len(game_id) < 6:
-            return False, "ID جواكر أقل من 6 أرقام"
-        if len(game_id) > 12:
-            return False, "ID جواكر أكثر من 12 رقم"
+        if len(game_id) < 6: return False, "ID جواكر أقل من 6 أرقام"
+        if len(game_id) > 12: return False, "ID جواكر أكثر من 12 رقم"
 
     return True, game_id
 
 # ============ المسابقة ============
 def create_user_invite_link(uid):
-    """ينشئ رابط دعوة فريد للمستخدم"""
     try:
         link_name = f"ref_{uid}_{int(time.time())}"
         result = bot.create_chat_invite_link(
             chat_id=CHANNEL_USERNAME,
             name=link_name,
-            member_limit=0,  # 0 = غير محدود (يرجى تغييره حسب الحاجة)
+            member_limit=1,
             creates_join_request=False
         )
         return result.invite_link, link_name
@@ -755,7 +836,6 @@ def get_contest_entry(uid):
     return row
 
 def register_contest_user(uid, username, full_name):
-    """ينشئ حساب في المسابقة"""
     invite_link, link_name = create_user_invite_link(uid)
     if not invite_link:
         return None
@@ -780,6 +860,35 @@ def get_all_contestants():
     cur.close(); conn.close()
     return rows
 
+def get_last_referral_time(referrer_id):
+    """يرجّع وقت آخر مدعو للداعي"""
+    conn = db_connect()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT joined_at FROM referrals WHERE referrer_id = %s "
+        "ORDER BY joined_at DESC LIMIT 1",
+        (referrer_id,)
+    )
+    row = cur.fetchone()
+    cur.close(); conn.close()
+    return row["joined_at"] if row else None
+
+def get_referrals_list(referrer_id):
+    """يرجّع قائمة بكل المدعوين"""
+    conn = db_connect()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT r.referred_id, r.joined_at, u.full_name, u.username "
+        "FROM referrals r "
+        "LEFT JOIN users u ON u.user_id = r.referred_id "
+        "WHERE r.referrer_id = %s "
+        "ORDER BY r.joined_at ASC",
+        (referrer_id,)
+    )
+    rows = cur.fetchall()
+    cur.close(); conn.close()
+    return rows
+
 def contest_status_text(lang, status):
     if status == "qualified":
         return TEXTS[lang]["contest_status_qualified"]
@@ -793,19 +902,13 @@ def format_remaining(seconds, lang):
     m = seconds // 60
     s = seconds % 60
     if lang == "en":
-        if m > 0 and s > 0:
-            return f"{m} min {s} sec"
-        elif m > 0:
-            return f"{m} min"
-        else:
-            return f"{s} sec"
+        if m > 0 and s > 0: return f"{m} min {s} sec"
+        elif m > 0: return f"{m} min"
+        else: return f"{s} sec"
     else:
-        if m > 0 and s > 0:
-            return f"{m} دقيقة و {s} ثانية"
-        elif m > 0:
-            return f"{m} دقيقة"
-        else:
-            return f"{s} ثانية"
+        if m > 0 and s > 0: return f"{m} دقيقة و {s} ثانية"
+        elif m > 0: return f"{m} دقيقة"
+        else: return f"{s} ثانية"
 
 def build_payment_steps(method, lang, price):
     if method == "syriatel":
@@ -843,75 +946,52 @@ def build_payment_steps(method, lang, price):
                 "5️⃣ Confirm ✅"
             ), "Sham Cash 📷"
 
-
 def start_countdown(chat_id, message_id, order_id, method, uid, lang, price_str, total_seconds=300):
     COUNTDOWNS[order_id] = False
 
     def run():
         print(f"⏳ بدء العداد للطلب #{order_id}")
         steps_text, method_name = build_payment_steps(method, lang, price_str)
-
         remaining = total_seconds
         while remaining > 0:
             time.sleep(60)
             remaining -= 60
-
             if COUNTDOWNS.get(order_id) is True:
-                COUNTDOWNS.pop(order_id, None)
-                return
-
+                COUNTDOWNS.pop(order_id, None); return
             try:
-                conn = db_connect()
-                cur = conn.cursor()
+                conn = db_connect(); cur = conn.cursor()
                 cur.execute("SELECT status FROM orders WHERE order_id = %s", (order_id,))
-                r = cur.fetchone()
-                cur.close(); conn.close()
+                r = cur.fetchone(); cur.close(); conn.close()
                 if r and r["status"] != "pending":
-                    COUNTDOWNS.pop(order_id, None)
-                    return
+                    COUNTDOWNS.pop(order_id, None); return
             except Exception as e:
                 print(f"⚠️ DB check #{order_id}: {e}")
-
             if remaining > 0:
                 remaining_text = format_remaining(remaining, lang)
                 text = t_lang(lang, "payment_with_timer",
-                              method=method_name,
-                              steps=steps_text,
-                              remaining=remaining_text,
-                              oid=order_id)
+                              method=method_name, steps=steps_text,
+                              remaining=remaining_text, oid=order_id)
                 try:
-                    bot.edit_message_text(
-                        text, chat_id=chat_id, message_id=message_id, parse_mode="HTML"
-                    )
+                    bot.edit_message_text(text, chat_id=chat_id, message_id=message_id, parse_mode="HTML")
                     print(f"✅ تعديل #{order_id} → {remaining}ث")
                 except Exception as e:
                     err = str(e).lower()
                     if "message to edit not found" in err or "message can't be edited" in err:
-                        COUNTDOWNS.pop(order_id, None)
-                        return
+                        COUNTDOWNS.pop(order_id, None); return
                     print(f"⚠️ تعديل #{order_id} فشل: {e}")
-
         try:
-            conn = db_connect()
-            cur = conn.cursor()
+            conn = db_connect(); cur = conn.cursor()
             cur.execute("SELECT status FROM orders WHERE order_id = %s", (order_id,))
             r = cur.fetchone()
             if r and r["status"] == "pending":
                 cur.execute("UPDATE orders SET status = 'expired' WHERE order_id = %s", (order_id,))
-                conn.commit()
-                cur.close(); conn.close()
+                conn.commit(); cur.close(); conn.close()
                 try:
-                    bot.edit_message_text(
-                        t_lang(lang, "payment_expired", oid=order_id),
-                        chat_id=chat_id, message_id=message_id, parse_mode="HTML"
-                    )
+                    bot.edit_message_text(t_lang(lang, "payment_expired", oid=order_id),
+                                          chat_id=chat_id, message_id=message_id, parse_mode="HTML")
                 except: pass
                 try:
-                    bot.send_message(
-                        ADMIN_ID,
-                        f"⌛ <b>طلب #{order_id} انتهى وقته</b>",
-                        parse_mode="HTML"
-                    )
+                    bot.send_message(ADMIN_ID, f"⌛ <b>طلب #{order_id} انتهى وقته</b>", parse_mode="HTML")
                 except: pass
             else:
                 cur.close(); conn.close()
@@ -927,64 +1007,47 @@ def start_countdown(chat_id, message_id, order_id, method, uid, lang, price_str,
 def games_row(uid):
     T = TEXTS[get_lang(uid)]
     order = get_button_order().split(",")
-    game_map = {
-        "ff": T["btn_ff"],
-        "pubg": T["btn_pubg"],
-        "jawaker": T["btn_jawaker"],
-    }
+    game_map = {"ff": T["btn_ff"], "pubg": T["btn_pubg"], "jawaker": T["btn_jawaker"]}
     return [game_map[g] for g in order if g in game_map]
 
 def main_keyboard(uid):
     lang = get_lang(uid)
     T = TEXTS[lang]
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
-
     games = games_row(uid)
     if len(games) == 3:
-        kb.row(games[0], games[1])
-        kb.row(games[2])
+        kb.row(games[0], games[1]); kb.row(games[2])
     else:
         kb.row(*games)
-
     kb.row(T["btn_info"], T["btn_settings"])
-
     if uid == ADMIN_ID:
         kb.row(T["btn_support"], T["btn_inbox"])
         kb.row(T["btn_contestants"])
     else:
         kb.row(T["btn_support"])
-
     return kb
 
 def back_keyboard(uid):
-    lang = get_lang(uid)
-    T = TEXTS[lang]
+    lang = get_lang(uid); T = TEXTS[lang]
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
-
     kb.row(T["btn_back"])
-
     games = games_row(uid)
     if len(games) == 3:
-        kb.row(games[0], games[1])
-        kb.row(games[2])
+        kb.row(games[0], games[1]); kb.row(games[2])
     else:
         kb.row(*games)
-
     kb.row(T["btn_info"], T["btn_settings"])
     if uid == ADMIN_ID:
         kb.row(T["btn_support"], T["btn_inbox"])
         kb.row(T["btn_contestants"])
     else:
         kb.row(T["btn_support"])
-
     return kb
 
 # ============ رسائل ============
 def send_welcome(chat_id, first_name, uid):
-    bot.send_message(
-        chat_id, t(uid, "welcome", name=first_name),
-        parse_mode="HTML", reply_markup=main_keyboard(uid)
-    )
+    bot.send_message(chat_id, t(uid, "welcome", name=first_name),
+                     parse_mode="HTML", reply_markup=main_keyboard(uid))
 
 def show_subscription_message(chat_id, uid):
     kb = types.InlineKeyboardMarkup(row_width=1)
@@ -996,18 +1059,14 @@ def show_packages_for_game(chat_id, uid, game_key):
     lang = get_lang(uid)
     game_data = PACKAGES[game_key]
     game_title = game_data["title"][lang]
-
     kb = types.InlineKeyboardMarkup(row_width=1)
     for key, item in game_data["items"].items():
         kb.add(types.InlineKeyboardButton(
             text=f"{item[lang]} — {item['price']}",
             callback_data=f"pkg|{game_key}|{key}"
         ))
-
-    bot.send_message(
-        chat_id, t(uid, "choose_package", game=game_title),
-        parse_mode="HTML", reply_markup=kb
-    )
+    bot.send_message(chat_id, t(uid, "choose_package", game=game_title),
+                     parse_mode="HTML", reply_markup=kb)
     bot.send_message(chat_id, "🔽", reply_markup=back_keyboard(uid))
     USER_DATA.setdefault(uid, {})
     USER_DATA[uid]["step"] = 3
@@ -1018,10 +1077,7 @@ def show_ff_types(chat_id, uid):
         types.InlineKeyboardButton(t(uid, "btn_ff_diamonds"), callback_data="ff_type|diamonds"),
         types.InlineKeyboardButton(t(uid, "btn_ff_membership"), callback_data="ff_type|membership"),
     )
-    bot.send_message(
-        chat_id, t(uid, "choose_ff_type"),
-        parse_mode="HTML", reply_markup=kb
-    )
+    bot.send_message(chat_id, t(uid, "choose_ff_type"), parse_mode="HTML", reply_markup=kb)
     bot.send_message(chat_id, "🔽", reply_markup=back_keyboard(uid))
     USER_DATA.setdefault(uid, {})
     USER_DATA[uid]["step"] = 2
@@ -1033,77 +1089,48 @@ def go_back(message):
     step = data.get("step", 1)
 
     if step <= 1:
-        bot.send_message(message.chat.id, t(uid, "back_done"),
-                         reply_markup=main_keyboard(uid))
-        USER_DATA[uid] = {"step": 1}
-        return
-
+        bot.send_message(message.chat.id, t(uid, "back_done"), reply_markup=main_keyboard(uid))
+        USER_DATA[uid] = {"step": 1}; return
     if step == 2:
-        bot.send_message(message.chat.id, t(uid, "back_done"),
-                         reply_markup=main_keyboard(uid))
-        USER_DATA[uid] = {"step": 1}
-        return
-
+        bot.send_message(message.chat.id, t(uid, "back_done"), reply_markup=main_keyboard(uid))
+        USER_DATA[uid] = {"step": 1}; return
     if step == 3:
         game = data.get("game", "")
         if game in ("ff", "ff_membership"):
             USER_DATA[uid] = {"game": "ff", "step": 2}
             show_ff_types(message.chat.id, uid)
         else:
-            bot.send_message(message.chat.id, t(uid, "back_done"),
-                             reply_markup=main_keyboard(uid))
+            bot.send_message(message.chat.id, t(uid, "back_done"), reply_markup=main_keyboard(uid))
             USER_DATA[uid] = {"step": 1}
         return
-
     if step == 4:
         game = data.get("game", "ff")
         USER_DATA[uid]["step"] = 3
-        show_packages_for_game(message.chat.id, uid, game)
-        return
-
+        show_packages_for_game(message.chat.id, uid, game); return
     if step == 5:
         game = data.get("game", "ff")
         game_title = PACKAGES[game]["title"][get_lang(uid)]
         USER_DATA[uid]["step"] = 4
         msg = bot.send_message(
             message.chat.id,
-            t(uid, "chosen",
-              item=data.get("package_name", ""),
-              price=data.get("price", ""),
-              game=game_title),
-            parse_mode="HTML",
-            reply_markup=back_keyboard(uid)
-        )
-        bot.register_next_step_handler(msg, get_game_id)
-        return
-
+            t(uid, "chosen", item=data.get("package_name", ""),
+              price=data.get("price", ""), game=game_title),
+            parse_mode="HTML", reply_markup=back_keyboard(uid))
+        bot.register_next_step_handler(msg, get_game_id); return
     if step == 6:
         USER_DATA[uid]["step"] = 5
-        msg = bot.send_message(
-            message.chat.id, t(uid, "send_name"),
-            parse_mode="HTML", reply_markup=back_keyboard(uid)
-        )
-        bot.register_next_step_handler(msg, get_player_name)
-        return
-
-    bot.send_message(message.chat.id, t(uid, "back_done"),
-                     reply_markup=main_keyboard(uid))
+        msg = bot.send_message(message.chat.id, t(uid, "send_name"),
+                               parse_mode="HTML", reply_markup=back_keyboard(uid))
+        bot.register_next_step_handler(msg, get_player_name); return
+    bot.send_message(message.chat.id, t(uid, "back_done"), reply_markup=main_keyboard(uid))
     USER_DATA[uid] = {"step": 1}
 
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"]])
 def back_button_handler(message):
     try:
-        ensure_user(message)
-        go_back(message)
+        ensure_user(message); go_back(message)
     except Exception as e:
         print(f"❌ back_button_handler: {e}")
-        try:
-            bot.send_message(
-                message.chat.id,
-                "⚠️ حدث خطأ، جرّب مرة أخرى",
-                reply_markup=main_keyboard(message.from_user.id)
-            )
-        except: pass
 
 # ============ /start ============
 @bot.message_handler(commands=['start'])
@@ -1116,84 +1143,59 @@ def cmd_start(message):
     else:
         show_subscription_message(message.chat.id, uid)
 
-# ============ التحقق من الاشتراك ============
 @bot.callback_query_handler(func=lambda c: c.data == "check_sub")
 def check_subscription(call):
     try:
         uid = call.from_user.id
         if is_subscribed(uid):
             bot.answer_callback_query(call.id, t(uid, "check_success"))
-            try:
-                bot.delete_message(call.message.chat.id, call.message.message_id)
+            try: bot.delete_message(call.message.chat.id, call.message.message_id)
             except: pass
             send_welcome(call.message.chat.id, call.from_user.first_name, uid)
             USER_DATA[uid] = {"step": 1}
         else:
             bot.answer_callback_query(call.id, t(uid, "check_fail"), show_alert=True)
-    except Exception as e:
-        print(f"❌ {e}")
+    except Exception as e: print(f"❌ {e}")
 
-# ============ 🎉 حدث انضمام عضو جديد للقناة ============
+# ============ 🎉 حدث انضمام عضو جديد ============
 @bot.chat_member_handler()
 def on_chat_member(update):
-    """يُستدعى عندما ينضم عضو جديد للقناة"""
     try:
         new_member = update.new_chat_member
         old_member = update.old_chat_member
-
-        # نتأكد أنه انضم فعلاً (كان left وصار member)
-        if not (old_member.status in ("left", "kicked") and
-                new_member.status == "member"):
+        if not (old_member.status in ("left", "kicked") and new_member.status == "member"):
             return
-
         invite_link = update.invite_link
         if not invite_link:
-            print("⚠️ انضم بدون رابط دعوة")
-            return
-
+            print("⚠️ انضم بدون رابط دعوة"); return
         used_link = invite_link.invite_link
         new_user_id = new_member.user.id
         new_user_name = new_member.user.full_name
-
         print(f"🎉 عضو جديد: {new_user_name} | رابط: {used_link}")
-
-        # نبحث عن الداعي
-        conn = db_connect()
-        cur = conn.cursor()
-        cur.execute("SELECT user_id, joins_count FROM contest WHERE invite_link = %s", (used_link,))
+        conn = db_connect(); cur = conn.cursor()
+        cur.execute("SELECT user_id FROM contest WHERE invite_link = %s", (used_link,))
         row = cur.fetchone()
         if not row:
             cur.close(); conn.close()
-            print("⚠️ الرابط غير مرتبط بأي متسابق")
-            return
-
+            print("⚠️ الرابط غير مرتبط بأي متسابق"); return
         referrer_id = row["user_id"]
-
-        # نتأكد ما انحسب من قبل
         cur.execute("SELECT id FROM referrals WHERE referred_id = %s", (new_user_id,))
         if cur.fetchone():
             cur.close(); conn.close()
-            print("⚠️ هذا العضو محسوب من قبل")
-            return
-
-        # نسجل الإحالة
+            print("⚠️ محسوب من قبل"); return
         cur.execute(
             "INSERT INTO referrals (referrer_id, referred_id, invite_link, joined_at) "
             "VALUES (%s, %s, %s, %s)",
             (referrer_id, new_user_id, used_link,
              datetime.now().strftime("%Y-%m-%d %H:%M"))
         )
-
-        # نزيد عدّاد الداعي
         cur.execute(
             "UPDATE contest SET joins_count = joins_count + 1 WHERE user_id = %s RETURNING joins_count",
             (referrer_id,)
         )
         new_count = cur.fetchone()["joins_count"]
-        conn.commit()
-        cur.close(); conn.close()
+        conn.commit(); cur.close(); conn.close()
 
-        # نُعلم الداعي
         try:
             extra = ""
             if new_count >= REQUIRED_JOINS:
@@ -1205,76 +1207,53 @@ def on_chat_member(update):
                   required=REQUIRED_JOINS, extra=extra),
                 parse_mode="HTML"
             )
-        except Exception as e:
-            print(f"⚠️ فشل إعلام الداعي: {e}")
+        except: pass
 
-        # إذا وصل للعدد → يدخل السحب تلقائياً
         if new_count >= REQUIRED_JOINS:
-            conn = db_connect()
-            cur = conn.cursor()
-            cur.execute(
-                "UPDATE contest SET status = 'qualified' WHERE user_id = %s",
-                (referrer_id,)
-            )
-            conn.commit()
-            cur.close(); conn.close()
-
+            conn = db_connect(); cur = conn.cursor()
+            cur.execute("UPDATE contest SET status = 'qualified' WHERE user_id = %s", (referrer_id,))
+            conn.commit(); cur.close(); conn.close()
             try:
-                bot.send_message(
-                    ADMIN_ID,
+                bot.send_message(ADMIN_ID,
                     f"🏆 <b>متسابق جديد مؤهل!</b>\n\n"
-                    f"🆔 <code>{referrer_id}</code>\n"
-                    f"📊 {new_count} مدعوين",
-                    parse_mode="HTML"
-                )
+                    f"🆔 <code>{referrer_id}</code>\n📊 {new_count} مدعوين",
+                    parse_mode="HTML")
             except: pass
-
     except Exception as e:
         print(f"❌ on_chat_member: {e}")
 
-# ============ زر Free Fire ============
+# ============ أزرار الألعاب ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_ff"], TEXTS["en"]["btn_ff"]])
 def show_ff(message):
-    ensure_user(message)
-    uid = message.from_user.id
-    if not is_subscribed(uid):
-        show_subscription_message(message.chat.id, uid); return
+    ensure_user(message); uid = message.from_user.id
+    if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
     if not is_orders_open():
-        if get_setting("dev_mode", "off") == "on":
-            bot.send_message(message.chat.id, t(uid, "orders_closed_dev"), parse_mode="HTML")
-        else:
-            bot.send_message(message.chat.id, t(uid, "orders_closed"), parse_mode="HTML")
-        return
+        bot.send_message(message.chat.id,
+            t(uid, "orders_closed_dev") if get_setting("dev_mode", "off") == "on" else t(uid, "orders_closed"),
+            parse_mode="HTML"); return
     USER_DATA[uid] = {"game": "ff", "step": 2}
     show_ff_types(message.chat.id, uid)
 
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_pubg"], TEXTS["en"]["btn_pubg"]])
-def show_pubg(message):
-    show_game_packages(message, "pubg")
+def show_pubg(message): show_game_packages(message, "pubg")
 
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_jawaker"], TEXTS["en"]["btn_jawaker"]])
-def show_jawaker(message):
-    show_game_packages(message, "jawaker")
+def show_jawaker(message): show_game_packages(message, "jawaker")
 
 def show_game_packages(message, game):
-    ensure_user(message)
-    uid = message.from_user.id
-    if not is_subscribed(uid):
-        show_subscription_message(message.chat.id, uid); return
+    ensure_user(message); uid = message.from_user.id
+    if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
     if not is_orders_open():
-        if get_setting("dev_mode", "off") == "on":
-            bot.send_message(message.chat.id, t(uid, "orders_closed_dev"), parse_mode="HTML")
-        else:
-            bot.send_message(message.chat.id, t(uid, "orders_closed"), parse_mode="HTML")
-        return
+        bot.send_message(message.chat.id,
+            t(uid, "orders_closed_dev") if get_setting("dev_mode", "off") == "on" else t(uid, "orders_closed"),
+            parse_mode="HTML"); return
     USER_DATA[uid] = {"game": game, "step": 3}
     show_packages_for_game(message.chat.id, uid, game)
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("ff_type|"))
 def choose_ff_type(call):
     try:
-        ff_type = call.data.split("|")[1]
-        uid = call.from_user.id
+        ff_type = call.data.split("|")[1]; uid = call.from_user.id
         bot.answer_callback_query(call.id, "✅")
         if ff_type == "diamonds":
             USER_DATA[uid] = {"game": "ff", "step": 3}
@@ -1282,30 +1261,24 @@ def choose_ff_type(call):
         else:
             USER_DATA[uid] = {"game": "ff_membership", "step": 3}
             show_packages_for_game(call.message.chat.id, uid, "ff_membership")
-    except Exception as e:
-        print(f"❌ ff_type: {e}")
+    except Exception as e: print(f"❌ {e}")
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("pkg|"))
 def choose_package(call):
     try:
         _, game, key = call.data.split("|")
-        uid = call.from_user.id
-        lang = get_lang(uid)
+        uid = call.from_user.id; lang = get_lang(uid)
         item = PACKAGES[game]["items"][key]
         bot.answer_callback_query(call.id, "✅")
-        USER_DATA[uid] = {
-            "game": game, "package_key": key,
-            "package_name": item[lang], "price": item["price"], "step": 4
-        }
+        USER_DATA[uid] = {"game": game, "package_key": key,
+                          "package_name": item[lang], "price": item["price"], "step": 4}
         game_title = PACKAGES[game]["title"][lang]
-        msg = bot.send_message(
-            call.message.chat.id,
+        msg = bot.send_message(call.message.chat.id,
             t(uid, "chosen", item=item[lang], price=item["price"], game=game_title),
-            parse_mode="HTML", reply_markup=back_keyboard(uid)
-        )
+            parse_mode="HTML", reply_markup=back_keyboard(uid))
         bot.register_next_step_handler(msg, get_game_id)
     except Exception as e:
-        print(f"❌ choose_package: {e}")
+        print(f"❌ {e}")
         try: bot.answer_callback_query(call.id, "⚠️ خطأ")
         except: pass
 
@@ -1315,24 +1288,18 @@ def get_game_id(message):
         go_back(message); return
     data = USER_DATA.get(uid)
     if not data:
-        bot.send_message(message.chat.id, "⚠️ اضغط /start من جديد.",
-                         reply_markup=main_keyboard(uid)); return
+        bot.send_message(message.chat.id, "⚠️ اضغط /start", reply_markup=main_keyboard(uid)); return
     game = data.get("game", "ff")
     game_id = message.text.strip() if message.text else ""
     valid, result = validate_game_id(game_id, game)
     if not valid:
         key = "invalid_id_ff" if game in ("ff", "ff_membership") else ("invalid_id_pubg" if game == "pubg" else "invalid_id_jawaker")
-        msg = bot.send_message(
-            message.chat.id, t(uid, key, reason=result),
-            parse_mode="HTML", reply_markup=back_keyboard(uid)
-        )
+        msg = bot.send_message(message.chat.id, t(uid, key, reason=result),
+                               parse_mode="HTML", reply_markup=back_keyboard(uid))
         bot.register_next_step_handler(msg, get_game_id); return
-    USER_DATA[uid]["game_id"] = result
-    USER_DATA[uid]["step"] = 5
-    msg = bot.send_message(
-        message.chat.id, t(uid, "send_name"),
-        parse_mode="HTML", reply_markup=back_keyboard(uid)
-    )
+    USER_DATA[uid]["game_id"] = result; USER_DATA[uid]["step"] = 5
+    msg = bot.send_message(message.chat.id, t(uid, "send_name"),
+                           parse_mode="HTML", reply_markup=back_keyboard(uid))
     bot.register_next_step_handler(msg, get_player_name)
 
 def get_player_name(message):
@@ -1341,17 +1308,13 @@ def get_player_name(message):
         go_back(message); return
     data = USER_DATA.get(uid)
     if not data:
-        bot.send_message(message.chat.id, "⚠️ اضغط /start من جديد.",
-                         reply_markup=main_keyboard(uid)); return
+        bot.send_message(message.chat.id, "⚠️ اضغط /start", reply_markup=main_keyboard(uid)); return
     player_name = message.text.strip() if message.text else ""
     if len(player_name) < 2:
-        msg = bot.send_message(
-            message.chat.id, t(uid, "invalid_name"),
-            reply_markup=back_keyboard(uid)
-        )
+        msg = bot.send_message(message.chat.id, t(uid, "invalid_name"),
+                               reply_markup=back_keyboard(uid))
         bot.register_next_step_handler(msg, get_player_name); return
-    USER_DATA[uid]["player_name"] = player_name
-    USER_DATA[uid]["step"] = 6
+    USER_DATA[uid]["player_name"] = player_name; USER_DATA[uid]["step"] = 6
     kb = types.InlineKeyboardMarkup(row_width=2)
     kb.add(
         types.InlineKeyboardButton(t(uid, "btn_syriatel"), callback_data="pay|syriatel"),
@@ -1364,15 +1327,12 @@ def get_player_name(message):
 @bot.callback_query_handler(func=lambda c: c.data.startswith("pay|"))
 def choose_payment(call):
     try:
-        method = call.data.split("|")[1]
-        uid = call.from_user.id
+        method = call.data.split("|")[1]; uid = call.from_user.id
         data = USER_DATA.get(uid)
         if not data or "game_id" not in data:
             bot.answer_callback_query(call.id, "⚠️ اضغط /start", show_alert=True); return
         bot.answer_callback_query(call.id, "✅")
-
-        conn = db_connect()
-        cur = conn.cursor()
+        conn = db_connect(); cur = conn.cursor()
         cur.execute(
             "INSERT INTO orders (user_id, game, package, price, game_id, player_name, payment_method, status, created_at) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING order_id",
@@ -1381,9 +1341,7 @@ def choose_payment(call):
              datetime.now().strftime("%Y-%m-%d %H:%M"))
         )
         order_id = cur.fetchone()["order_id"]
-        conn.commit()
-        cur.close(); conn.close()
-
+        conn.commit(); cur.close(); conn.close()
         lang = get_lang(uid)
         if method == "sham":
             try:
@@ -1392,25 +1350,16 @@ def choose_payment(call):
                                    caption=t(uid, "sham_image_caption", price=data["price"]),
                                    parse_mode="HTML")
             except FileNotFoundError:
-                bot.send_message(call.message.chat.id, "⚠️ صورة sham.jpg غير موجودة")
-
+                bot.send_message(call.message.chat.id, "⚠️ sham.jpg غير موجودة")
         steps_text, method_name = build_payment_steps(method, lang, data["price"])
         remaining_text = "5 دقائق" if lang == "ar" else "5 min"
-
         sent_msg = bot.send_message(
             call.message.chat.id,
-            t_lang(lang, "payment_with_timer",
-                   method=method_name, steps=steps_text,
-                   remaining=remaining_text, oid=order_id),
-            parse_mode="HTML", reply_markup=main_keyboard(uid)
-        )
-
-        start_countdown(
-            chat_id=call.message.chat.id, message_id=sent_msg.message_id,
-            order_id=order_id, method=method, uid=uid, lang=lang,
-            price_str=data["price"], total_seconds=PAYMENT_TIMEOUT_SECONDS
-        )
-
+            t_lang(lang, "payment_with_timer", method=method_name,
+                   steps=steps_text, remaining=remaining_text, oid=order_id),
+            parse_mode="HTML", reply_markup=main_keyboard(uid))
+        start_countdown(call.message.chat.id, sent_msg.message_id, order_id,
+                        method, uid, lang, data["price"], PAYMENT_TIMEOUT_SECONDS)
         method_label = "💳 سيرياتيل كاش" if method == "syriatel" else "📷 شام كاش"
         admin_text = (
             "🔔 <b>طلب شراء جديد!</b>\n\n"
@@ -1431,17 +1380,14 @@ def choose_payment(call):
         )
         bot.send_message(ADMIN_ID, admin_text, parse_mode="HTML", reply_markup=kb)
         USER_DATA.pop(uid, None)
-    except Exception as e:
-        print(f"❌ choose_payment: {e}")
+    except Exception as e: print(f"❌ choose_payment: {e}")
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("accept|") or c.data.startswith("reject|"))
 def handle_decision(call):
     try:
-        action, oid = call.data.split("|")
-        oid = int(oid)
+        action, oid = call.data.split("|"); oid = int(oid)
         COUNTDOWNS[oid] = True
-        conn = db_connect()
-        cur = conn.cursor()
+        conn = db_connect(); cur = conn.cursor()
         cur.execute("SELECT user_id, package FROM orders WHERE order_id = %s", (oid,))
         row = cur.fetchone()
         if not row:
@@ -1460,26 +1406,18 @@ def handle_decision(call):
         cur.close(); conn.close()
         try: bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)
         except: pass
-    except Exception as e:
-        print(f"❌ {e}")
+    except Exception as e: print(f"❌ {e}")
 
 # ============ زر معلوماتي ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_info"], TEXTS["en"]["btn_info"]])
 def my_info(message):
-    ensure_user(message)
-    uid = message.from_user.id
-    if not is_subscribed(uid):
-        show_subscription_message(message.chat.id, uid); return
-    u = get_user(uid)
-    lang = get_lang(uid)
-    conn = db_connect()
-    cur = conn.cursor()
-    cur.execute(
-        "SELECT order_id, package, price, status, created_at FROM orders "
-        "WHERE user_id = %s ORDER BY order_id DESC LIMIT 5", (uid,)
-    )
-    orders = cur.fetchall()
-    cur.close(); conn.close()
+    ensure_user(message); uid = message.from_user.id
+    if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
+    u = get_user(uid); lang = get_lang(uid)
+    conn = db_connect(); cur = conn.cursor()
+    cur.execute("SELECT order_id, package, price, status, created_at FROM orders "
+                "WHERE user_id = %s ORDER BY order_id DESC LIMIT 5", (uid,))
+    orders = cur.fetchall(); cur.close(); conn.close()
     status_map = {
         "pending": "⏳ قيد المراجعة" if lang == "ar" else "⏳ Pending",
         "accepted": "✅ مقبول" if lang == "ar" else "✅ Accepted",
@@ -1491,81 +1429,69 @@ def my_info(message):
     else:
         orders_text = ""
         for o in orders:
-            orders_text += (
-                f"\n🔖 #{o['order_id']} — {o['package']} ({o['price']})\n"
-                f"   {status_map.get(o['status'], o['status'])} | {o['created_at']}\n"
-            )
-    bot.send_message(
-        message.chat.id,
-        t(uid, "my_info",
-          name=message.from_user.full_name,
-          rid=u["random_id"] if u else "-",
-          joined=u["joined_at"] if u else "-",
-          lang="العربية 🇸🇦" if lang == "ar" else "English 🇬🇧",
-          orders=orders_text),
-        parse_mode="HTML"
-    )
+            orders_text += (f"\n🔖 #{o['order_id']} — {o['package']} ({o['price']})\n"
+                            f"   {status_map.get(o['status'], o['status'])} | {o['created_at']}\n")
+    bot.send_message(message.chat.id,
+        t(uid, "my_info", name=message.from_user.full_name,
+          rid=u["random_id"] if u else "-", joined=u["joined_at"] if u else "-",
+          lang="العربية 🇸🇦" if lang == "ar" else "English 🇬🇧", orders=orders_text),
+        parse_mode="HTML")
     kb = types.InlineKeyboardMarkup(row_width=1)
     kb.add(types.InlineKeyboardButton(t(uid, "btn_contest"), callback_data="contest_show"))
-    bot.send_message(
-        message.chat.id,
+    bot.send_message(message.chat.id,
         "🎁 <b>هل تريد المشاركة في المسابقة؟</b>\n👇 اضغط الزر بالأسفل",
-        parse_mode="HTML", reply_markup=kb
-    )
+        parse_mode="HTML", reply_markup=kb)
 
 # ============ المسابقة ============
 @bot.callback_query_handler(func=lambda c: c.data == "contest_show")
 def contest_show(call):
     uid = call.from_user.id
     bot.answer_callback_query(call.id)
-
     entry = get_contest_entry(uid)
     lang = get_lang(uid)
-
     if entry:
         status = contest_status_text(lang, entry["status"])
         text = t(uid, "contest_title",
-                 link=entry["invite_link"],
-                 count=entry["joins_count"],
-                 required=REQUIRED_JOINS,
-                 status=status)
+                 link=entry["invite_link"], count=entry["joins_count"],
+                 required=REQUIRED_JOINS, status=status)
         kb = types.InlineKeyboardMarkup(row_width=1)
         kb.add(types.InlineKeyboardButton(t(uid, "btn_copy_link"), url=entry["invite_link"]))
         bot.send_message(uid, text, parse_mode="HTML", reply_markup=kb)
     else:
         msg = bot.send_message(uid, t(uid, "contest_loading"))
-        try:
-            bot.delete_message(uid, msg.message_id)
+        try: bot.delete_message(uid, msg.message_id)
         except: pass
-
-        new_entry = register_contest_user(
-            uid,
-            call.from_user.username or "",
-            call.from_user.full_name
-        )
-
+        try:
+            me = bot.get_me()
+            member = bot.get_chat_member(CHANNEL_USERNAME, me.id)
+            if member.status not in ("administrator", "creator"):
+                bot.send_message(uid,
+                    "⚠️ <b>البوت غير مضاف كمشرف في القناة!</b>\n\n"
+                    "👨‍💻 تواصل مع الدعم: " + SUPPORT_USERNAME, parse_mode="HTML")
+                return
+        except Exception as e:
+            print(f"❌ فحص الصلاحيات: {e}")
+        new_entry = register_contest_user(uid, call.from_user.username or "",
+                                          call.from_user.full_name)
         if not new_entry:
             bot.send_message(uid, "⚠️ حدث خطأ في إنشاء الرابط. تأكد أن البوت مشرف في القناة.")
             return
-
-        text = t(uid, "contest_created",
-                 link=new_entry["invite_link"],
+        text = t(uid, "contest_created", link=new_entry["invite_link"],
                  count=0, required=REQUIRED_JOINS)
         kb = types.InlineKeyboardMarkup(row_width=1)
         kb.add(types.InlineKeyboardButton(t(uid, "btn_copy_link"), url=new_entry["invite_link"]))
         bot.send_message(uid, text, parse_mode="HTML", reply_markup=kb)
+        try:
+            bot.send_message(ADMIN_ID,
+                f"🎁 <b>متسابق جديد!</b>\n\n"
+                f"👤 {call.from_user.full_name}\n"
+                f"🆔 <code>{uid}</code>\n"
+                f"🌐 @{call.from_user.username or 'لا يوجد'}\n"
+                f"🔗 {new_entry['invite_link']}",
+                parse_mode="HTML")
+        except: pass
 
-        bot.send_message(
-            ADMIN_ID,
-            f"🎁 <b>متسابق جديد!</b>\n\n"
-            f"👤 {call.from_user.full_name}\n"
-            f"🆔 <code>{uid}</code>\n"
-            f"🌐 @{call.from_user.username or 'لا يوجد'}\n"
-            f"🔗 {new_entry['invite_link']}",
-            parse_mode="HTML"
-        )
-
-# ============ المطور: قائمة المتسابقين ============
+# ============ المطور: قائمة المتسابقين (موسّعة) ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_contestants"], TEXTS["en"]["btn_contestants"]] and m.from_user.id == ADMIN_ID)
 def show_contestants(message):
     uid = message.from_user.id
@@ -1575,31 +1501,82 @@ def show_contestants(message):
     total = len(contestants)
     qualified = sum(1 for c in contestants if c["status"] == "qualified")
     active = sum(1 for c in contestants if c["status"] == "active")
-    bot.send_message(
-        uid,
+    bot.send_message(uid,
         t(uid, "contestants_title", total=total, qualified=qualified, active=active),
-        parse_mode="HTML"
-    )
+        parse_mode="HTML")
     for c in contestants:
         status_txt = contest_status_text(get_lang(uid), c["status"])
+        last_ref = get_last_referral_time(c["user_id"])
+        last_txt = last_ref if last_ref else t(uid, "contestant_no_last")
         text = t(uid, "contestant_item",
-                 name=c["full_name"] or "-",
-                 uid=c["user_id"],
+                 name=c["full_name"] or "-", uid=c["user_id"],
                  username=c["username"] or "لا يوجد",
-                 count=c["joins_count"],
-                 required=REQUIRED_JOINS,
-                 status=status_txt,
-                 time=c["created_at"] or "-")
-        kb = types.InlineKeyboardMarkup(row_width=2)
-        kb.add(types.InlineKeyboardButton("👤 فتح حساب", url=f"tg://user?id={c['user_id']}"))
+                 count=c["joins_count"], required=REQUIRED_JOINS,
+                 status=status_txt, time=c["created_at"] or "-",
+                 last=last_txt, link=c["invite_link"] or "-")
+        kb = types.InlineKeyboardMarkup(row_width=1)
+        kb.add(types.InlineKeyboardButton(t(uid, "btn_view_details"),
+                                          callback_data=f"cdetails|{c['user_id']}"))
+        kb.add(types.InlineKeyboardButton(t(uid, "btn_view_user"),
+                                          url=f"tg://user?id={c['user_id']}"))
         bot.send_message(uid, text, parse_mode="HTML", reply_markup=kb)
 
-# ============ زر الدعم ============
+# ============ صفحة تفاصيل المتسابق الكاملة ============
+@bot.callback_query_handler(func=lambda c: c.data.startswith("cdetails|"))
+def contestant_details(call):
+    try:
+        uid_admin = call.from_user.id
+        if uid_admin != ADMIN_ID:
+            bot.answer_callback_query(call.id, "🚫", show_alert=True); return
+        target_uid = int(call.data.split("|")[1])
+        bot.answer_callback_query(call.id)
+
+        conn = db_connect(); cur = conn.cursor()
+        cur.execute("SELECT * FROM contest WHERE user_id = %s", (target_uid,))
+        entry = cur.fetchone()
+        cur.close(); conn.close()
+
+        if not entry:
+            bot.send_message(uid_admin, "⚠️ المتسابق غير موجود"); return
+
+        last_ref = get_last_referral_time(target_uid)
+        last_txt = last_ref if last_ref else "لا يوجد بعد"
+
+        refs = get_referrals_list(target_uid)
+        if refs:
+            refs_text = ""
+            for i, r in enumerate(refs, 1):
+                name = r["full_name"] or "مستخدم"
+                refs_text += f"   {i}. 👤 {name} — <code>{r['referred_id']}</code> — {r['joined_at']}\n"
+        else:
+            refs_text = "   لم يدعُ أحدًا بعد"
+
+        status_txt = contest_status_text(get_lang(uid_admin), entry["status"])
+
+        text = t(uid_admin, "contestant_full_details",
+                 name=entry["full_name"] or "-",
+                 uid=entry["user_id"],
+                 username=entry["username"] or "لا يوجد",
+                 count=entry["joins_count"],
+                 required=REQUIRED_JOINS,
+                 status=status_txt,
+                 created=entry["created_at"] or "-",
+                 last=last_txt,
+                 link=entry["invite_link"] or "-",
+                 referrals_list=refs_text)
+
+        kb = types.InlineKeyboardMarkup(row_width=1)
+        kb.add(types.InlineKeyboardButton("👤 فتح حساب المستخدم",
+                                          url=f"tg://user?id={entry['user_id']}"))
+        bot.send_message(uid_admin, text, parse_mode="HTML", reply_markup=kb)
+    except Exception as e:
+        print(f"❌ contestant_details: {e}")
+
+# ============ الدعم ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_support"], TEXTS["en"]["btn_support"]])
 def support(message):
     uid = message.from_user.id
-    if not is_subscribed(uid):
-        show_subscription_message(message.chat.id, uid); return
+    if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
     kb = types.InlineKeyboardMarkup(row_width=1)
     kb.add(types.InlineKeyboardButton(t(uid, "btn_complaint"), callback_data="send_complaint"))
     bot.send_message(message.chat.id, t(uid, "support"), parse_mode="HTML", reply_markup=kb)
@@ -1609,62 +1586,46 @@ def ask_complaint(call):
     try:
         uid = call.from_user.id
         bot.answer_callback_query(call.id)
-        msg = bot.send_message(
-            call.message.chat.id, t(uid, "ask_message"),
-            parse_mode="HTML", reply_markup=back_keyboard(uid)
-        )
+        msg = bot.send_message(call.message.chat.id, t(uid, "ask_message"),
+                               parse_mode="HTML", reply_markup=back_keyboard(uid))
         bot.register_next_step_handler(msg, receive_complaint)
-    except Exception as e:
-        print(f"❌ {e}")
+    except Exception as e: print(f"❌ {e}")
 
 def receive_complaint(message):
     uid = message.from_user.id
     if message.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"]]:
-        bot.send_message(message.chat.id, t(uid, "back_done"), reply_markup=main_keyboard(uid))
-        return
+        bot.send_message(message.chat.id, t(uid, "back_done"), reply_markup=main_keyboard(uid)); return
     text = message.text.strip() if message.text else ""
     if len(text) < 5:
-        msg = bot.send_message(
-            message.chat.id, t(uid, "message_too_short"),
-            reply_markup=back_keyboard(uid)
-        )
+        msg = bot.send_message(message.chat.id, t(uid, "message_too_short"),
+                               reply_markup=back_keyboard(uid))
         bot.register_next_step_handler(msg, receive_complaint); return
-    conn = db_connect()
-    cur = conn.cursor()
-    cur.execute(
-        "INSERT INTO messages (user_id, username, full_name, message, created_at) "
-        "VALUES (%s, %s, %s, %s, %s) RETURNING id",
-        (uid, message.from_user.username or "", message.from_user.full_name,
-         text, datetime.now().strftime("%Y-%m-%d %H:%M"))
-    )
+    conn = db_connect(); cur = conn.cursor()
+    cur.execute("INSERT INTO messages (user_id, username, full_name, message, created_at) "
+                "VALUES (%s, %s, %s, %s, %s) RETURNING id",
+                (uid, message.from_user.username or "", message.from_user.full_name,
+                 text, datetime.now().strftime("%Y-%m-%d %H:%M")))
     msg_id = cur.fetchone()["id"]
     conn.commit(); cur.close(); conn.close()
     bot.send_message(message.chat.id, t(uid, "message_sent"), parse_mode="HTML",
                      reply_markup=main_keyboard(uid))
-    bot.send_message(
-        ADMIN_ID,
-        f"📩 <b>رسالة جديدة!</b>\n\n"
-        f"🔖 #{msg_id}\n👤 {message.from_user.full_name}\n"
-        f"🆔 <code>{uid}</code>\n🌐 @{message.from_user.username or 'لا يوجد'}\n\n"
-        f"💬 {text}",
-        parse_mode="HTML"
-    )
+    bot.send_message(ADMIN_ID,
+        f"📩 <b>رسالة جديدة!</b>\n\n🔖 #{msg_id}\n👤 {message.from_user.full_name}\n"
+        f"🆔 <code>{uid}</code>\n🌐 @{message.from_user.username or 'لا يوجد'}\n\n💬 {text}",
+        parse_mode="HTML")
 
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_inbox"], TEXTS["en"]["btn_inbox"]] and m.from_user.id == ADMIN_ID)
 def show_inbox(message):
     uid = message.from_user.id
-    conn = db_connect()
-    cur = conn.cursor()
+    conn = db_connect(); cur = conn.cursor()
     cur.execute("SELECT * FROM messages ORDER BY id DESC LIMIT 10")
-    msgs = cur.fetchall()
-    cur.close(); conn.close()
+    msgs = cur.fetchall(); cur.close(); conn.close()
     if not msgs:
         bot.send_message(message.chat.id, t(uid, "inbox_empty")); return
     bot.send_message(message.chat.id, t(uid, "inbox_title", count=len(msgs)), parse_mode="HTML")
     for m in msgs:
-        text = t(uid, "inbox_item",
-                 n=m["id"], name=m["full_name"], uid=m["user_id"],
-                 time=m["created_at"], msg=m["message"])
+        text = t(uid, "inbox_item", n=m["id"], name=m["full_name"],
+                 uid=m["user_id"], time=m["created_at"], msg=m["message"])
         kb = types.InlineKeyboardMarkup()
         kb.add(types.InlineKeyboardButton("👤 الرد", url=f"tg://user?id={m['user_id']}"))
         bot.send_message(message.chat.id, text, parse_mode="HTML", reply_markup=kb)
@@ -1672,10 +1633,8 @@ def show_inbox(message):
 # ============ الإعدادات ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_settings"], TEXTS["en"]["btn_settings"]])
 def settings_menu(message):
-    uid = message.from_user.id
-    ensure_user(message)
-    if not is_subscribed(uid):
-        show_subscription_message(message.chat.id, uid); return
+    uid = message.from_user.id; ensure_user(message)
+    if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
     is_admin = (uid == ADMIN_ID)
     kb = types.InlineKeyboardMarkup(row_width=1)
     kb.add(types.InlineKeyboardButton(t(uid, "btn_change_lang"), callback_data="cfg_lang"))
@@ -1691,12 +1650,10 @@ def cfg_lang(call):
     try:
         uid = call.from_user.id
         kb = types.InlineKeyboardMarkup(row_width=2)
-        kb.add(
-            types.InlineKeyboardButton("🇸🇦 العربية", callback_data="set_lang|ar"),
-            types.InlineKeyboardButton("🇬🇧 English", callback_data="set_lang|en"),
-        )
-        bot.edit_message_text(t(uid, "lang_pick"),
-                              call.message.chat.id, call.message.message_id, reply_markup=kb)
+        kb.add(types.InlineKeyboardButton("🇸🇦 العربية", callback_data="set_lang|ar"),
+               types.InlineKeyboardButton("🇬🇧 English", callback_data="set_lang|en"))
+        bot.edit_message_text(t(uid, "lang_pick"), call.message.chat.id,
+                              call.message.message_id, reply_markup=kb)
         bot.answer_callback_query(call.id)
     except Exception as e: print(f"❌ {e}")
 
@@ -1773,12 +1730,10 @@ def cfg_reset(call):
     try:
         uid = call.from_user.id
         kb = types.InlineKeyboardMarkup(row_width=2)
-        kb.add(
-            types.InlineKeyboardButton(t(uid, "btn_yes"), callback_data="do_reset"),
-            types.InlineKeyboardButton(t(uid, "btn_no"), callback_data="cancel_reset"),
-        )
-        bot.edit_message_text(t(uid, "reset_confirm"),
-                              call.message.chat.id, call.message.message_id, reply_markup=kb)
+        kb.add(types.InlineKeyboardButton(t(uid, "btn_yes"), callback_data="do_reset"),
+               types.InlineKeyboardButton(t(uid, "btn_no"), callback_data="cancel_reset"))
+        bot.edit_message_text(t(uid, "reset_confirm"), call.message.chat.id,
+                              call.message.message_id, reply_markup=kb)
         bot.answer_callback_query(call.id)
     except Exception as e: print(f"❌ {e}")
 
@@ -1787,8 +1742,7 @@ def set_lang(call):
     try:
         uid = call.from_user.id
         new_lang = call.data.split("|")[1]
-        conn = db_connect()
-        cur = conn.cursor()
+        conn = db_connect(); cur = conn.cursor()
         cur.execute("UPDATE users SET language = %s WHERE user_id = %s", (new_lang, uid))
         conn.commit(); cur.close(); conn.close()
         bot.answer_callback_query(call.id, t(uid, "lang_changed"))
@@ -1817,8 +1771,7 @@ def set_order(call):
 def do_reset(call):
     try:
         uid = call.from_user.id
-        conn = db_connect()
-        cur = conn.cursor()
+        conn = db_connect(); cur = conn.cursor()
         cur.execute("DELETE FROM orders WHERE user_id = %s", (uid,))
         cur.execute("DELETE FROM users WHERE user_id = %s", (uid,))
         conn.commit(); cur.close(); conn.close()
@@ -1854,19 +1807,14 @@ def unknown_message(message):
 # ============ تشغيل ============
 print("🤖 البوت يعمل الآن...")
 print("🎁 نظام المسابقة (إحالة حقيقية) مفعّل")
+print("📋 تفاصيل المتسابقين موسّعة")
 
 bot.infinity_polling(
     allowed_updates=[
-        "message",
-        "edited_message",
-        "callback_query",
-        "inline_query",
-        "chosen_inline_result",
-        "channel_post",
-        "edited_channel_post",
-        "chat_member",         # ← مهم جداً
-        "my_chat_member",
-        "chat_join_request"
+        "message", "edited_message", "callback_query",
+        "inline_query", "chosen_inline_result",
+        "channel_post", "edited_channel_post",
+        "chat_member", "my_chat_member", "chat_join_request"
     ],
     skip_pending=True,
     timeout=30,
