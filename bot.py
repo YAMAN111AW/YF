@@ -56,16 +56,14 @@ def fix_allowed_updates():
         )
         info = r3.json()
         allowed = info.get("result", {}).get("allowed_updates", [])
-        print(f"🔧 allowed_updates الآن: {allowed}")
+        print(f"🔧 allowed_updates: {allowed}")
 
         if "callback_query" in allowed and "chat_member" in allowed:
             print("✅ callback_query + chat_member مسموحان!")
             return True
-        else:
-            print("⚠️ بعض الأنواع غير مسموحة")
-            return False
+        return False
     except Exception as e:
-        print(f"❌ خطأ في fix_allowed_updates: {e}")
+        print(f"❌ fix_allowed_updates: {e}")
         return False
 
 fix_allowed_updates()
@@ -78,17 +76,17 @@ def check_bot_admin():
         status = member.status
         print(f"🤖 حالة البوت في القناة: {status}")
         if status not in ("administrator", "creator"):
-            print("⚠️⚠️⚠️ البوت ليس مشرف في القناة!")
+            print("⚠️⚠️⚠️ البوت ليس مشرف!")
             return False
         if status == "administrator":
             can_invite = getattr(member, "can_invite_users", False)
-            print(f"🔑 صلاحية دعوة الأعضاء: {can_invite}")
+            print(f"🔑 can_invite_users: {can_invite}")
             if not can_invite:
-                print("⚠️ البوت يحتاج صلاحية 'invite users'!")
+                print("⚠️ البوت يحتاج صلاحية invite users!")
                 return False
         return True
     except Exception as e:
-        print(f"❌ خطأ في التحقق: {e}")
+        print(f"❌ check_bot_admin: {e}")
         return False
 
 check_bot_admin()
@@ -127,6 +125,20 @@ PACKAGES = {
             "jw_20000": {"ar": "20000 توكنز ♥️", "en": "20000 Tokens ♥️", "price": "340 ل.س"},
             "jw_30000": {"ar": "30000 توكنز ♣️", "en": "30000 Tokens ♣️", "price": "490 ل.س"},
         }
+    },
+    "bs_global": {
+        "title": {"ar": "🌍 Blood Strike — عالمي", "en": "🌍 Blood Strike — Global"},
+        "items": {
+            "bs_g_51":    {"ar": "51 Gold 🥇",              "en": "51 Gold 🥇",              "price": "75 ل.س"},
+            "bs_g_105":   {"ar": "105 Gold 🥇",             "en": "105 Gold 🥇",             "price": "120 ل.س"},
+            "bs_g_320":   {"ar": "320 Gold 🥇",             "en": "320 Gold 🥇",             "price": "340 ل.س"},
+            "bs_g_540":   {"ar": "540 Gold 🥇",             "en": "540 Gold 🥇",             "price": "550 ل.س"},
+            "bs_g_1100":  {"ar": "1100 Gold 🥇",            "en": "1100 Gold 🥇",            "price": "1060 ل.س"},
+            "bs_g_lucky": {"ar": "Ultra Skin Lucky Chest 🎁","en": "Ultra Skin Lucky Chest 🎁","price": "620 ل.س"},
+            "bs_g_bag":   {"ar": "Lucky Bag Week 💰",       "en": "Lucky Bag Week 💰",       "price": "1220 ل.س"},
+            "bs_g_pass_p":{"ar": "Strike Pass Premium 🎫",  "en": "Strike Pass Premium 🎫",  "price": "1080 ل.س"},
+            "bs_g_pass_e":{"ar": "Strike Pass Elite 🎫",    "en": "Strike Pass Elite 🎫",    "price": "500 ل.س"},
+        }
     }
 }
 
@@ -136,7 +148,7 @@ TEXTS = {
         "welcome": (
             "👋 أهلاً بك <b>{name}</b> في بوت شحن الجواهر والشدات 💎🔥\n\n"
             "🎯 <b>فكرة البوت:</b>\n"
-            "يمكنك شحن فري فاير، ببجي، أو جواكر عبر سيرياتيل كاش أو شام كاش ✅\n\n"
+            "يمكنك شحن فري فاير، ببجي، جواكر، أو Blood Strike عبر سيرياتيل كاش أو شام كاش ✅\n\n"
             "📌 <b>طريقة الشراء:</b>\n"
             "1️⃣ اختر اللعبة\n2️⃣ اختر العرض\n3️⃣ أرسل ID حسابك\n"
             "4️⃣ أرسل اسمك في اللعبة\n5️⃣ اختر طريقة الدفع\n6️⃣ حوّل المبلغ خلال 5 دقائق\n"
@@ -154,6 +166,7 @@ TEXTS = {
         "btn_ff": "🔥 Free Fire",
         "btn_pubg": "🎯 PUBG",
         "btn_jawaker": "🃏 Jawaker",
+        "btn_blood": "🩸 Blood Strike",
         "btn_info": "👤 معلوماتي",
         "btn_support": "🆘 تواصل مع الدعم",
         "btn_settings": "⚙️ الإعدادات",
@@ -172,12 +185,23 @@ TEXTS = {
             "⛔ لا يستقبل الطلبات حاليًا.\n"
             "🔄 يرجى المحاولة لاحقًا."
         ),
-        "choose_ff_type": (
-            "🔥 <b>اختر نوع الشحن في فري فاير:</b>\n\n"
-            "👇 من الأزرار بالأسفل"
-        ),
+        "choose_ff_type": "🔥 <b>اختر نوع الشحن في فري فاير:</b>\n\n👇 من الأزرار بالأسفل",
         "btn_ff_diamonds": "💎 شحن جواهر",
         "btn_ff_membership": "⭐ شحن عضوية",
+        "choose_bs_server": (
+            "🩸 <b>اختر سيرفر Blood Strike:</b>\n\n"
+            "🌍 <b>عالمي</b> — يتوفر بشحن فوري\n"
+            "🌐 <b>مينا / العرب</b> — قريبًا\n\n"
+            "👇 اختر:"
+        ),
+        "btn_bs_global": "🌍 عالمي",
+        "btn_bs_mena": "🌐 مينا / العرب",
+        "bs_mena_soon": (
+            "🌐 <b>Blood Strike — سيرفر مينا / العرب</b>\n\n"
+            "⏳ <b>سيتوفر قريبًا!</b>\n\n"
+            "🔔 تابع قناتنا لتصلك أخبار توفره فورًا.\n"
+            "شكرًا لصبرك 🙏"
+        ),
         "choose_package": "💎 <b>قائمة أسعار {game}:</b>\n\nاختر العرض الذي تريده 👇",
         "chosen": (
             "✅ اخترت: <b>{item}</b> بسعر <b>{price}</b>\n\n"
@@ -203,6 +227,13 @@ TEXTS = {
             "⚠️ {reason}\n\n"
             "📌 <b>شروط ID جواكر:</b>\n"
             "• أرقام فقط 🔢\n• من 6 إلى 12 رقم\n• لا يبدأ بـ 0\n\n"
+            "🔁 أرسل ID صحيح:"
+        ),
+        "invalid_id_bs": (
+            "❌ <b>ID Blood Strike غير صالح!</b>\n\n"
+            "⚠️ {reason}\n\n"
+            "📌 <b>شروط ID Blood Strike:</b>\n"
+            "• أرقام فقط 🔢\n• من 6 إلى 15 رقم\n• لا يبدأ بـ 0\n\n"
             "🔁 أرسل ID صحيح:"
         ),
         "send_name": "📝 ممتاز! الآن أرسل <b>اسمك داخل اللعبة</b>:",
@@ -242,6 +273,7 @@ TEXTS = {
             "🧾 <b>آخر عمليات الشراء:</b>\n{orders}"
         ),
         "no_orders": "لا يوجد أي عمليات شراء حتى الآن 😕",
+        "contest_disabled": "🚫 <b>المسابقة متوقفة حاليًا</b>\n\nعد قريبًا!",
         "contest_title": (
             "🎁 <b>مسابقة البوت!</b>\n\n"
             "🎯 <b>الشروط:</b>\n"
@@ -309,8 +341,7 @@ TEXTS = {
             "━━━━━━━━━━━━━━━━━━\n\n"
             "👤 <b>الاسم:</b> {name}\n"
             "🆔 <b>تلغرام آيدي:</b> <code>{uid}</code>\n"
-            "🌐 <b>يوزر:</b> @{username}\n"
-            "🔗 <b>رابط الحساب:</b> <a href=\"tg://user?id={uid}\">اضغط هنا</a>\n\n"
+            "🌐 <b>يوزر:</b> @{username}\n\n"
             "━━━━━━━━━━━━━━━━━━\n"
             "🎁 <b>بيانات المسابقة</b>\n"
             "━━━━━━━━━━━━━━━━━━\n\n"
@@ -318,14 +349,12 @@ TEXTS = {
             "🎯 <b>الحالة:</b> {status}\n"
             "🕒 <b>بدأ المسابقة:</b> {created}\n"
             "🕐 <b>آخر مدعو:</b> {last}\n\n"
-            "🔗 <b>رابط الدعوة الخاص:</b>\n"
+            "🔗 <b>رابط الدعوة:</b>\n"
             "<code>{link}</code>\n\n"
             "━━━━━━━━━━━━━━━━━━\n"
             "👥 <b>قائمة المدعوين ({count}):</b>\n"
             "{referrals_list}"
         ),
-        "referral_item": "   {n}. 👤 {name} — <code>{uid}</code> — {time}\n",
-        "no_referrals_yet": "   لم يدعُ أحدًا بعد",
         "inbox_title": "📬 <b>البريد الوارد</b>\n\n📥 آخر <b>{count}</b> رسالة",
         "inbox_empty": "📭 لا يوجد رسائل حتى الآن",
         "inbox_item": (
@@ -341,47 +370,60 @@ TEXTS = {
         "btn_change_order": "🔀 ترتيب الأزرار (أدمن)",
         "btn_reset_data": "🗑️ تصفير بياناتي",
         "btn_dev_mode": "🔧 وضع المطور (تشغيل البوت)",
+        "btn_contest_toggle": "🎁 إدارة المسابقة",
+        "contest_toggle_current_on": (
+            "🎁 <b>حالة المسابقة:</b> ✅ مفعّلة\n\n"
+            "المستخدمون يمكنهم المشاركة في المسابقة حاليًا.\n\n"
+            "اضغط لإيقافها:"
+        ),
+        "contest_toggle_current_off": (
+            "🎁 <b>حالة المسابقة:</b> ❌ متوقفة\n\n"
+            "المستخدمون لا يمكنهم المشاركة حاليًا.\n\n"
+            "اضغط لتشغيلها:"
+        ),
+        "btn_contest_toggle_on": "✅ تشغيل المسابقة",
+        "btn_contest_toggle_off": "🛑 إيقاف المسابقة",
+        "contest_enabled_msg": "✅ <b>تم تشغيل المسابقة</b>\n\nالمستخدمون يمكنهم المشاركة الآن 🎉",
+        "contest_disabled_msg": "🛑 <b>تم إيقاف المسابقة</b>\n\nلن يستقبل البوت مشاركات جديدة.",
         "dev_mode_current_on": (
             "🔧 <b>حالة وضع المطور:</b> ✅ مفعّل\n\n"
-            "البوت يعمل حاليًا خارج ساعات العمل الرسمية.\n\n"
-            "اضغط الزر لإيقافه:"
+            "البوت يعمل حاليًا خارج ساعات العمل.\n\n"
+            "اضغط لإيقافه:"
         ),
         "dev_mode_current_off": (
             "🔧 <b>حالة وضع المطور:</b> ❌ موقّف\n\n"
-            "البوت يتبع ساعات العمل الرسمية (12 ظهرًا - 10 مساءً).\n\n"
-            "اضغط الزر لتشغيله مؤقتًا:"
+            "البوت يتبع ساعات العمل الرسمية (12 - 10).\n\n"
+            "اضغط لتشغيله:"
         ),
         "btn_dev_on": "✅ تشغيل البوت مؤقتًا",
         "btn_dev_off": "🛑 إيقاف البوت مؤقتًا",
-        "dev_mode_enabled": "✅ <b>تم تفعيل وضع المطور</b>\n\nالبوت يقبل الطلبات الآن خارج ساعات العمل 🚀",
-        "dev_mode_disabled": "🛑 <b>تم إيقاف وضع المطور</b>\n\nالبوت عاد لساعات العمل الرسمية.",
+        "dev_mode_enabled": "✅ <b>وضع المطور مفعّل</b> — البوت يعمل خارج الساعات 🚀",
+        "dev_mode_disabled": "🛑 <b>وضع المطور موقّف</b> — عاد لساعات العمل.",
         "lang_changed": "✅ تم تغيير اللغة إلى العربية 🇸🇦",
         "lang_pick": "🌐 اختر اللغة:",
-        "reset_confirm": "⚠️ هل أنت متأكد من حذف كل بياناتك؟\n\nهذا لا يمكن التراجع عنه!",
+        "reset_confirm": "⚠️ متأكد من حذف كل بياناتك؟",
         "reset_done": "🗑️ تم حذف جميع بياناتك ✅",
         "btn_yes": "✅ نعم، احذف",
         "btn_no": "❌ إلغاء",
-        "order_current": "🔀 <b>ترتيب الأزرار الحالي:</b>\n\n{order}\n\nاختر:",
+        "order_current": "🔀 <b>ترتيب الأزرار:</b>\n\n{order}\n\nاختر:",
         "order_changed": "✅ تم تغيير الترتيب!",
-        "btn_order_1": "1️⃣ FF → PUBG → Jawaker",
-        "btn_order_2": "2️⃣ Jawaker → FF → PUBG",
-        "btn_order_3": "3️⃣ PUBG → Jawaker → FF",
+        "btn_order_1": "1️⃣ FF → PUBG → Jawaker → Blood",
+        "btn_order_2": "2️⃣ Blood → FF → PUBG → Jawaker",
+        "btn_order_3": "3️⃣ Jawaker → Blood → FF → PUBG",
         "back_done": "⬅️ رجعنا للخطوة السابقة",
         "unknown_msg": "🤔 لم أفهم رسالتك. استخدم الأزرار بالأسفل 👇",
         "ask_message": (
             "✉️ <b>أرسل رسالتك الآن</b>\n\n"
             "📝 اكتب شكواك، اقتراحك، أو أي استفسار\n"
-            "سيتم إرسالها للإدارة مباشرة ✅\n\n"
-            "لإلغاء الإرسال اضغط زر الرجوع 👇"
+            "سيتم إرسالها للإدارة مباشرة ✅"
         ),
-        "message_sent": "✅ <b>تم إرسال رسالتك بنجاح!</b>\n\nسيتم الرد عليك في أقرب وقت 📩",
-        "message_too_short": "❌ الرسالة قصيرة جدًا! أرسل رسالة أطول:",
+        "message_sent": "✅ <b>تم إرسال رسالتك!</b>\n\nسيتم الرد قريبًا 📩",
+        "message_too_short": "❌ الرسالة قصيرة! أرسل أطول:",
     },
     "en": {
         "welcome": (
-            "👋 Welcome <b>{name}</b> to the Top-Up bot 💎🔥\n\n"
-            "🎯 <b>Bot purpose:</b>\n"
-            "Top up Free Fire, PUBG, or Jawaker via Syriatel Cash or Sham Cash ✅\n\n"
+            "👋 Welcome <b>{name}</b> 💎🔥\n\n"
+            "🎯 Top up Free Fire, PUBG, Jawaker, or Blood Strike via Syriatel Cash or Sham Cash ✅\n\n"
             "📌 <b>How to buy:</b>\n1️⃣ Choose game\n2️⃣ Choose package\n"
             "3️⃣ Send your ID\n4️⃣ Send in-game name\n5️⃣ Choose payment\n"
             "6️⃣ Pay within 5 minutes\n7️⃣ Wait for approval ✅\n\n"
@@ -396,6 +438,7 @@ TEXTS = {
         "btn_ff": "🔥 Free Fire",
         "btn_pubg": "🎯 PUBG",
         "btn_jawaker": "🃏 Jawaker",
+        "btn_blood": "🩸 Blood Strike",
         "btn_info": "👤 My info",
         "btn_support": "🆘 Support",
         "btn_settings": "⚙️ Settings",
@@ -403,201 +446,116 @@ TEXTS = {
         "btn_inbox": "📬 Inbox",
         "btn_contestants": "🏆 Contestants",
         "btn_contest": "🎁 Contest",
-        "check_success": "✅ Verified! Welcome 🎉",
-        "check_fail": "❌ Not subscribed yet!",
+        "check_success": "✅ Verified! 🎉",
+        "check_fail": "❌ Not subscribed!",
         "orders_closed": "⛔ Orders closed.\n🕛 Working: 12 PM - 10 PM 🇸🇦",
-        "orders_closed_dev": (
-            "🔧 <b>Bot is in maintenance/test mode</b>\n\n"
-            "⛔ Not accepting orders right now.\n"
-            "🔄 Please try again later."
-        ),
-        "choose_ff_type": "🔥 <b>Choose Free Fire top-up type:</b>\n\n👇 From buttons below",
+        "orders_closed_dev": "🔧 <b>Bot is in maintenance mode</b>",
+        "choose_ff_type": "🔥 <b>Choose FF type:</b>\n\n👇 From buttons",
         "btn_ff_diamonds": "💎 Diamonds",
         "btn_ff_membership": "⭐ Membership",
+        "choose_bs_server": (
+            "🩸 <b>Choose Blood Strike server:</b>\n\n"
+            "🌍 <b>Global</b>\n🌐 <b>MENA / Arab</b> — Coming soon\n\n👇"
+        ),
+        "btn_bs_global": "🌍 Global",
+        "btn_bs_mena": "🌐 MENA / Arab",
+        "bs_mena_soon": "🌐 <b>Blood Strike — MENA</b>\n\n⏳ <b>Coming soon!</b>",
         "choose_package": "💎 <b>{game} prices:</b>\n\nChoose 👇",
-        "chosen": (
-            "✅ Chosen: <b>{item}</b> for <b>{price}</b>\n\n"
-            "🆔 Send your <b>{game} ID</b>:\n\n"
-            "💡 <i>Must be a valid ID (digits only)</i>"
-        ),
-        "invalid_id_ff": (
-            "❌ <b>Invalid Free Fire ID!</b>\n\n⚠️ {reason}\n\n"
-            "📌 <b>FF ID rules:</b>\n• Digits only 🔢\n• 5-15 digits\n• No leading 0\n\n"
-            "🔁 Send a valid ID:"
-        ),
-        "invalid_id_pubg": (
-            "❌ <b>Invalid PUBG ID!</b>\n\n⚠️ {reason}\n\n"
-            "📌 <b>PUBG ID rules:</b>\n• Digits only 🔢\n• 9-12 digits\n• No leading 0\n\n"
-            "🔁 Send a valid ID:"
-        ),
-        "invalid_id_jawaker": (
-            "❌ <b>Invalid Jawaker ID!</b>\n\n⚠️ {reason}\n\n"
-            "📌 <b>Jawaker ID rules:</b>\n• Digits only 🔢\n• 6-12 digits\n• No leading 0\n\n"
-            "🔁 Send a valid ID:"
-        ),
+        "chosen": "✅ Chosen: <b>{item}</b> for <b>{price}</b>\n\n🆔 Send your <b>{game} ID</b>:",
+        "invalid_id_ff": "❌ <b>Invalid FF ID!</b>\n\n⚠️ {reason}\n\n• Digits only 🔢\n• 5-15 digits\n• No leading 0\n\n🔁 Send valid:",
+        "invalid_id_pubg": "❌ <b>Invalid PUBG ID!</b>\n\n⚠️ {reason}\n\n• Digits only 🔢\n• 9-12 digits\n\n🔁 Send valid:",
+        "invalid_id_jawaker": "❌ <b>Invalid Jawaker ID!</b>\n\n⚠️ {reason}\n\n🔁 Send valid:",
+        "invalid_id_bs": "❌ <b>Invalid Blood Strike ID!</b>\n\n⚠️ {reason}\n\n🔁 Send valid:",
         "send_name": "📝 Now send your <b>in-game name</b>:",
         "invalid_name": "❌ Name too short!",
-        "choose_payment": "💳 <b>Choose payment method:</b>\n\n👇 From buttons below",
+        "choose_payment": "💳 <b>Choose payment method:</b>",
         "btn_syriatel": "💳 Syriatel Cash",
         "btn_sham": "📷 Sham Cash",
         "payment_with_timer": (
             "💳 <b>Payment: {method}</b>\n\n"
-            "📌 <b>Steps:</b>\n"
-            "{steps}\n\n"
-            "⏳ <b>Time left to pay: {remaining}</b>\n\n"
-            "🔔 <b>Important:</b>\n"
-            "You must pay within <b>5 minutes</b> or the order will be auto-cancelled!\n\n"
-            "⚠️ Reviewed by admin ✅\n"
-            "🔖 Order #<b>{oid}</b>"
+            "📌 <b>Steps:</b>\n{steps}\n\n"
+            "⏳ <b>Time left: {remaining}</b>\n\n"
+            "🔔 You must pay within <b>5 minutes</b>!\n\n"
+            "⚠️ Reviewed by admin ✅\n🔖 Order #<b>{oid}</b>"
         ),
-        "payment_expired": (
-            "⌛ <b>Payment time expired!</b>\n\n"
-            "Sorry, you didn't pay within <b>5 minutes</b>.\n"
-            "🔖 Order #<b>{oid}</b>\n\n"
-            "🔄 Create a new order via /start"
-        ),
-        "sham_image_caption": "📷 <b>Scan this code to pay via Sham Cash</b>\n\n💰 Amount: <b>{price}</b>",
-        "accepted": (
-            "✅ <b>Accepted!</b>\n\n"
-            "💎 <b>{item}</b> within <b>5 min</b> ⏳\n\n"
-            "Thanks ❤️"
-        ),
-        "rejected": "❌ Order <b>rejected</b>.\nContact support 🆘",
-        "my_info": (
-            "👤 <b>Your info:</b>\n\n📛 {name}\n🆔 <code>{rid}</code>\n"
-            "📅 {joined}\n🌐 {lang}\n\n🧾 <b>Recent orders:</b>\n{orders}"
-        ),
+        "payment_expired": "⌛ <b>Payment expired!</b>\n\n🔖 Order #<b>{oid}</b>",
+        "sham_image_caption": "📷 <b>Scan to pay via Sham Cash</b>\n\n💰 Amount: <b>{price}</b>",
+        "accepted": "✅ <b>Accepted!</b>\n\n💎 <b>{item}</b> within <b>5 min</b> ⏳",
+        "rejected": "❌ Order <b>rejected</b>.",
+        "my_info": "👤 <b>Info:</b>\n\n📛 {name}\n🆔 <code>{rid}</code>\n📅 {joined}\n🌐 {lang}\n\n🧾 <b>Orders:</b>\n{orders}",
         "no_orders": "No orders yet 😕",
+        "contest_disabled": "🚫 <b>Contest is disabled</b>",
         "contest_title": (
-            "🎁 <b>Bot Contest!</b>\n\n"
-            "🎯 <b>Requirements:</b>\n"
-            f"📢 Invite <b>{REQUIRED_JOINS} people</b> to join the channel via your link\n\n"
-            "🔗 <b>Your invite link:</b>\n"
-            "<code>{link}</code>\n\n"
-            "📌 <b>How it works:</b>\n"
-            "1️⃣ Copy your link above ☝️\n"
-            "2️⃣ Share with friends\n"
-            "3️⃣ Each join via your link = +1 auto\n"
-            f"4️⃣ At {REQUIRED_JOINS} joins → auto-entry to draw 🎉\n\n"
-            "📊 <b>Your invites:</b> <b>{count}/{required}</b>\n"
+            "🎁 <b>Contest!</b>\n\n"
+            f"📢 Invite <b>{REQUIRED_JOINS} people</b> to the channel via your link\n\n"
+            "🔗 <b>Your link:</b>\n<code>{link}</code>\n\n"
+            "📊 <b>Invites:</b> <b>{count}/{required}</b>\n"
             "🎯 Status: {status}"
         ),
         "btn_copy_link": "📋 Copy link",
-        "contest_loading": "⏳ Creating your invite link...",
-        "contest_created": (
-            "🎉 <b>Your invite link is ready!</b>\n\n"
-            "🔗 <b>Link:</b>\n<code>{link}</code>\n\n"
-            "📤 Share with friends:\n"
-            "📊 <b>Invites:</b> <b>{count}/{required}</b>\n\n"
-            "🔔 Each join via your link counts automatically!"
-        ),
+        "contest_loading": "⏳ Creating your link...",
+        "contest_created": "🎉 <b>Link ready!</b>\n\n🔗 <code>{link}</code>\n\n📊 <b>Invites:</b> <b>{count}/{required}</b>",
         "contest_status_active": "🎯 Active",
         "contest_status_qualified": "🏆 Qualified",
         "contest_status_rejected": "❌ Rejected",
-        "contestant_joined": (
-            "🎉 <b>Congrats!</b>\n\n"
-            "Someone joined the channel via your link!\n"
-            "👤 Name: <b>{name}</b>\n\n"
-            "📊 <b>Your invites:</b> {count}/{required}\n"
-            "{extra}"
-        ),
-        "contestant_complete": (
-            "🏆 <b>Congratulations!</b>\n\n"
-            f"🎊 You've completed <b>{REQUIRED_JOINS} invites</b> and entered the <b>contest draw</b>!\n\n"
-            "🍀 Good luck!"
-        ),
-        "contestants_title": (
-            "🏆 <b>Contestants</b>\n\n"
-            "📊 Total: <b>{total}</b>\n"
-            "✅ Qualified: <b>{qualified}</b>\n"
-            "🎯 Active: <b>{active}</b>\n\n"
-            "👇 Details:"
-        ),
+        "contestant_joined": "🎉 <b>Someone joined via your link!</b>\n\n👤 {name}\n\n📊 {count}/{required}\n{extra}",
+        "contestant_complete": "🏆 <b>Congrats! You entered the draw!</b>",
+        "contestants_title": "🏆 <b>Contestants</b>\n\n📊 Total: <b>{total}</b>\n✅ {qualified}\n🎯 {active}",
         "contestants_empty": "📭 No contestants yet",
         "contestant_item": (
             "━━━━━━━━━━━━━━━━━━\n"
-            "👤 <b>{name}</b>\n"
-            "🆔 Telegram ID: <code>{uid}</code>\n"
-            "🌐 Username: @{username}\n"
-            "📊 <b>Invites: {count}/{required}</b>\n"
-            "🎯 Status: {status}\n"
-            "🕒 <b>Started:</b> {time}\n"
-            "🕐 <b>Last invite:</b> {last}\n"
-            "🔗 <b>Link:</b> <code>{link}</code>\n"
+            "👤 <b>{name}</b>\n🆔 <code>{uid}</code>\n🌐 @{username}\n"
+            "📊 <b>{count}/{required}</b>\n🎯 {status}\n"
+            "🕒 {time}\n🕐 {last}\n🔗 <code>{link}</code>\n"
             "━━━━━━━━━━━━━━━━━━"
         ),
         "contestant_no_last": "No invites yet",
-        "btn_view_details": "📋 Full details",
-        "btn_view_user": "👤 Open account",
+        "btn_view_details": "📋 Details",
+        "btn_view_user": "👤 User",
         "contestant_full_details": (
-            "━━━━━━━━━━━━━━━━━━\n"
-            "📋 <b>Contestant Details</b>\n"
-            "━━━━━━━━━━━━━━━━━━\n\n"
-            "👤 <b>Name:</b> {name}\n"
-            "🆔 <b>Telegram ID:</b> <code>{uid}</code>\n"
-            "🌐 <b>Username:</b> @{username}\n"
-            "🔗 <b>Account link:</b> <a href=\"tg://user?id={uid}\">Click here</a>\n\n"
-            "━━━━━━━━━━━━━━━━━━\n"
-            "🎁 <b>Contest Data</b>\n"
-            "━━━━━━━━━━━━━━━━━━\n\n"
-            "📊 <b>Invites:</b> <b>{count}/{required}</b>\n"
-            "🎯 <b>Status:</b> {status}\n"
-            "🕒 <b>Started:</b> {created}\n"
-            "🕐 <b>Last invite:</b> {last}\n\n"
-            "🔗 <b>Invite link:</b>\n"
-            "<code>{link}</code>\n\n"
-            "━━━━━━━━━━━━━━━━━━\n"
-            "👥 <b>Invited people ({count}):</b>\n"
-            "{referrals_list}"
+            "📋 <b>Contestant Details</b>\n\n"
+            "👤 <b>{name}</b>\n🆔 <code>{uid}</code>\n🌐 @{username}\n\n"
+            "📊 <b>{count}/{required}</b>\n🎯 {status}\n"
+            "🕒 {created}\n🕐 {last}\n🔗 <code>{link}</code>\n\n"
+            "👥 <b>Invited ({count}):</b>\n{referrals_list}"
         ),
-        "referral_item": "   {n}. 👤 {name} — <code>{uid}</code> — {time}\n",
-        "no_referrals_yet": "   No invites yet",
-        "inbox_title": "📬 <b>Inbox</b>\n\n📥 Last <b>{count}</b> messages",
-        "inbox_empty": "📭 No messages yet",
-        "inbox_item": (
-            "📩 <b>Complaint #{n}</b>\n\n👤 Name: <b>{name}</b>\n"
-            "🆔 <code>{uid}</code>\n🕒 {time}\n\n💬 <b>Message:</b>\n{msg}"
-        ),
-        "settings_admin": "⚙️ <b>Settings (Admin)</b>\n\nChoose:",
-        "settings_user": "⚙️ <b>Settings</b>\n\nChoose:",
+        "inbox_title": "📬 <b>Inbox</b>\n\n📥 Last <b>{count}</b>",
+        "inbox_empty": "📭 No messages",
+        "inbox_item": "📩 <b>#{n}</b>\n\n👤 {name}\n🆔 <code>{uid}</code>\n🕒 {time}\n\n💬 {msg}",
+        "settings_admin": "⚙️ <b>Settings (Admin)</b>",
+        "settings_user": "⚙️ <b>Settings</b>",
         "btn_change_lang": "🌐 Change language",
-        "btn_change_order": "🔀 Button order (Admin)",
+        "btn_change_order": "🔀 Button order",
         "btn_reset_data": "🗑️ Reset my data",
-        "btn_dev_mode": "🔧 Developer mode (Bot toggle)",
-        "dev_mode_current_on": (
-            "🔧 <b>Developer Mode:</b> ✅ ON\n\n"
-            "Bot is accepting orders outside working hours.\n\n"
-            "Press to disable:"
-        ),
-        "dev_mode_current_off": (
-            "🔧 <b>Developer Mode:</b> ❌ OFF\n\n"
-            "Bot follows working hours (12 PM - 10 PM).\n\n"
-            "Press to enable temporarily:"
-        ),
-        "btn_dev_on": "✅ Enable bot temporarily",
-        "btn_dev_off": "🛑 Disable bot temporarily",
-        "dev_mode_enabled": "✅ <b>Developer Mode enabled</b>\n\nBot is now accepting orders outside hours 🚀",
-        "dev_mode_disabled": "🛑 <b>Developer Mode disabled</b>\n\nBot returned to working hours.",
+        "btn_dev_mode": "🔧 Developer mode",
+        "btn_contest_toggle": "🎁 Manage Contest",
+        "contest_toggle_current_on": "🎁 <b>Contest:</b> ✅ ON\n\nPress to disable:",
+        "contest_toggle_current_off": "🎁 <b>Contest:</b> ❌ OFF\n\nPress to enable:",
+        "btn_contest_toggle_on": "✅ Enable Contest",
+        "btn_contest_toggle_off": "🛑 Disable Contest",
+        "contest_enabled_msg": "✅ <b>Contest enabled</b>",
+        "contest_disabled_msg": "🛑 <b>Contest disabled</b>",
+        "dev_mode_current_on": "🔧 <b>Dev Mode:</b> ✅ ON",
+        "dev_mode_current_off": "🔧 <b>Dev Mode:</b> ❌ OFF",
+        "btn_dev_on": "✅ Enable bot",
+        "btn_dev_off": "🛑 Disable bot",
+        "dev_mode_enabled": "✅ <b>Dev Mode enabled</b>",
+        "dev_mode_disabled": "🛑 <b>Dev Mode disabled</b>",
         "lang_changed": "✅ Language: English 🇬🇧",
         "lang_pick": "🌐 Choose language:",
-        "reset_confirm": "⚠️ Delete all your data?\n\nCannot be undone!",
+        "reset_confirm": "⚠️ Delete all your data?",
         "reset_done": "🗑️ Data deleted ✅",
         "btn_yes": "✅ Yes, delete",
         "btn_no": "❌ Cancel",
-        "order_current": "🔀 <b>Current order:</b>\n\n{order}\n\nChoose:",
+        "order_current": "🔀 <b>Order:</b>\n\n{order}\n\nChoose:",
         "order_changed": "✅ Order changed!",
-        "btn_order_1": "1️⃣ FF → PUBG → Jawaker",
-        "btn_order_2": "2️⃣ Jawaker → FF → PUBG",
-        "btn_order_3": "3️⃣ PUBG → Jawaker → FF",
+        "btn_order_1": "1️⃣ FF → PUBG → Jawaker → Blood",
+        "btn_order_2": "2️⃣ Blood → FF → PUBG → Jawaker",
+        "btn_order_3": "3️⃣ Jawaker → Blood → FF → PUBG",
         "back_done": "⬅️ Back",
-        "unknown_msg": "🤔 I didn't understand. Use the buttons below 👇",
-        "ask_message": (
-            "✉️ <b>Send your message</b>\n\n"
-            "📝 Complaint, suggestion, or inquiry\n"
-            "Will be sent directly ✅\n\n"
-            "To cancel, press Back 👇"
-        ),
-        "message_sent": "✅ <b>Message sent!</b>\n\nWe'll reply soon 📩",
+        "unknown_msg": "🤔 I didn't understand.",
+        "ask_message": "✉️ <b>Send your message</b>",
+        "message_sent": "✅ <b>Sent!</b>",
         "message_too_short": "❌ Too short!",
     }
 }
@@ -609,64 +567,23 @@ def db_connect():
 def init_db():
     conn = db_connect()
     cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            user_id BIGINT PRIMARY KEY,
-            username TEXT,
-            full_name TEXT,
-            random_id TEXT,
-            language TEXT DEFAULT 'ar',
-            joined_at TEXT
-        )
-    """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS orders (
-            order_id SERIAL PRIMARY KEY,
-            user_id BIGINT,
-            game TEXT,
-            package TEXT,
-            price TEXT,
-            game_id TEXT,
-            player_name TEXT,
-            payment_method TEXT,
-            status TEXT,
-            created_at TEXT
-        )
-    """)
+    cur.execute("""CREATE TABLE IF NOT EXISTS users (
+        user_id BIGINT PRIMARY KEY, username TEXT, full_name TEXT,
+        random_id TEXT, language TEXT DEFAULT 'ar', joined_at TEXT)""")
+    cur.execute("""CREATE TABLE IF NOT EXISTS orders (
+        order_id SERIAL PRIMARY KEY, user_id BIGINT, game TEXT, package TEXT,
+        price TEXT, game_id TEXT, player_name TEXT, payment_method TEXT,
+        status TEXT, created_at TEXT)""")
     cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method TEXT")
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS settings (
-            key TEXT PRIMARY KEY,
-            value TEXT
-        )
-    """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS messages (
-            id SERIAL PRIMARY KEY,
-            user_id BIGINT,
-            username TEXT,
-            full_name TEXT,
-            message TEXT,
-            is_read BOOLEAN DEFAULT FALSE,
-            created_at TEXT
-        )
-    """)
-
-    # ========== جدول المسابقة ==========
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS contest (
-            user_id BIGINT PRIMARY KEY,
-            username TEXT,
-            full_name TEXT,
-            invite_link TEXT UNIQUE,
-            invite_link_name TEXT,
-            joins_count INT DEFAULT 0,
-            status TEXT DEFAULT 'active',
-            created_at TEXT
-        )
-    """)
-
-    # ✅ ضمان وجود كل الأعمدة (حتى لو الجدول موجود من قبل)
+    cur.execute("""CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY, value TEXT)""")
+    cur.execute("""CREATE TABLE IF NOT EXISTS messages (
+        id SERIAL PRIMARY KEY, user_id BIGINT, username TEXT, full_name TEXT,
+        message TEXT, is_read BOOLEAN DEFAULT FALSE, created_at TEXT)""")
+    cur.execute("""CREATE TABLE IF NOT EXISTS contest (
+        user_id BIGINT PRIMARY KEY, username TEXT, full_name TEXT,
+        invite_link TEXT UNIQUE, invite_link_name TEXT,
+        joins_count INT DEFAULT 0, status TEXT DEFAULT 'active', created_at TEXT)""")
     cur.execute("ALTER TABLE contest ADD COLUMN IF NOT EXISTS username TEXT")
     cur.execute("ALTER TABLE contest ADD COLUMN IF NOT EXISTS full_name TEXT")
     cur.execute("ALTER TABLE contest ADD COLUMN IF NOT EXISTS invite_link TEXT")
@@ -674,17 +591,9 @@ def init_db():
     cur.execute("ALTER TABLE contest ADD COLUMN IF NOT EXISTS joins_count INT DEFAULT 0")
     cur.execute("ALTER TABLE contest ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active'")
     cur.execute("ALTER TABLE contest ADD COLUMN IF NOT EXISTS created_at TEXT")
-
-    # ========== جدول الإحالات ==========
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS referrals (
-            id SERIAL PRIMARY KEY,
-            referrer_id BIGINT,
-            referred_id BIGINT UNIQUE,
-            invite_link TEXT,
-            joined_at TEXT
-        )
-    """)
+    cur.execute("""CREATE TABLE IF NOT EXISTS referrals (
+        id SERIAL PRIMARY KEY, referrer_id BIGINT, referred_id BIGINT UNIQUE,
+        invite_link TEXT, joined_at TEXT)""")
     cur.execute("ALTER TABLE referrals ADD COLUMN IF NOT EXISTS referrer_id BIGINT")
     cur.execute("ALTER TABLE referrals ADD COLUMN IF NOT EXISTS referred_id BIGINT")
     cur.execute("ALTER TABLE referrals ADD COLUMN IF NOT EXISTS invite_link TEXT")
@@ -693,12 +602,13 @@ def init_db():
     cur.execute("SELECT value FROM settings WHERE key = 'button_order'")
     row = cur.fetchone()
     if row:
-        if "jawaker" not in row["value"]:
-            cur.execute("UPDATE settings SET value = 'ff,pubg,jawaker' WHERE key = 'button_order'")
+        if "blood" not in row["value"]:
+            cur.execute("UPDATE settings SET value = 'ff,pubg,jawaker,blood' WHERE key = 'button_order'")
     else:
-        cur.execute("INSERT INTO settings VALUES ('button_order', 'ff,pubg,jawaker')")
+        cur.execute("INSERT INTO settings VALUES ('button_order', 'ff,pubg,jawaker,blood')")
 
     cur.execute("INSERT INTO settings VALUES ('dev_mode', 'off') ON CONFLICT (key) DO NOTHING")
+    cur.execute("INSERT INTO settings VALUES ('contest_mode', 'on') ON CONFLICT (key) DO NOTHING")
 
     conn.commit()
     cur.close(); conn.close()
@@ -711,25 +621,21 @@ def gen_random_id():
     return str(random.randint(10000000, 99999999))
 
 def get_user(uid):
-    conn = db_connect()
-    cur = conn.cursor()
+    conn = db_connect(); cur = conn.cursor()
     cur.execute("SELECT * FROM users WHERE user_id = %s", (uid,))
-    u = cur.fetchone()
-    cur.close(); conn.close()
+    u = cur.fetchone(); cur.close(); conn.close()
     return u
 
 def ensure_user(message):
     uid = message.from_user.id
-    conn = db_connect()
-    cur = conn.cursor()
+    conn = db_connect(); cur = conn.cursor()
     cur.execute("SELECT user_id FROM users WHERE user_id = %s", (uid,))
     if not cur.fetchone():
         cur.execute(
             "INSERT INTO users (user_id, username, full_name, random_id, language, joined_at) "
             "VALUES (%s, %s, %s, %s, %s, %s)",
             (uid, message.from_user.username or "", message.from_user.full_name,
-             gen_random_id(), "ar", datetime.now().strftime("%Y-%m-%d %H:%M"))
-        )
+             gen_random_id(), "ar", datetime.now().strftime("%Y-%m-%d %H:%M")))
         conn.commit()
     cur.close(); conn.close()
 
@@ -747,37 +653,27 @@ def t_lang(lang, key, **kwargs):
     return text.format(**kwargs) if kwargs else text
 
 def get_button_order():
-    conn = db_connect()
-    cur = conn.cursor()
+    conn = db_connect(); cur = conn.cursor()
     cur.execute("SELECT value FROM settings WHERE key = 'button_order'")
-    row = cur.fetchone()
-    cur.close(); conn.close()
-    return row["value"] if row else "ff,pubg,jawaker"
+    row = cur.fetchone(); cur.close(); conn.close()
+    return row["value"] if row else "ff,pubg,jawaker,blood"
 
 def set_button_order(value):
-    conn = db_connect()
-    cur = conn.cursor()
+    conn = db_connect(); cur = conn.cursor()
     cur.execute("UPDATE settings SET value = %s WHERE key = 'button_order'", (value,))
-    conn.commit()
-    cur.close(); conn.close()
+    conn.commit(); cur.close(); conn.close()
 
 def get_setting(key, default=None):
-    conn = db_connect()
-    cur = conn.cursor()
+    conn = db_connect(); cur = conn.cursor()
     cur.execute("SELECT value FROM settings WHERE key = %s", (key,))
-    row = cur.fetchone()
-    cur.close(); conn.close()
+    row = cur.fetchone(); cur.close(); conn.close()
     return row["value"] if row else default
 
 def set_setting(key, value):
-    conn = db_connect()
-    cur = conn.cursor()
-    cur.execute("""
-        INSERT INTO settings VALUES (%s, %s)
-        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
-    """, (key, value))
-    conn.commit()
-    cur.close(); conn.close()
+    conn = db_connect(); cur = conn.cursor()
+    cur.execute("""INSERT INTO settings VALUES (%s, %s)
+        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value""", (key, value))
+    conn.commit(); cur.close(); conn.close()
 
 def is_orders_open():
     if get_setting("dev_mode", "off") == "on":
@@ -785,12 +681,15 @@ def is_orders_open():
     now = datetime.now(timezone(timedelta(hours=3)))
     return ORDERS_OPEN_HOUR <= now.hour < ORDERS_CLOSE_HOUR
 
+def is_contest_open():
+    return get_setting("contest_mode", "on") == "on"
+
 def is_subscribed(user_id):
     try:
         m = bot.get_chat_member(CHANNEL_USERNAME, user_id)
         return m.status in ("member", "administrator", "creator")
     except Exception as e:
-        print(f"❌ خطأ في التحقق من الاشتراك: {e}")
+        print(f"❌ is_subscribed: {e}")
         return False
 
 def validate_game_id(game_id: str, game: str):
@@ -799,28 +698,33 @@ def validate_game_id(game_id: str, game: str):
         return False, "يجب أن يحتوي على أرقام فقط"
     if game_id.startswith("0"):
         return False, "لا يبدأ بـ 0"
-
     if game in ("ff", "ff_membership"):
-        if len(game_id) < 5: return False, "ID فري فاير أقل من 5 أرقام"
-        if len(game_id) > 15: return False, "ID فري فاير أكثر من 15 رقم"
+        if len(game_id) < 5: return False, "ID أقل من 5 أرقام"
+        if len(game_id) > 15: return False, "ID أكثر من 15 رقم"
     elif game == "pubg":
-        if len(game_id) < 9: return False, "ID ببجي أقل من 9 أرقام"
-        if len(game_id) > 12: return False, "ID ببجي أكثر من 12 رقم"
+        if len(game_id) < 9: return False, "ID أقل من 9 أرقام"
+        if len(game_id) > 12: return False, "ID أكثر من 12 رقم"
     elif game == "jawaker":
-        if len(game_id) < 6: return False, "ID جواكر أقل من 6 أرقام"
-        if len(game_id) > 12: return False, "ID جواكر أكثر من 12 رقم"
-
+        if len(game_id) < 6: return False, "ID أقل من 6 أرقام"
+        if len(game_id) > 12: return False, "ID أكثر من 12 رقم"
+    elif game == "bs_global":
+        if len(game_id) < 6: return False, "ID أقل من 6 أرقام"
+        if len(game_id) > 15: return False, "ID أكثر من 15 رقم"
     return True, game_id
 
 # ============ المسابقة ============
 def create_user_invite_link(uid):
+    """
+    ينشئ رابط دعوة فريد للمستخدم
+    ✅ بدون member_limit — يقبل عدداً غير محدود من المدعوين
+    """
     try:
         link_name = f"ref_{uid}_{int(time.time())}"
         result = bot.create_chat_invite_link(
             chat_id=CHANNEL_USERNAME,
             name=link_name,
-            member_limit=1,
             creates_join_request=False
+            # ✅ لا نستخدم member_limit — حتى يبقى الرابط فعالاً
         )
         return result.invite_link, link_name
     except Exception as e:
@@ -828,65 +732,43 @@ def create_user_invite_link(uid):
         return None, None
 
 def get_contest_entry(uid):
-    conn = db_connect()
-    cur = conn.cursor()
+    conn = db_connect(); cur = conn.cursor()
     cur.execute("SELECT * FROM contest WHERE user_id = %s", (uid,))
-    row = cur.fetchone()
-    cur.close(); conn.close()
+    row = cur.fetchone(); cur.close(); conn.close()
     return row
 
 def register_contest_user(uid, username, full_name):
     invite_link, link_name = create_user_invite_link(uid)
     if not invite_link:
         return None
-    conn = db_connect()
-    cur = conn.cursor()
+    conn = db_connect(); cur = conn.cursor()
     cur.execute(
         "INSERT INTO contest (user_id, username, full_name, invite_link, invite_link_name, created_at) "
         "VALUES (%s, %s, %s, %s, %s, %s) RETURNING *",
         (uid, username, full_name, invite_link, link_name,
-         datetime.now().strftime("%Y-%m-%d %H:%M"))
-    )
-    row = cur.fetchone()
-    conn.commit()
-    cur.close(); conn.close()
+         datetime.now().strftime("%Y-%m-%d %H:%M")))
+    row = cur.fetchone(); conn.commit(); cur.close(); conn.close()
     return row
 
 def get_all_contestants():
-    conn = db_connect()
-    cur = conn.cursor()
+    conn = db_connect(); cur = conn.cursor()
     cur.execute("SELECT * FROM contest ORDER BY joins_count DESC, created_at DESC")
-    rows = cur.fetchall()
-    cur.close(); conn.close()
+    rows = cur.fetchall(); cur.close(); conn.close()
     return rows
 
 def get_last_referral_time(referrer_id):
-    """يرجّع وقت آخر مدعو للداعي"""
-    conn = db_connect()
-    cur = conn.cursor()
-    cur.execute(
-        "SELECT joined_at FROM referrals WHERE referrer_id = %s "
-        "ORDER BY joined_at DESC LIMIT 1",
-        (referrer_id,)
-    )
-    row = cur.fetchone()
-    cur.close(); conn.close()
+    conn = db_connect(); cur = conn.cursor()
+    cur.execute("SELECT joined_at FROM referrals WHERE referrer_id = %s "
+                "ORDER BY joined_at DESC LIMIT 1", (referrer_id,))
+    row = cur.fetchone(); cur.close(); conn.close()
     return row["joined_at"] if row else None
 
 def get_referrals_list(referrer_id):
-    """يرجّع قائمة بكل المدعوين"""
-    conn = db_connect()
-    cur = conn.cursor()
-    cur.execute(
-        "SELECT r.referred_id, r.joined_at, u.full_name, u.username "
-        "FROM referrals r "
-        "LEFT JOIN users u ON u.user_id = r.referred_id "
-        "WHERE r.referrer_id = %s "
-        "ORDER BY r.joined_at ASC",
-        (referrer_id,)
-    )
-    rows = cur.fetchall()
-    cur.close(); conn.close()
+    conn = db_connect(); cur = conn.cursor()
+    cur.execute("""SELECT r.referred_id, r.joined_at, u.full_name, u.username
+        FROM referrals r LEFT JOIN users u ON u.user_id = r.referred_id
+        WHERE r.referrer_id = %s ORDER BY r.joined_at ASC""", (referrer_id,))
+    rows = cur.fetchall(); cur.close(); conn.close()
     return rows
 
 def contest_status_text(lang, status):
@@ -899,8 +781,7 @@ def contest_status_text(lang, status):
 
 # ============ العداد الحي ============
 def format_remaining(seconds, lang):
-    m = seconds // 60
-    s = seconds % 60
+    m = seconds // 60; s = seconds % 60
     if lang == "en":
         if m > 0 and s > 0: return f"{m} min {s} sec"
         elif m > 0: return f"{m} min"
@@ -948,14 +829,12 @@ def build_payment_steps(method, lang, price):
 
 def start_countdown(chat_id, message_id, order_id, method, uid, lang, price_str, total_seconds=300):
     COUNTDOWNS[order_id] = False
-
     def run():
-        print(f"⏳ بدء العداد للطلب #{order_id}")
+        print(f"⏳ بدء العداد #{order_id}")
         steps_text, method_name = build_payment_steps(method, lang, price_str)
         remaining = total_seconds
         while remaining > 0:
-            time.sleep(60)
-            remaining -= 60
+            time.sleep(60); remaining -= 60
             if COUNTDOWNS.get(order_id) is True:
                 COUNTDOWNS.pop(order_id, None); return
             try:
@@ -968,17 +847,14 @@ def start_countdown(chat_id, message_id, order_id, method, uid, lang, price_str,
                 print(f"⚠️ DB check #{order_id}: {e}")
             if remaining > 0:
                 remaining_text = format_remaining(remaining, lang)
-                text = t_lang(lang, "payment_with_timer",
-                              method=method_name, steps=steps_text,
-                              remaining=remaining_text, oid=order_id)
+                text = t_lang(lang, "payment_with_timer", method=method_name,
+                              steps=steps_text, remaining=remaining_text, oid=order_id)
                 try:
                     bot.edit_message_text(text, chat_id=chat_id, message_id=message_id, parse_mode="HTML")
-                    print(f"✅ تعديل #{order_id} → {remaining}ث")
                 except Exception as e:
                     err = str(e).lower()
                     if "message to edit not found" in err or "message can't be edited" in err:
                         COUNTDOWNS.pop(order_id, None); return
-                    print(f"⚠️ تعديل #{order_id} فشل: {e}")
         try:
             conn = db_connect(); cur = conn.cursor()
             cur.execute("SELECT status FROM orders WHERE order_id = %s", (order_id,))
@@ -999,23 +875,28 @@ def start_countdown(chat_id, message_id, order_id, method, uid, lang, price_str,
         except Exception as e:
             print(f"❌ countdown end: {e}")
             COUNTDOWNS.pop(order_id, None)
-
-    th = threading.Thread(target=run, daemon=True)
-    th.start()
+    th = threading.Thread(target=run, daemon=True); th.start()
 
 # ============ لوحات الأزرار ============
 def games_row(uid):
     T = TEXTS[get_lang(uid)]
     order = get_button_order().split(",")
-    game_map = {"ff": T["btn_ff"], "pubg": T["btn_pubg"], "jawaker": T["btn_jawaker"]}
+    game_map = {
+        "ff": T["btn_ff"],
+        "pubg": T["btn_pubg"],
+        "jawaker": T["btn_jawaker"],
+        "blood": T["btn_blood"],
+    }
     return [game_map[g] for g in order if g in game_map]
 
 def main_keyboard(uid):
-    lang = get_lang(uid)
-    T = TEXTS[lang]
+    lang = get_lang(uid); T = TEXTS[lang]
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
     games = games_row(uid)
-    if len(games) == 3:
+    # نوزع الأزرار 2-2
+    if len(games) == 4:
+        kb.row(games[0], games[1]); kb.row(games[2], games[3])
+    elif len(games) == 3:
         kb.row(games[0], games[1]); kb.row(games[2])
     else:
         kb.row(*games)
@@ -1032,7 +913,9 @@ def back_keyboard(uid):
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
     kb.row(T["btn_back"])
     games = games_row(uid)
-    if len(games) == 3:
+    if len(games) == 4:
+        kb.row(games[0], games[1]); kb.row(games[2], games[3])
+    elif len(games) == 3:
         kb.row(games[0], games[1]); kb.row(games[2])
     else:
         kb.row(*games)
@@ -1063,31 +946,34 @@ def show_packages_for_game(chat_id, uid, game_key):
     for key, item in game_data["items"].items():
         kb.add(types.InlineKeyboardButton(
             text=f"{item[lang]} — {item['price']}",
-            callback_data=f"pkg|{game_key}|{key}"
-        ))
+            callback_data=f"pkg|{game_key}|{key}"))
     bot.send_message(chat_id, t(uid, "choose_package", game=game_title),
                      parse_mode="HTML", reply_markup=kb)
     bot.send_message(chat_id, "🔽", reply_markup=back_keyboard(uid))
-    USER_DATA.setdefault(uid, {})
-    USER_DATA[uid]["step"] = 3
+    USER_DATA.setdefault(uid, {}); USER_DATA[uid]["step"] = 3
 
 def show_ff_types(chat_id, uid):
     kb = types.InlineKeyboardMarkup(row_width=2)
     kb.add(
         types.InlineKeyboardButton(t(uid, "btn_ff_diamonds"), callback_data="ff_type|diamonds"),
-        types.InlineKeyboardButton(t(uid, "btn_ff_membership"), callback_data="ff_type|membership"),
-    )
+        types.InlineKeyboardButton(t(uid, "btn_ff_membership"), callback_data="ff_type|membership"))
     bot.send_message(chat_id, t(uid, "choose_ff_type"), parse_mode="HTML", reply_markup=kb)
     bot.send_message(chat_id, "🔽", reply_markup=back_keyboard(uid))
-    USER_DATA.setdefault(uid, {})
-    USER_DATA[uid]["step"] = 2
+    USER_DATA.setdefault(uid, {}); USER_DATA[uid]["step"] = 2
+
+def show_bs_servers(chat_id, uid):
+    kb = types.InlineKeyboardMarkup(row_width=2)
+    kb.add(
+        types.InlineKeyboardButton(t(uid, "btn_bs_global"), callback_data="bs_server|global"),
+        types.InlineKeyboardButton(t(uid, "btn_bs_mena"), callback_data="bs_server|mena"))
+    bot.send_message(chat_id, t(uid, "choose_bs_server"), parse_mode="HTML", reply_markup=kb)
+    bot.send_message(chat_id, "🔽", reply_markup=back_keyboard(uid))
+    USER_DATA.setdefault(uid, {}); USER_DATA[uid]["step"] = 2
 
 # ============ زر الرجوع ============
 def go_back(message):
     uid = message.from_user.id
-    data = USER_DATA.get(uid, {})
-    step = data.get("step", 1)
-
+    data = USER_DATA.get(uid, {}); step = data.get("step", 1)
     if step <= 1:
         bot.send_message(message.chat.id, t(uid, "back_done"), reply_markup=main_keyboard(uid))
         USER_DATA[uid] = {"step": 1}; return
@@ -1099,6 +985,9 @@ def go_back(message):
         if game in ("ff", "ff_membership"):
             USER_DATA[uid] = {"game": "ff", "step": 2}
             show_ff_types(message.chat.id, uid)
+        elif game == "bs_global":
+            USER_DATA[uid] = {"game": "blood", "step": 2}
+            show_bs_servers(message.chat.id, uid)
         else:
             bot.send_message(message.chat.id, t(uid, "back_done"), reply_markup=main_keyboard(uid))
             USER_DATA[uid] = {"step": 1}
@@ -1111,8 +1000,7 @@ def go_back(message):
         game = data.get("game", "ff")
         game_title = PACKAGES[game]["title"][get_lang(uid)]
         USER_DATA[uid]["step"] = 4
-        msg = bot.send_message(
-            message.chat.id,
+        msg = bot.send_message(message.chat.id,
             t(uid, "chosen", item=data.get("package_name", ""),
               price=data.get("price", ""), game=game_title),
             parse_mode="HTML", reply_markup=back_keyboard(uid))
@@ -1135,8 +1023,7 @@ def back_button_handler(message):
 # ============ /start ============
 @bot.message_handler(commands=['start'])
 def cmd_start(message):
-    ensure_user(message)
-    uid = message.from_user.id
+    ensure_user(message); uid = message.from_user.id
     if is_subscribed(uid):
         send_welcome(message.chat.id, message.from_user.first_name, uid)
         USER_DATA[uid] = {"step": 1}
@@ -1157,7 +1044,7 @@ def check_subscription(call):
             bot.answer_callback_query(call.id, t(uid, "check_fail"), show_alert=True)
     except Exception as e: print(f"❌ {e}")
 
-# ============ 🎉 حدث انضمام عضو جديد ============
+# ============ حدث انضمام عضو ============
 @bot.chat_member_handler()
 def on_chat_member(update):
     try:
@@ -1165,58 +1052,53 @@ def on_chat_member(update):
         old_member = update.old_chat_member
         if not (old_member.status in ("left", "kicked") and new_member.status == "member"):
             return
-        invite_link = update.invite_link
-        if not invite_link:
-            print("⚠️ انضم بدون رابط دعوة"); return
-        used_link = invite_link.invite_link
         new_user_id = new_member.user.id
         new_user_name = new_member.user.full_name
+        invite_link = update.invite_link
+        if not invite_link:
+            print(f"⚠️ انضم بدون رابط: {new_user_name}")
+            return
+        used_link = invite_link.invite_link
         print(f"🎉 عضو جديد: {new_user_name} | رابط: {used_link}")
         conn = db_connect(); cur = conn.cursor()
         cur.execute("SELECT user_id FROM contest WHERE invite_link = %s", (used_link,))
         row = cur.fetchone()
         if not row:
             cur.close(); conn.close()
-            print("⚠️ الرابط غير مرتبط بأي متسابق"); return
+            print(f"⚠️ الرابط غير مرتبط")
+            return
         referrer_id = row["user_id"]
         cur.execute("SELECT id FROM referrals WHERE referred_id = %s", (new_user_id,))
         if cur.fetchone():
-            cur.close(); conn.close()
-            print("⚠️ محسوب من قبل"); return
+            cur.close(); conn.close(); return
         cur.execute(
             "INSERT INTO referrals (referrer_id, referred_id, invite_link, joined_at) "
             "VALUES (%s, %s, %s, %s)",
-            (referrer_id, new_user_id, used_link,
-             datetime.now().strftime("%Y-%m-%d %H:%M"))
-        )
-        cur.execute(
-            "UPDATE contest SET joins_count = joins_count + 1 WHERE user_id = %s RETURNING joins_count",
-            (referrer_id,)
-        )
+            (referrer_id, new_user_id, used_link, datetime.now().strftime("%Y-%m-%d %H:%M")))
+        cur.execute("UPDATE contest SET joins_count = joins_count + 1 WHERE user_id = %s RETURNING joins_count",
+                    (referrer_id,))
         new_count = cur.fetchone()["joins_count"]
         conn.commit(); cur.close(); conn.close()
-
+        # إعلام الداعي — نستخدم t_lang لتجنب التعارض
+        referrer_lang = get_lang(referrer_id)
         try:
             extra = ""
             if new_count >= REQUIRED_JOINS:
-                extra = TEXTS[get_lang(referrer_id)]["contestant_complete"]
-            bot.send_message(
-                referrer_id,
-                t(referrer_id, "contestant_joined",
-                  name=new_user_name, count=new_count,
-                  required=REQUIRED_JOINS, extra=extra),
-                parse_mode="HTML"
-            )
-        except: pass
-
+                extra = TEXTS[referrer_lang]["contestant_complete"]
+            msg_text = t_lang(referrer_lang, "contestant_joined",
+                              name=new_user_name, count=new_count,
+                              required=REQUIRED_JOINS, extra=extra)
+            bot.send_message(referrer_id, msg_text, parse_mode="HTML")
+            print(f"✅ إشعار {referrer_id}: {new_count}/{REQUIRED_JOINS}")
+        except Exception as e:
+            print(f"⚠️ فشل إشعار الداعي: {e}")
         if new_count >= REQUIRED_JOINS:
             conn = db_connect(); cur = conn.cursor()
             cur.execute("UPDATE contest SET status = 'qualified' WHERE user_id = %s", (referrer_id,))
             conn.commit(); cur.close(); conn.close()
             try:
                 bot.send_message(ADMIN_ID,
-                    f"🏆 <b>متسابق جديد مؤهل!</b>\n\n"
-                    f"🆔 <code>{referrer_id}</code>\n📊 {new_count} مدعوين",
+                    f"🏆 <b>متسابق مؤهل جديد!</b>\n🆔 <code>{referrer_id}</code>\n📊 {new_count}",
                     parse_mode="HTML")
             except: pass
     except Exception as e:
@@ -1228,11 +1110,20 @@ def show_ff(message):
     ensure_user(message); uid = message.from_user.id
     if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
     if not is_orders_open():
-        bot.send_message(message.chat.id,
-            t(uid, "orders_closed_dev") if get_setting("dev_mode", "off") == "on" else t(uid, "orders_closed"),
-            parse_mode="HTML"); return
+        bot.send_message(message.chat.id, t(uid, "orders_closed_dev") if get_setting("dev_mode", "off") == "on" else t(uid, "orders_closed"), parse_mode="HTML")
+        return
     USER_DATA[uid] = {"game": "ff", "step": 2}
     show_ff_types(message.chat.id, uid)
+
+@bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_blood"], TEXTS["en"]["btn_blood"]])
+def show_blood(message):
+    ensure_user(message); uid = message.from_user.id
+    if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
+    if not is_orders_open():
+        bot.send_message(message.chat.id, t(uid, "orders_closed_dev") if get_setting("dev_mode", "off") == "on" else t(uid, "orders_closed"), parse_mode="HTML")
+        return
+    USER_DATA[uid] = {"game": "blood", "step": 2}
+    show_bs_servers(message.chat.id, uid)
 
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_pubg"], TEXTS["en"]["btn_pubg"]])
 def show_pubg(message): show_game_packages(message, "pubg")
@@ -1244,9 +1135,8 @@ def show_game_packages(message, game):
     ensure_user(message); uid = message.from_user.id
     if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
     if not is_orders_open():
-        bot.send_message(message.chat.id,
-            t(uid, "orders_closed_dev") if get_setting("dev_mode", "off") == "on" else t(uid, "orders_closed"),
-            parse_mode="HTML"); return
+        bot.send_message(message.chat.id, t(uid, "orders_closed_dev") if get_setting("dev_mode", "off") == "on" else t(uid, "orders_closed"), parse_mode="HTML")
+        return
     USER_DATA[uid] = {"game": game, "step": 3}
     show_packages_for_game(message.chat.id, uid, game)
 
@@ -1261,6 +1151,21 @@ def choose_ff_type(call):
         else:
             USER_DATA[uid] = {"game": "ff_membership", "step": 3}
             show_packages_for_game(call.message.chat.id, uid, "ff_membership")
+    except Exception as e: print(f"❌ {e}")
+
+@bot.callback_query_handler(func=lambda c: c.data.startswith("bs_server|"))
+def choose_bs_server(call):
+    try:
+        server = call.data.split("|")[1]; uid = call.from_user.id
+        bot.answer_callback_query(call.id, "✅")
+        if server == "global":
+            USER_DATA[uid] = {"game": "bs_global", "step": 3}
+            show_packages_for_game(call.message.chat.id, uid, "bs_global")
+        else:
+            # MENA — قريباً
+            bot.send_message(call.message.chat.id, t(uid, "bs_mena_soon"),
+                             parse_mode="HTML", reply_markup=main_keyboard(uid))
+            USER_DATA[uid] = {"step": 1}
     except Exception as e: print(f"❌ {e}")
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("pkg|"))
@@ -1279,7 +1184,7 @@ def choose_package(call):
         bot.register_next_step_handler(msg, get_game_id)
     except Exception as e:
         print(f"❌ {e}")
-        try: bot.answer_callback_query(call.id, "⚠️ خطأ")
+        try: bot.answer_callback_query(call.id, "⚠️")
         except: pass
 
 def get_game_id(message):
@@ -1288,12 +1193,15 @@ def get_game_id(message):
         go_back(message); return
     data = USER_DATA.get(uid)
     if not data:
-        bot.send_message(message.chat.id, "⚠️ اضغط /start", reply_markup=main_keyboard(uid)); return
+        bot.send_message(message.chat.id, "⚠️ /start", reply_markup=main_keyboard(uid)); return
     game = data.get("game", "ff")
     game_id = message.text.strip() if message.text else ""
     valid, result = validate_game_id(game_id, game)
     if not valid:
-        key = "invalid_id_ff" if game in ("ff", "ff_membership") else ("invalid_id_pubg" if game == "pubg" else "invalid_id_jawaker")
+        if game in ("ff", "ff_membership"): key = "invalid_id_ff"
+        elif game == "pubg": key = "invalid_id_pubg"
+        elif game == "jawaker": key = "invalid_id_jawaker"
+        else: key = "invalid_id_bs"
         msg = bot.send_message(message.chat.id, t(uid, key, reason=result),
                                parse_mode="HTML", reply_markup=back_keyboard(uid))
         bot.register_next_step_handler(msg, get_game_id); return
@@ -1308,7 +1216,7 @@ def get_player_name(message):
         go_back(message); return
     data = USER_DATA.get(uid)
     if not data:
-        bot.send_message(message.chat.id, "⚠️ اضغط /start", reply_markup=main_keyboard(uid)); return
+        bot.send_message(message.chat.id, "⚠️ /start", reply_markup=main_keyboard(uid)); return
     player_name = message.text.strip() if message.text else ""
     if len(player_name) < 2:
         msg = bot.send_message(message.chat.id, t(uid, "invalid_name"),
@@ -1318,10 +1226,8 @@ def get_player_name(message):
     kb = types.InlineKeyboardMarkup(row_width=2)
     kb.add(
         types.InlineKeyboardButton(t(uid, "btn_syriatel"), callback_data="pay|syriatel"),
-        types.InlineKeyboardButton(t(uid, "btn_sham"), callback_data="pay|sham"),
-    )
-    bot.send_message(message.chat.id, t(uid, "choose_payment"),
-                     parse_mode="HTML", reply_markup=kb)
+        types.InlineKeyboardButton(t(uid, "btn_sham"), callback_data="pay|sham"))
+    bot.send_message(message.chat.id, t(uid, "choose_payment"), parse_mode="HTML", reply_markup=kb)
     bot.send_message(message.chat.id, "🔽", reply_markup=back_keyboard(uid))
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("pay|"))
@@ -1330,7 +1236,7 @@ def choose_payment(call):
         method = call.data.split("|")[1]; uid = call.from_user.id
         data = USER_DATA.get(uid)
         if not data or "game_id" not in data:
-            bot.answer_callback_query(call.id, "⚠️ اضغط /start", show_alert=True); return
+            bot.answer_callback_query(call.id, "⚠️ /start", show_alert=True); return
         bot.answer_callback_query(call.id, "✅")
         conn = db_connect(); cur = conn.cursor()
         cur.execute(
@@ -1338,8 +1244,7 @@ def choose_payment(call):
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING order_id",
             (uid, data["game"], data["package_name"], data["price"],
              data["game_id"], data["player_name"], method, "pending",
-             datetime.now().strftime("%Y-%m-%d %H:%M"))
-        )
+             datetime.now().strftime("%Y-%m-%d %H:%M")))
         order_id = cur.fetchone()["order_id"]
         conn.commit(); cur.close(); conn.close()
         lang = get_lang(uid)
@@ -1350,13 +1255,12 @@ def choose_payment(call):
                                    caption=t(uid, "sham_image_caption", price=data["price"]),
                                    parse_mode="HTML")
             except FileNotFoundError:
-                bot.send_message(call.message.chat.id, "⚠️ sham.jpg غير موجودة")
+                bot.send_message(call.message.chat.id, "⚠️ sham.jpg")
         steps_text, method_name = build_payment_steps(method, lang, data["price"])
         remaining_text = "5 دقائق" if lang == "ar" else "5 min"
-        sent_msg = bot.send_message(
-            call.message.chat.id,
-            t_lang(lang, "payment_with_timer", method=method_name,
-                   steps=steps_text, remaining=remaining_text, oid=order_id),
+        sent_msg = bot.send_message(call.message.chat.id,
+            t_lang(lang, "payment_with_timer", method=method_name, steps=steps_text,
+                   remaining=remaining_text, oid=order_id),
             parse_mode="HTML", reply_markup=main_keyboard(uid))
         start_countdown(call.message.chat.id, sent_msg.message_id, order_id,
                         method, uid, lang, data["price"], PAYMENT_TIMEOUT_SECONDS)
@@ -1371,13 +1275,10 @@ def choose_payment(call):
             f"💰 <b>{data['price']}</b>\n"
             f"🎮 ID: <code>{data['game_id']}</code>\n"
             f"📝 <b>{data['player_name']}</b>\n"
-            f"💳 <b>{method_label}</b>"
-        )
+            f"💳 <b>{method_label}</b>")
         kb = types.InlineKeyboardMarkup()
-        kb.add(
-            types.InlineKeyboardButton("✅ قبول", callback_data=f"accept|{order_id}"),
-            types.InlineKeyboardButton("❌ رفض", callback_data=f"reject|{order_id}")
-        )
+        kb.add(types.InlineKeyboardButton("✅ قبول", callback_data=f"accept|{order_id}"),
+               types.InlineKeyboardButton("❌ رفض", callback_data=f"reject|{order_id}"))
         bot.send_message(ADMIN_ID, admin_text, parse_mode="HTML", reply_markup=kb)
         USER_DATA.pop(uid, None)
     except Exception as e: print(f"❌ choose_payment: {e}")
@@ -1408,7 +1309,7 @@ def handle_decision(call):
         except: pass
     except Exception as e: print(f"❌ {e}")
 
-# ============ زر معلوماتي ============
+# ============ معلوماتي ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_info"], TEXTS["en"]["btn_info"]])
 def my_info(message):
     ensure_user(message); uid = message.from_user.id
@@ -1439,7 +1340,7 @@ def my_info(message):
     kb = types.InlineKeyboardMarkup(row_width=1)
     kb.add(types.InlineKeyboardButton(t(uid, "btn_contest"), callback_data="contest_show"))
     bot.send_message(message.chat.id,
-        "🎁 <b>هل تريد المشاركة في المسابقة؟</b>\n👇 اضغط الزر بالأسفل",
+        "🎁 <b>هل تريد المشاركة في المسابقة؟</b>\n👇",
         parse_mode="HTML", reply_markup=kb)
 
 # ============ المسابقة ============
@@ -1447,13 +1348,18 @@ def my_info(message):
 def contest_show(call):
     uid = call.from_user.id
     bot.answer_callback_query(call.id)
+
+    # 🚫 إذا المسابقة متوقفة
+    if not is_contest_open():
+        bot.send_message(uid, t(uid, "contest_disabled"), parse_mode="HTML")
+        return
+
     entry = get_contest_entry(uid)
     lang = get_lang(uid)
     if entry:
         status = contest_status_text(lang, entry["status"])
-        text = t(uid, "contest_title",
-                 link=entry["invite_link"], count=entry["joins_count"],
-                 required=REQUIRED_JOINS, status=status)
+        text = t(uid, "contest_title", link=entry["invite_link"],
+                 count=entry["joins_count"], required=REQUIRED_JOINS, status=status)
         kb = types.InlineKeyboardMarkup(row_width=1)
         kb.add(types.InlineKeyboardButton(t(uid, "btn_copy_link"), url=entry["invite_link"]))
         bot.send_message(uid, text, parse_mode="HTML", reply_markup=kb)
@@ -1465,16 +1371,12 @@ def contest_show(call):
             me = bot.get_me()
             member = bot.get_chat_member(CHANNEL_USERNAME, me.id)
             if member.status not in ("administrator", "creator"):
-                bot.send_message(uid,
-                    "⚠️ <b>البوت غير مضاف كمشرف في القناة!</b>\n\n"
-                    "👨‍💻 تواصل مع الدعم: " + SUPPORT_USERNAME, parse_mode="HTML")
+                bot.send_message(uid, "⚠️ البوت غير مضاف كمشرف!\n👨‍💻 " + SUPPORT_USERNAME)
                 return
-        except Exception as e:
-            print(f"❌ فحص الصلاحيات: {e}")
-        new_entry = register_contest_user(uid, call.from_user.username or "",
-                                          call.from_user.full_name)
+        except Exception as e: print(f"❌ {e}")
+        new_entry = register_contest_user(uid, call.from_user.username or "", call.from_user.full_name)
         if not new_entry:
-            bot.send_message(uid, "⚠️ حدث خطأ في إنشاء الرابط. تأكد أن البوت مشرف في القناة.")
+            bot.send_message(uid, "⚠️ حدث خطأ في إنشاء الرابط.")
             return
         text = t(uid, "contest_created", link=new_entry["invite_link"],
                  count=0, required=REQUIRED_JOINS)
@@ -1484,14 +1386,12 @@ def contest_show(call):
         try:
             bot.send_message(ADMIN_ID,
                 f"🎁 <b>متسابق جديد!</b>\n\n"
-                f"👤 {call.from_user.full_name}\n"
-                f"🆔 <code>{uid}</code>\n"
+                f"👤 {call.from_user.full_name}\n🆔 <code>{uid}</code>\n"
                 f"🌐 @{call.from_user.username or 'لا يوجد'}\n"
-                f"🔗 {new_entry['invite_link']}",
-                parse_mode="HTML")
+                f"🔗 {new_entry['invite_link']}", parse_mode="HTML")
         except: pass
 
-# ============ المطور: قائمة المتسابقين (موسّعة) ============
+# ============ قائمة المتسابقين ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_contestants"], TEXTS["en"]["btn_contestants"]] and m.from_user.id == ADMIN_ID)
 def show_contestants(message):
     uid = message.from_user.id
@@ -1521,7 +1421,6 @@ def show_contestants(message):
                                           url=f"tg://user?id={c['user_id']}"))
         bot.send_message(uid, text, parse_mode="HTML", reply_markup=kb)
 
-# ============ صفحة تفاصيل المتسابق الكاملة ============
 @bot.callback_query_handler(func=lambda c: c.data.startswith("cdetails|"))
 def contestant_details(call):
     try:
@@ -1530,18 +1429,13 @@ def contestant_details(call):
             bot.answer_callback_query(call.id, "🚫", show_alert=True); return
         target_uid = int(call.data.split("|")[1])
         bot.answer_callback_query(call.id)
-
         conn = db_connect(); cur = conn.cursor()
         cur.execute("SELECT * FROM contest WHERE user_id = %s", (target_uid,))
-        entry = cur.fetchone()
-        cur.close(); conn.close()
-
+        entry = cur.fetchone(); cur.close(); conn.close()
         if not entry:
-            bot.send_message(uid_admin, "⚠️ المتسابق غير موجود"); return
-
+            bot.send_message(uid_admin, "⚠️ غير موجود"); return
         last_ref = get_last_referral_time(target_uid)
         last_txt = last_ref if last_ref else "لا يوجد بعد"
-
         refs = get_referrals_list(target_uid)
         if refs:
             refs_text = ""
@@ -1550,27 +1444,19 @@ def contestant_details(call):
                 refs_text += f"   {i}. 👤 {name} — <code>{r['referred_id']}</code> — {r['joined_at']}\n"
         else:
             refs_text = "   لم يدعُ أحدًا بعد"
-
         status_txt = contest_status_text(get_lang(uid_admin), entry["status"])
-
         text = t(uid_admin, "contestant_full_details",
-                 name=entry["full_name"] or "-",
-                 uid=entry["user_id"],
+                 name=entry["full_name"] or "-", uid=entry["user_id"],
                  username=entry["username"] or "لا يوجد",
-                 count=entry["joins_count"],
-                 required=REQUIRED_JOINS,
-                 status=status_txt,
-                 created=entry["created_at"] or "-",
-                 last=last_txt,
-                 link=entry["invite_link"] or "-",
+                 count=entry["joins_count"], required=REQUIRED_JOINS,
+                 status=status_txt, created=entry["created_at"] or "-",
+                 last=last_txt, link=entry["invite_link"] or "-",
                  referrals_list=refs_text)
-
         kb = types.InlineKeyboardMarkup(row_width=1)
-        kb.add(types.InlineKeyboardButton("👤 فتح حساب المستخدم",
+        kb.add(types.InlineKeyboardButton("👤 فتح حساب",
                                           url=f"tg://user?id={entry['user_id']}"))
         bot.send_message(uid_admin, text, parse_mode="HTML", reply_markup=kb)
-    except Exception as e:
-        print(f"❌ contestant_details: {e}")
+    except Exception as e: print(f"❌ {e}")
 
 # ============ الدعم ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_support"], TEXTS["en"]["btn_support"]])
@@ -1605,8 +1491,7 @@ def receive_complaint(message):
                 "VALUES (%s, %s, %s, %s, %s) RETURNING id",
                 (uid, message.from_user.username or "", message.from_user.full_name,
                  text, datetime.now().strftime("%Y-%m-%d %H:%M")))
-    msg_id = cur.fetchone()["id"]
-    conn.commit(); cur.close(); conn.close()
+    msg_id = cur.fetchone()["id"]; conn.commit(); cur.close(); conn.close()
     bot.send_message(message.chat.id, t(uid, "message_sent"), parse_mode="HTML",
                      reply_markup=main_keyboard(uid))
     bot.send_message(ADMIN_ID,
@@ -1641,6 +1526,7 @@ def settings_menu(message):
     if is_admin:
         kb.add(types.InlineKeyboardButton(t(uid, "btn_change_order"), callback_data="cfg_order"))
         kb.add(types.InlineKeyboardButton(t(uid, "btn_dev_mode"), callback_data="cfg_dev"))
+        kb.add(types.InlineKeyboardButton(t(uid, "btn_contest_toggle"), callback_data="cfg_contest"))
     kb.add(types.InlineKeyboardButton(t(uid, "btn_reset_data"), callback_data="cfg_reset"))
     title = t(uid, "settings_admin") if is_admin else t(uid, "settings_user")
     bot.send_message(message.chat.id, title, parse_mode="HTML", reply_markup=kb)
@@ -1665,15 +1551,15 @@ def cfg_order(call):
             bot.answer_callback_query(call.id, "🚫", show_alert=True); return
         current = get_button_order()
         order_display = {
-            "ff,pubg,jawaker": "1️⃣ FF → PUBG → Jawaker",
-            "jawaker,ff,pubg": "2️⃣ Jawaker → FF → PUBG",
-            "pubg,jawaker,ff": "3️⃣ PUBG → Jawaker → FF",
+            "ff,pubg,jawaker,blood": "1️⃣ FF → PUBG → Jawaker → Blood",
+            "blood,ff,pubg,jawaker": "2️⃣ Blood → FF → PUBG → Jawaker",
+            "jawaker,blood,ff,pubg": "3️⃣ Jawaker → Blood → FF → PUBG",
         }
         order_str = order_display.get(current, current)
         kb = types.InlineKeyboardMarkup(row_width=1)
-        kb.add(types.InlineKeyboardButton(t(uid, "btn_order_1"), callback_data="set_order|ff,pubg,jawaker"))
-        kb.add(types.InlineKeyboardButton(t(uid, "btn_order_2"), callback_data="set_order|jawaker,ff,pubg"))
-        kb.add(types.InlineKeyboardButton(t(uid, "btn_order_3"), callback_data="set_order|pubg,jawaker,ff"))
+        kb.add(types.InlineKeyboardButton(t(uid, "btn_order_1"), callback_data="set_order|ff,pubg,jawaker,blood"))
+        kb.add(types.InlineKeyboardButton(t(uid, "btn_order_2"), callback_data="set_order|blood,ff,pubg,jawaker"))
+        kb.add(types.InlineKeyboardButton(t(uid, "btn_order_3"), callback_data="set_order|jawaker,blood,ff,pubg"))
         bot.edit_message_text(t(uid, "order_current", order=order_str),
                               call.message.chat.id, call.message.message_id,
                               parse_mode="HTML", reply_markup=kb)
@@ -1696,6 +1582,54 @@ def cfg_dev(call):
         bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
                               parse_mode="HTML", reply_markup=kb)
         bot.answer_callback_query(call.id)
+    except Exception as e: print(f"❌ {e}")
+
+# ============ إدارة المسابقة ============
+@bot.callback_query_handler(func=lambda c: c.data == "cfg_contest")
+def cfg_contest(call):
+    try:
+        uid = call.from_user.id
+        if uid != ADMIN_ID:
+            bot.answer_callback_query(call.id, "🚫", show_alert=True); return
+        current = get_setting("contest_mode", "on")
+        if current == "on":
+            text = t(uid, "contest_toggle_current_on")
+            btn = t(uid, "btn_contest_toggle_off"); cb = "contest|off"
+        else:
+            text = t(uid, "contest_toggle_current_off")
+            btn = t(uid, "btn_contest_toggle_on"); cb = "contest|on"
+        kb = types.InlineKeyboardMarkup(row_width=1)
+        kb.add(types.InlineKeyboardButton(btn, callback_data=cb))
+        bot.edit_message_text(text, call.message.chat.id, call.message.message_id,
+                              parse_mode="HTML", reply_markup=kb)
+        bot.answer_callback_query(call.id)
+    except Exception as e: print(f"❌ {e}")
+
+@bot.callback_query_handler(func=lambda c: c.data.startswith("contest|"))
+def contest_toggle(call):
+    try:
+        uid = call.from_user.id
+        if uid != ADMIN_ID:
+            bot.answer_callback_query(call.id, "🚫", show_alert=True); return
+        action = call.data.split("|")[1]
+        if action == "on":
+            set_setting("contest_mode", "on")
+            bot.answer_callback_query(call.id, t(uid, "contest_enabled_msg"), show_alert=True)
+            try:
+                bot.edit_message_text(t(uid, "contest_toggle_current_on"),
+                    call.message.chat.id, call.message.message_id, parse_mode="HTML",
+                    reply_markup=types.InlineKeyboardMarkup().add(
+                        types.InlineKeyboardButton(t(uid, "btn_contest_toggle_off"), callback_data="contest|off")))
+            except: pass
+        else:
+            set_setting("contest_mode", "off")
+            bot.answer_callback_query(call.id, t(uid, "contest_disabled_msg"), show_alert=True)
+            try:
+                bot.edit_message_text(t(uid, "contest_toggle_current_off"),
+                    call.message.chat.id, call.message.message_id, parse_mode="HTML",
+                    reply_markup=types.InlineKeyboardMarkup().add(
+                        types.InlineKeyboardButton(t(uid, "btn_contest_toggle_on"), callback_data="contest|on")))
+            except: pass
     except Exception as e: print(f"❌ {e}")
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("dev|"))
@@ -1806,8 +1740,9 @@ def unknown_message(message):
 
 # ============ تشغيل ============
 print("🤖 البوت يعمل الآن...")
-print("🎁 نظام المسابقة (إحالة حقيقية) مفعّل")
-print("📋 تفاصيل المتسابقين موسّعة")
+print("🩸 Blood Strike مضاف")
+print("🎁 إدارة المسابقة في الإعدادات")
+print("🔗 member_limit محذوف — روابط دائمة")
 
 bot.infinity_polling(
     allowed_updates=[
@@ -1819,4 +1754,4 @@ bot.infinity_polling(
     skip_pending=True,
     timeout=30,
     long_polling_timeout=30
-)
+    )
