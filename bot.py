@@ -35,29 +35,17 @@ def fix_allowed_updates():
     try:
         r1 = requests.get(
             f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook",
-            params={"drop_pending_updates": "true"},
-            timeout=10
-        )
+            params={"drop_pending_updates": "true"}, timeout=10)
         print(f"🔧 deleteWebhook: {r1.json()}")
-
         r2 = requests.get(
             f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates",
-            params={
-                "allowed_updates": '["message","edited_message","channel_post","edited_channel_post","callback_query","inline_query","chosen_inline_result","poll","poll_answer","my_chat_member","chat_member","chat_join_request"]',
-                "timeout": 1
-            },
-            timeout=15
-        )
+            params={"allowed_updates": '["message","edited_message","channel_post","edited_channel_post","callback_query","inline_query","chosen_inline_result","poll","poll_answer","my_chat_member","chat_member","chat_join_request"]', "timeout": 1},
+            timeout=15)
         print(f"🔧 getUpdates: {r2.json().get('ok')}")
-
-        r3 = requests.get(
-            f"https://api.telegram.org/bot{BOT_TOKEN}/getWebhookInfo",
-            timeout=10
-        )
+        r3 = requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/getWebhookInfo", timeout=10)
         info = r3.json()
         allowed = info.get("result", {}).get("allowed_updates", [])
         print(f"🔧 allowed_updates: {allowed}")
-
         if "callback_query" in allowed and "chat_member" in allowed:
             print("✅ callback_query + chat_member مسموحان!")
             return True
@@ -120,10 +108,12 @@ PACKAGES = {
     "jawaker": {
         "title": {"ar": "🃏 جواكر", "en": "🃏 Jawaker"},
         "items": {
-            "jw_10000": {"ar": "10000 توكنز ♦️", "en": "10000 Tokens ♦️", "price": "180 ل.س"},
-            "jw_15000": {"ar": "15000 توكنز ♠️", "en": "15000 Tokens ♠️", "price": "260 ل.س"},
-            "jw_20000": {"ar": "20000 توكنز ♥️", "en": "20000 Tokens ♥️", "price": "340 ل.س"},
-            "jw_30000": {"ar": "30000 توكنز ♣️", "en": "30000 Tokens ♣️", "price": "490 ل.س"},
+            "jw_10000":  {"ar": "10000 توكنز ♦️",  "en": "10000 Tokens ♦️",  "price": "180 ل.س"},
+            "jw_15000":  {"ar": "15000 توكنز ♠️",  "en": "15000 Tokens ♠️",  "price": "260 ل.س"},
+            "jw_20000":  {"ar": "20000 توكنز ♥️",  "en": "20000 Tokens ♥️",  "price": "340 ل.س"},
+            "jw_30000":  {"ar": "30000 توكنز ♣️",  "en": "30000 Tokens ♣️",  "price": "490 ل.س"},
+            "jw_50000":  {"ar": "50000 توكنز 🃏",  "en": "50000 Tokens 🃏",  "price": "790 ل.س"},
+            "jw_100000": {"ar": "100000 توكنز 👑", "en": "100000 Tokens 👑", "price": "1550 ل.س"},
         }
     },
     "bs_global": {
@@ -191,8 +181,7 @@ TEXTS = {
         "choose_bs_server": (
             "🩸 <b>اختر سيرفر Blood Strike:</b>\n\n"
             "🌍 <b>عالمي</b> — يتوفر بشحن فوري\n"
-            "🌐 <b>مينا / العرب</b> — قريبًا\n\n"
-            "👇 اختر:"
+            "🌐 <b>مينا / العرب</b> — قريبًا\n\n👇 اختر:"
         ),
         "btn_bs_global": "🌍 عالمي",
         "btn_bs_mena": "🌐 مينا / العرب",
@@ -209,32 +198,24 @@ TEXTS = {
             "💡 <i>ملاحظة: يجب أن يكون ID حقيقي (أرقام فقط)</i>"
         ),
         "invalid_id_ff": (
-            "❌ <b>ID Free Fire غير صالح!</b>\n\n"
-            "⚠️ {reason}\n\n"
+            "❌ <b>ID Free Fire غير صالح!</b>\n\n⚠️ {reason}\n\n"
             "📌 <b>شروط ID فري فاير:</b>\n"
-            "• أرقام فقط 🔢\n• من 5 إلى 15 رقم\n• لا يبدأ بـ 0\n\n"
-            "🔁 أرسل ID صحيح:"
+            "• أرقام فقط 🔢\n• من 5 إلى 15 رقم\n• لا يبدأ بـ 0\n\n🔁 أرسل ID صحيح:"
         ),
         "invalid_id_pubg": (
-            "❌ <b>ID PUBG غير صالح!</b>\n\n"
-            "⚠️ {reason}\n\n"
+            "❌ <b>ID PUBG غير صالح!</b>\n\n⚠️ {reason}\n\n"
             "📌 <b>شروط ID ببجي:</b>\n"
-            "• أرقام فقط 🔢\n• من 9 إلى 12 رقم\n• لا يبدأ بـ 0\n\n"
-            "🔁 أرسل ID صحيح:"
+            "• أرقام فقط 🔢\n• من 9 إلى 12 رقم\n• لا يبدأ بـ 0\n\n🔁 أرسل ID صحيح:"
         ),
         "invalid_id_jawaker": (
-            "❌ <b>ID جواكر غير صالح!</b>\n\n"
-            "⚠️ {reason}\n\n"
+            "❌ <b>ID جواكر غير صالح!</b>\n\n⚠️ {reason}\n\n"
             "📌 <b>شروط ID جواكر:</b>\n"
-            "• أرقام فقط 🔢\n• من 6 إلى 12 رقم\n• لا يبدأ بـ 0\n\n"
-            "🔁 أرسل ID صحيح:"
+            "• أرقام فقط 🔢\n• من 6 إلى 12 رقم\n• لا يبدأ بـ 0\n\n🔁 أرسل ID صحيح:"
         ),
         "invalid_id_bs": (
-            "❌ <b>ID Blood Strike غير صالح!</b>\n\n"
-            "⚠️ {reason}\n\n"
+            "❌ <b>ID Blood Strike غير صالح!</b>\n\n⚠️ {reason}\n\n"
             "📌 <b>شروط ID Blood Strike:</b>\n"
-            "• أرقام فقط 🔢\n• من 6 إلى 15 رقم\n• لا يبدأ بـ 0\n\n"
-            "🔁 أرسل ID صحيح:"
+            "• أرقام فقط 🔢\n• من 6 إلى 15 رقم\n• لا يبدأ بـ 0\n\n🔁 أرسل ID صحيح:"
         ),
         "send_name": "📝 ممتاز! الآن أرسل <b>اسمك داخل اللعبة</b>:",
         "invalid_name": "❌ الاسم قصير جدًا! أرسل اسمك الصحيح:",
@@ -243,8 +224,7 @@ TEXTS = {
         "btn_sham": "📷 شام كاش",
         "payment_with_timer": (
             "💳 <b>طريقة الدفع: {method}</b>\n\n"
-            "📌 <b>الخطوات:</b>\n"
-            "{steps}\n\n"
+            "📌 <b>الخطوات:</b>\n{steps}\n\n"
             "⏳ <b>المتبقي للتسديد: {remaining}</b>\n\n"
             "🔔 <b>ملاحظة مهمة:</b>\n"
             "يجب تسديد المبلغ خلال <b>5 دقائق</b> وإلا سيُلغى الطلب تلقائيًا!\n\n"
@@ -260,8 +240,7 @@ TEXTS = {
         "sham_image_caption": "📷 <b>امسح هذا الكود للدفع عبر شام كاش</b>\n\n💰 المبلغ المطلوب: <b>{price}</b>",
         "accepted": (
             "✅ <b>تم قبول طلبك!</b>\n\n"
-            "💎 <b>{item}</b> سيصلك خلال <b>5 دقائق</b> ⏳\n\n"
-            "شكرًا لثقتك ❤️"
+            "💎 <b>{item}</b> سيصلك خلال <b>5 دقائق</b> ⏳\n\nشكرًا لثقتك ❤️"
         ),
         "rejected": "❌ عذرًا، تم <b>رفض طلبك</b>.\nتواصل مع الدعم 🆘",
         "my_info": (
@@ -278,8 +257,7 @@ TEXTS = {
             "🎁 <b>مسابقة البوت!</b>\n\n"
             "🎯 <b>الشروط:</b>\n"
             f"📢 اجلب <b>{REQUIRED_JOINS} أشخاص</b> يشتركوا في القناة عبر رابطك الخاص\n\n"
-            "🔗 <b>رابطك الخاص بالدعوة:</b>\n"
-            "<code>{link}</code>\n\n"
+            "🔗 <b>رابطك الخاص بالدعوة:</b>\n<code>{link}</code>\n\n"
             "📌 <b>كيف يعمل؟</b>\n"
             "1️⃣ انسخ رابطك بالأعلى ☝️\n"
             "2️⃣ شاركه مع أصحابك\n"
@@ -304,8 +282,7 @@ TEXTS = {
             "🎉 <b>مبروك!</b>\n\n"
             "شخص جديد اشترك في القناة عبر رابطك!\n"
             "👤 الاسم: <b>{name}</b>\n\n"
-            "📊 <b>مدعوينك الآن:</b> {count}/{required}\n"
-            "{extra}"
+            "📊 <b>مدعوينك الآن:</b> {count}/{required}\n{extra}"
         ),
         "contestant_complete": (
             "🏆 <b>ألف مبروك!</b>\n\n"
@@ -316,8 +293,7 @@ TEXTS = {
             "🏆 <b>قائمة المتسابقين</b>\n\n"
             "📊 الإجمالي: <b>{total}</b>\n"
             "✅ مؤهلون: <b>{qualified}</b>\n"
-            "🎯 نشطون: <b>{active}</b>\n\n"
-            "👇 تفاصيل كل متسابق:"
+            "🎯 نشطون: <b>{active}</b>\n\n👇 تفاصيل كل متسابق:"
         ),
         "contestants_empty": "📭 لا يوجد متسابقون حتى الآن",
         "contestant_item": (
@@ -349,11 +325,9 @@ TEXTS = {
             "🎯 <b>الحالة:</b> {status}\n"
             "🕒 <b>بدأ المسابقة:</b> {created}\n"
             "🕐 <b>آخر مدعو:</b> {last}\n\n"
-            "🔗 <b>رابط الدعوة:</b>\n"
-            "<code>{link}</code>\n\n"
+            "🔗 <b>رابط الدعوة:</b>\n<code>{link}</code>\n\n"
             "━━━━━━━━━━━━━━━━━━\n"
-            "👥 <b>قائمة المدعوين ({count}):</b>\n"
-            "{referrals_list}"
+            "👥 <b>قائمة المدعوين ({count}):</b>\n{referrals_list}"
         ),
         "inbox_title": "📬 <b>البريد الوارد</b>\n\n📥 آخر <b>{count}</b> رسالة",
         "inbox_empty": "📭 لا يوجد رسائل حتى الآن",
@@ -373,13 +347,11 @@ TEXTS = {
         "btn_contest_toggle": "🎁 إدارة المسابقة",
         "contest_toggle_current_on": (
             "🎁 <b>حالة المسابقة:</b> ✅ مفعّلة\n\n"
-            "المستخدمون يمكنهم المشاركة في المسابقة حاليًا.\n\n"
-            "اضغط لإيقافها:"
+            "المستخدمون يمكنهم المشاركة حاليًا.\n\nاضغط لإيقافها:"
         ),
         "contest_toggle_current_off": (
             "🎁 <b>حالة المسابقة:</b> ❌ متوقفة\n\n"
-            "المستخدمون لا يمكنهم المشاركة حاليًا.\n\n"
-            "اضغط لتشغيلها:"
+            "المستخدمون لا يمكنهم المشاركة حاليًا.\n\nاضغط لتشغيلها:"
         ),
         "btn_contest_toggle_on": "✅ تشغيل المسابقة",
         "btn_contest_toggle_off": "🛑 إيقاف المسابقة",
@@ -387,13 +359,11 @@ TEXTS = {
         "contest_disabled_msg": "🛑 <b>تم إيقاف المسابقة</b>\n\nلن يستقبل البوت مشاركات جديدة.",
         "dev_mode_current_on": (
             "🔧 <b>حالة وضع المطور:</b> ✅ مفعّل\n\n"
-            "البوت يعمل حاليًا خارج ساعات العمل.\n\n"
-            "اضغط لإيقافه:"
+            "البوت يعمل حاليًا خارج ساعات العمل.\n\nاضغط لإيقافه:"
         ),
         "dev_mode_current_off": (
             "🔧 <b>حالة وضع المطور:</b> ❌ موقّف\n\n"
-            "البوت يتبع ساعات العمل الرسمية (12 - 10).\n\n"
-            "اضغط لتشغيله:"
+            "البوت يتبع ساعات العمل الرسمية (12 - 10).\n\nاضغط لتشغيله:"
         ),
         "btn_dev_on": "✅ تشغيل البوت مؤقتًا",
         "btn_dev_off": "🛑 إيقاف البوت مؤقتًا",
@@ -419,6 +389,19 @@ TEXTS = {
         ),
         "message_sent": "✅ <b>تم إرسال رسالتك!</b>\n\nسيتم الرد قريبًا 📩",
         "message_too_short": "❌ الرسالة قصيرة! أرسل أطول:",
+        # ✅ نصوص الدعم (كانت ناقصة سابقًا)
+        "support": (
+            "🆘 <b>مركز الدعم الفني</b>\n\n"
+            f"👨‍💻 للتواصل: {SUPPORT_USERNAME}\n\n"
+            "📖 <b>طريقة الاستخدام:</b>\n"
+            "1️⃣ اختر اللعبة\n2️⃣ اختر عرض الشحن 💎\n"
+            "3️⃣ أرسل ID حسابك 🆔\n4️⃣ أرسل اسمك في اللعبة 📝\n"
+            "5️⃣ اختر طريقة الدفع\n6️⃣ حوّل المبلغ خلال 5 دقائق 💳\n"
+            "7️⃣ انتظر الموافقة ✅\n8️⃣ تصلك خلال 5 دقائق ⏳\n\n"
+            "⏰ <b>ساعات العمل:</b> 12 ظهرًا - 10 مساءً 🇸🇦\n\n"
+            "👇 يمكنك إرسال شكوى أو اقتراح عبر الزر بالأسفل:"
+        ),
+        "btn_complaint": "✉️ إرسال شكوى / اقتراح",
     },
     "en": {
         "welcome": (
@@ -453,10 +436,7 @@ TEXTS = {
         "choose_ff_type": "🔥 <b>Choose FF type:</b>\n\n👇 From buttons",
         "btn_ff_diamonds": "💎 Diamonds",
         "btn_ff_membership": "⭐ Membership",
-        "choose_bs_server": (
-            "🩸 <b>Choose Blood Strike server:</b>\n\n"
-            "🌍 <b>Global</b>\n🌐 <b>MENA / Arab</b> — Coming soon\n\n👇"
-        ),
+        "choose_bs_server": "🩸 <b>Choose Blood Strike server:</b>\n\n🌍 <b>Global</b>\n🌐 <b>MENA / Arab</b> — Coming soon\n\n👇",
         "btn_bs_global": "🌍 Global",
         "btn_bs_mena": "🌐 MENA / Arab",
         "bs_mena_soon": "🌐 <b>Blood Strike — MENA</b>\n\n⏳ <b>Coming soon!</b>",
@@ -472,8 +452,7 @@ TEXTS = {
         "btn_syriatel": "💳 Syriatel Cash",
         "btn_sham": "📷 Sham Cash",
         "payment_with_timer": (
-            "💳 <b>Payment: {method}</b>\n\n"
-            "📌 <b>Steps:</b>\n{steps}\n\n"
+            "💳 <b>Payment: {method}</b>\n\n📌 <b>Steps:</b>\n{steps}\n\n"
             "⏳ <b>Time left: {remaining}</b>\n\n"
             "🔔 You must pay within <b>5 minutes</b>!\n\n"
             "⚠️ Reviewed by admin ✅\n🔖 Order #<b>{oid}</b>"
@@ -489,8 +468,7 @@ TEXTS = {
             "🎁 <b>Contest!</b>\n\n"
             f"📢 Invite <b>{REQUIRED_JOINS} people</b> to the channel via your link\n\n"
             "🔗 <b>Your link:</b>\n<code>{link}</code>\n\n"
-            "📊 <b>Invites:</b> <b>{count}/{required}</b>\n"
-            "🎯 Status: {status}"
+            "📊 <b>Invites:</b> <b>{count}/{required}</b>\n🎯 Status: {status}"
         ),
         "btn_copy_link": "📋 Copy link",
         "contest_loading": "⏳ Creating your link...",
@@ -557,6 +535,18 @@ TEXTS = {
         "ask_message": "✉️ <b>Send your message</b>",
         "message_sent": "✅ <b>Sent!</b>",
         "message_too_short": "❌ Too short!",
+        "support": (
+            "🆘 <b>Support Center</b>\n\n"
+            f"👨‍💻 Contact: {SUPPORT_USERNAME}\n\n"
+            "📖 <b>How to use:</b>\n"
+            "1️⃣ Choose game\n2️⃣ Choose package 💎\n"
+            "3️⃣ Send ID 🆔\n4️⃣ Send name 📝\n"
+            "5️⃣ Choose payment\n6️⃣ Pay within 5 min 💳\n"
+            "7️⃣ Wait ✅\n8️⃣ Receive in 5 min ⏳\n\n"
+            "⏰ <b>Working: 12 PM - 10 PM</b> 🇸🇦\n\n"
+            "👇 Send a complaint/suggestion:"
+        ),
+        "btn_complaint": "✉️ Send complaint/suggestion",
     }
 }
 
@@ -565,8 +555,7 @@ def db_connect():
     return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 def init_db():
-    conn = db_connect()
-    cur = conn.cursor()
+    conn = db_connect(); cur = conn.cursor()
     cur.execute("""CREATE TABLE IF NOT EXISTS users (
         user_id BIGINT PRIMARY KEY, username TEXT, full_name TEXT,
         random_id TEXT, language TEXT DEFAULT 'ar', joined_at TEXT)""")
@@ -606,12 +595,9 @@ def init_db():
             cur.execute("UPDATE settings SET value = 'ff,pubg,jawaker,blood' WHERE key = 'button_order'")
     else:
         cur.execute("INSERT INTO settings VALUES ('button_order', 'ff,pubg,jawaker,blood')")
-
     cur.execute("INSERT INTO settings VALUES ('dev_mode', 'off') ON CONFLICT (key) DO NOTHING")
     cur.execute("INSERT INTO settings VALUES ('contest_mode', 'on') ON CONFLICT (key) DO NOTHING")
-
-    conn.commit()
-    cur.close(); conn.close()
+    conn.commit(); cur.close(); conn.close()
     print("✅ قاعدة البيانات جاهزة")
 
 init_db()
@@ -714,18 +700,11 @@ def validate_game_id(game_id: str, game: str):
 
 # ============ المسابقة ============
 def create_user_invite_link(uid):
-    """
-    ينشئ رابط دعوة فريد للمستخدم
-    ✅ بدون member_limit — يقبل عدداً غير محدود من المدعوين
-    """
     try:
         link_name = f"ref_{uid}_{int(time.time())}"
         result = bot.create_chat_invite_link(
-            chat_id=CHANNEL_USERNAME,
-            name=link_name,
-            creates_join_request=False
-            # ✅ لا نستخدم member_limit — حتى يبقى الرابط فعالاً
-        )
+            chat_id=CHANNEL_USERNAME, name=link_name,
+            creates_join_request=False)
         return result.invite_link, link_name
     except Exception as e:
         print(f"❌ create_user_invite_link: {e}")
@@ -882,10 +861,8 @@ def games_row(uid):
     T = TEXTS[get_lang(uid)]
     order = get_button_order().split(",")
     game_map = {
-        "ff": T["btn_ff"],
-        "pubg": T["btn_pubg"],
-        "jawaker": T["btn_jawaker"],
-        "blood": T["btn_blood"],
+        "ff": T["btn_ff"], "pubg": T["btn_pubg"],
+        "jawaker": T["btn_jawaker"], "blood": T["btn_blood"],
     }
     return [game_map[g] for g in order if g in game_map]
 
@@ -893,7 +870,6 @@ def main_keyboard(uid):
     lang = get_lang(uid); T = TEXTS[lang]
     kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
     games = games_row(uid)
-    # نوزع الأزرار 2-2
     if len(games) == 4:
         kb.row(games[0], games[1]); kb.row(games[2], games[3])
     elif len(games) == 3:
@@ -974,10 +950,7 @@ def show_bs_servers(chat_id, uid):
 def go_back(message):
     uid = message.from_user.id
     data = USER_DATA.get(uid, {}); step = data.get("step", 1)
-    if step <= 1:
-        bot.send_message(message.chat.id, t(uid, "back_done"), reply_markup=main_keyboard(uid))
-        USER_DATA[uid] = {"step": 1}; return
-    if step == 2:
+    if step <= 2:
         bot.send_message(message.chat.id, t(uid, "back_done"), reply_markup=main_keyboard(uid))
         USER_DATA[uid] = {"step": 1}; return
     if step == 3:
@@ -1059,14 +1032,12 @@ def on_chat_member(update):
             print(f"⚠️ انضم بدون رابط: {new_user_name}")
             return
         used_link = invite_link.invite_link
-        print(f"🎉 عضو جديد: {new_user_name} | رابط: {used_link}")
+        print(f"🎉 عضو جديد: {new_user_name} | {used_link}")
         conn = db_connect(); cur = conn.cursor()
         cur.execute("SELECT user_id FROM contest WHERE invite_link = %s", (used_link,))
         row = cur.fetchone()
         if not row:
-            cur.close(); conn.close()
-            print(f"⚠️ الرابط غير مرتبط")
-            return
+            cur.close(); conn.close(); return
         referrer_id = row["user_id"]
         cur.execute("SELECT id FROM referrals WHERE referred_id = %s", (new_user_id,))
         if cur.fetchone():
@@ -1079,7 +1050,6 @@ def on_chat_member(update):
                     (referrer_id,))
         new_count = cur.fetchone()["joins_count"]
         conn.commit(); cur.close(); conn.close()
-        # إعلام الداعي — نستخدم t_lang لتجنب التعارض
         referrer_lang = get_lang(referrer_id)
         try:
             extra = ""
@@ -1089,16 +1059,15 @@ def on_chat_member(update):
                               name=new_user_name, count=new_count,
                               required=REQUIRED_JOINS, extra=extra)
             bot.send_message(referrer_id, msg_text, parse_mode="HTML")
-            print(f"✅ إشعار {referrer_id}: {new_count}/{REQUIRED_JOINS}")
         except Exception as e:
-            print(f"⚠️ فشل إشعار الداعي: {e}")
+            print(f"⚠️ إشعار الداعي: {e}")
         if new_count >= REQUIRED_JOINS:
             conn = db_connect(); cur = conn.cursor()
             cur.execute("UPDATE contest SET status = 'qualified' WHERE user_id = %s", (referrer_id,))
             conn.commit(); cur.close(); conn.close()
             try:
                 bot.send_message(ADMIN_ID,
-                    f"🏆 <b>متسابق مؤهل جديد!</b>\n🆔 <code>{referrer_id}</code>\n📊 {new_count}",
+                    f"🏆 <b>متسابق مؤهل!</b>\n🆔 <code>{referrer_id}</code>\n📊 {new_count}",
                     parse_mode="HTML")
             except: pass
     except Exception as e:
@@ -1162,7 +1131,6 @@ def choose_bs_server(call):
             USER_DATA[uid] = {"game": "bs_global", "step": 3}
             show_packages_for_game(call.message.chat.id, uid, "bs_global")
         else:
-            # MENA — قريباً
             bot.send_message(call.message.chat.id, t(uid, "bs_mena_soon"),
                              parse_mode="HTML", reply_markup=main_keyboard(uid))
             USER_DATA[uid] = {"step": 1}
@@ -1224,9 +1192,8 @@ def get_player_name(message):
         bot.register_next_step_handler(msg, get_player_name); return
     USER_DATA[uid]["player_name"] = player_name; USER_DATA[uid]["step"] = 6
     kb = types.InlineKeyboardMarkup(row_width=2)
-    kb.add(
-        types.InlineKeyboardButton(t(uid, "btn_syriatel"), callback_data="pay|syriatel"),
-        types.InlineKeyboardButton(t(uid, "btn_sham"), callback_data="pay|sham"))
+    kb.add(types.InlineKeyboardButton(t(uid, "btn_syriatel"), callback_data="pay|syriatel"),
+           types.InlineKeyboardButton(t(uid, "btn_sham"), callback_data="pay|sham"))
     bot.send_message(message.chat.id, t(uid, "choose_payment"), parse_mode="HTML", reply_markup=kb)
     bot.send_message(message.chat.id, "🔽", reply_markup=back_keyboard(uid))
 
@@ -1268,8 +1235,7 @@ def choose_payment(call):
         admin_text = (
             "🔔 <b>طلب شراء جديد!</b>\n\n"
             f"🔖 رقم الطلب: <b>#{order_id}</b>\n"
-            f"👤 {call.from_user.full_name}\n"
-            f"🆔 <code>{uid}</code>\n\n"
+            f"👤 {call.from_user.full_name}\n🆔 <code>{uid}</code>\n\n"
             f"🎮 {data['game'].upper()}\n"
             f"💎 <b>{data['package_name']}</b>\n"
             f"💰 <b>{data['price']}</b>\n"
@@ -1348,12 +1314,8 @@ def my_info(message):
 def contest_show(call):
     uid = call.from_user.id
     bot.answer_callback_query(call.id)
-
-    # 🚫 إذا المسابقة متوقفة
     if not is_contest_open():
-        bot.send_message(uid, t(uid, "contest_disabled"), parse_mode="HTML")
-        return
-
+        bot.send_message(uid, t(uid, "contest_disabled"), parse_mode="HTML"); return
     entry = get_contest_entry(uid)
     lang = get_lang(uid)
     if entry:
@@ -1371,13 +1333,11 @@ def contest_show(call):
             me = bot.get_me()
             member = bot.get_chat_member(CHANNEL_USERNAME, me.id)
             if member.status not in ("administrator", "creator"):
-                bot.send_message(uid, "⚠️ البوت غير مضاف كمشرف!\n👨‍💻 " + SUPPORT_USERNAME)
-                return
+                bot.send_message(uid, "⚠️ البوت غير مضاف كمشرف!\n👨‍💻 " + SUPPORT_USERNAME); return
         except Exception as e: print(f"❌ {e}")
         new_entry = register_contest_user(uid, call.from_user.username or "", call.from_user.full_name)
         if not new_entry:
-            bot.send_message(uid, "⚠️ حدث خطأ في إنشاء الرابط.")
-            return
+            bot.send_message(uid, "⚠️ حدث خطأ في إنشاء الرابط."); return
         text = t(uid, "contest_created", link=new_entry["invite_link"],
                  count=0, required=REQUIRED_JOINS)
         kb = types.InlineKeyboardMarkup(row_width=1)
@@ -1458,11 +1418,12 @@ def contestant_details(call):
         bot.send_message(uid_admin, text, parse_mode="HTML", reply_markup=kb)
     except Exception as e: print(f"❌ {e}")
 
-# ============ الدعم ============
+# ============ الدعم (مصلّح) ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_support"], TEXTS["en"]["btn_support"]])
 def support(message):
     uid = message.from_user.id
-    if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
+    if not is_subscribed(uid):
+        show_subscription_message(message.chat.id, uid); return
     kb = types.InlineKeyboardMarkup(row_width=1)
     kb.add(types.InlineKeyboardButton(t(uid, "btn_complaint"), callback_data="send_complaint"))
     bot.send_message(message.chat.id, t(uid, "support"), parse_mode="HTML", reply_markup=kb)
@@ -1475,7 +1436,7 @@ def ask_complaint(call):
         msg = bot.send_message(call.message.chat.id, t(uid, "ask_message"),
                                parse_mode="HTML", reply_markup=back_keyboard(uid))
         bot.register_next_step_handler(msg, receive_complaint)
-    except Exception as e: print(f"❌ {e}")
+    except Exception as e: print(f"❌ ask_complaint: {e}")
 
 def receive_complaint(message):
     uid = message.from_user.id
@@ -1584,7 +1545,6 @@ def cfg_dev(call):
         bot.answer_callback_query(call.id)
     except Exception as e: print(f"❌ {e}")
 
-# ============ إدارة المسابقة ============
 @bot.callback_query_handler(func=lambda c: c.data == "cfg_contest")
 def cfg_contest(call):
     try:
@@ -1740,9 +1700,8 @@ def unknown_message(message):
 
 # ============ تشغيل ============
 print("🤖 البوت يعمل الآن...")
-print("🩸 Blood Strike مضاف")
-print("🎁 إدارة المسابقة في الإعدادات")
-print("🔗 member_limit محذوف — روابط دائمة")
+print("🃏 جواكر: 50k + 100k tokens مضافين")
+print("🆘 زر الدعم مصلّح")
 
 bot.infinity_polling(
     allowed_updates=[
@@ -1754,4 +1713,4 @@ bot.infinity_polling(
     skip_pending=True,
     timeout=30,
     long_polling_timeout=30
-    )
+)
