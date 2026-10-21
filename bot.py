@@ -19,7 +19,6 @@ DATABASE_URL = os.environ.get("DATABASE_URL",
     "postgresql://postgres:FmMcTnFMJbldpynWXDwrFfXISsKbYKvt@postgres.railway.internal:5432/railway")
 
 SHAM_IMAGE_PATH = "sham.jpg"
-
 ORDERS_OPEN_HOUR = 12
 ORDERS_CLOSE_HOUR = 22
 PAYMENT_TIMEOUT_SECONDS = 300
@@ -33,18 +32,14 @@ import requests
 
 def fix_allowed_updates():
     try:
-        r1 = requests.get(
-            f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook",
-            params={"drop_pending_updates": "true"}, timeout=10)
+        r1 = requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook",
+                          params={"drop_pending_updates": "true"}, timeout=10)
         print(f"🔧 deleteWebhook: {r1.json()}")
-        r2 = requests.get(
-            f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates",
-            params={"allowed_updates": '["message","edited_message","channel_post","edited_channel_post","callback_query","inline_query","chosen_inline_result","poll","poll_answer","my_chat_member","chat_member","chat_join_request"]', "timeout": 1},
-            timeout=15)
+        r2 = requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates",
+            params={"allowed_updates": '["message","edited_message","channel_post","edited_channel_post","callback_query","inline_query","chosen_inline_result","poll","poll_answer","my_chat_member","chat_member","chat_join_request"]', "timeout": 1}, timeout=15)
         print(f"🔧 getUpdates: {r2.json().get('ok')}")
         r3 = requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/getWebhookInfo", timeout=10)
-        info = r3.json()
-        allowed = info.get("result", {}).get("allowed_updates", [])
+        allowed = r3.json().get("result", {}).get("allowed_updates", [])
         print(f"🔧 allowed_updates: {allowed}")
         if "callback_query" in allowed and "chat_member" in allowed:
             print("✅ callback_query + chat_member مسموحان!")
@@ -64,14 +59,12 @@ def check_bot_admin():
         status = member.status
         print(f"🤖 حالة البوت في القناة: {status}")
         if status not in ("administrator", "creator"):
-            print("⚠️⚠️⚠️ البوت ليس مشرف!")
-            return False
+            print("⚠️ البوت ليس مشرف!"); return False
         if status == "administrator":
             can_invite = getattr(member, "can_invite_users", False)
             print(f"🔑 can_invite_users: {can_invite}")
             if not can_invite:
-                print("⚠️ البوت يحتاج صلاحية invite users!")
-                return False
+                print("⚠️ البوت يحتاج صلاحية invite users!"); return False
         return True
     except Exception as e:
         print(f"❌ check_bot_admin: {e}")
@@ -106,7 +99,7 @@ PACKAGES = {
         }
     },
     "jawaker": {
-        "title": {"ar": "🃏 جواكر", "en": "🃏 Jawaker"},
+        "title": {"ar": "🃏 شحن توكنز جواكر", "en": "🃏 Jawaker Tokens"},
         "items": {
             "jw_10000":  {"ar": "10000 توكنز ♦️",  "en": "10000 Tokens ♦️",  "price": "180 ل.س"},
             "jw_15000":  {"ar": "15000 توكنز ♠️",  "en": "15000 Tokens ♠️",  "price": "260 ل.س"},
@@ -114,6 +107,13 @@ PACKAGES = {
             "jw_30000":  {"ar": "30000 توكنز ♣️",  "en": "30000 Tokens ♣️",  "price": "490 ل.س"},
             "jw_50000":  {"ar": "50000 توكنز 🃏",  "en": "50000 Tokens 🃏",  "price": "790 ل.س"},
             "jw_100000": {"ar": "100000 توكنز 👑", "en": "100000 Tokens 👑", "price": "1550 ل.س"},
+        }
+    },
+    "jawaker_premium": {
+        "title": {"ar": "👑 بريميوم جواكر", "en": "👑 Jawaker Premium"},
+        "items": {
+            "jw_prem_silver": {"ar": "بريميوم جواكر 🃏 (فضي)", "en": "Jawaker Premium 🃏 (Silver)", "price": "900 ل.س"},
+            "jw_prem_red":    {"ar": "بريميوم جواكر 🃏 (أحمر)", "en": "Jawaker Premium 🃏 (Red)",    "price": "3750 ل.س"},
         }
     },
     "bs_global": {
@@ -172,12 +172,14 @@ TEXTS = {
         ),
         "orders_closed_dev": (
             "🔧 <b>البوت في وضع الصيانة/التجارب مؤقتًا</b>\n\n"
-            "⛔ لا يستقبل الطلبات حاليًا.\n"
-            "🔄 يرجى المحاولة لاحقًا."
+            "⛔ لا يستقبل الطلبات حاليًا.\n🔄 يرجى المحاولة لاحقًا."
         ),
         "choose_ff_type": "🔥 <b>اختر نوع الشحن في فري فاير:</b>\n\n👇 من الأزرار بالأسفل",
         "btn_ff_diamonds": "💎 شحن جواهر",
         "btn_ff_membership": "⭐ شحن عضوية",
+        "choose_jw_type": "🃏 <b>اختر نوع الشحن في جواكر:</b>\n\n👇 اختر من الأزرار بالأسفل",
+        "btn_jw_tokens": "💰 شحن توكنز",
+        "btn_jw_premium": "👑 شحن بريميوم",
         "choose_bs_server": (
             "🩸 <b>اختر سيرفر Blood Strike:</b>\n\n"
             "🌍 <b>عالمي</b> — يتوفر بشحن فوري\n"
@@ -188,8 +190,7 @@ TEXTS = {
         "bs_mena_soon": (
             "🌐 <b>Blood Strike — سيرفر مينا / العرب</b>\n\n"
             "⏳ <b>سيتوفر قريبًا!</b>\n\n"
-            "🔔 تابع قناتنا لتصلك أخبار توفره فورًا.\n"
-            "شكرًا لصبرك 🙏"
+            "🔔 تابع قناتنا لتصلك أخبار توفره فورًا.\nشكرًا لصبرك 🙏"
         ),
         "choose_package": "💎 <b>قائمة أسعار {game}:</b>\n\nاختر العرض الذي تريده 👇",
         "chosen": (
@@ -234,8 +235,7 @@ TEXTS = {
         "payment_expired": (
             "⌛ <b>انتهى وقت التسديد!</b>\n\n"
             "عذرًا، لم يتم تسديد المبلغ خلال <b>5 دقائق</b>.\n"
-            "🔖 رقم طلبك: <b>#{oid}</b>\n\n"
-            "🔄 يمكنك إنشاء طلب جديد عبر /start"
+            "🔖 رقم طلبك: <b>#{oid}</b>\n\n🔄 يمكنك إنشاء طلب جديد عبر /start"
         ),
         "sham_image_caption": "📷 <b>امسح هذا الكود للدفع عبر شام كاش</b>\n\n💰 المبلغ المطلوب: <b>{price}</b>",
         "accepted": (
@@ -389,7 +389,6 @@ TEXTS = {
         ),
         "message_sent": "✅ <b>تم إرسال رسالتك!</b>\n\nسيتم الرد قريبًا 📩",
         "message_too_short": "❌ الرسالة قصيرة! أرسل أطول:",
-        # ✅ نصوص الدعم (كانت ناقصة سابقًا)
         "support": (
             "🆘 <b>مركز الدعم الفني</b>\n\n"
             f"👨‍💻 للتواصل: {SUPPORT_USERNAME}\n\n"
@@ -436,6 +435,9 @@ TEXTS = {
         "choose_ff_type": "🔥 <b>Choose FF type:</b>\n\n👇 From buttons",
         "btn_ff_diamonds": "💎 Diamonds",
         "btn_ff_membership": "⭐ Membership",
+        "choose_jw_type": "🃏 <b>Choose Jawaker top-up type:</b>\n\n👇 From buttons below",
+        "btn_jw_tokens": "💰 Tokens",
+        "btn_jw_premium": "👑 Premium",
         "choose_bs_server": "🩸 <b>Choose Blood Strike server:</b>\n\n🌍 <b>Global</b>\n🌐 <b>MENA / Arab</b> — Coming soon\n\n👇",
         "btn_bs_global": "🌍 Global",
         "btn_bs_mena": "🌐 MENA / Arab",
@@ -690,7 +692,7 @@ def validate_game_id(game_id: str, game: str):
     elif game == "pubg":
         if len(game_id) < 9: return False, "ID أقل من 9 أرقام"
         if len(game_id) > 12: return False, "ID أكثر من 12 رقم"
-    elif game == "jawaker":
+    elif game in ("jawaker", "jawaker_premium"):
         if len(game_id) < 6: return False, "ID أقل من 6 أرقام"
         if len(game_id) > 12: return False, "ID أكثر من 12 رقم"
     elif game == "bs_global":
@@ -937,6 +939,15 @@ def show_ff_types(chat_id, uid):
     bot.send_message(chat_id, "🔽", reply_markup=back_keyboard(uid))
     USER_DATA.setdefault(uid, {}); USER_DATA[uid]["step"] = 2
 
+def show_jw_types(chat_id, uid):
+    kb = types.InlineKeyboardMarkup(row_width=2)
+    kb.add(
+        types.InlineKeyboardButton(t(uid, "btn_jw_tokens"), callback_data="jw_type|tokens"),
+        types.InlineKeyboardButton(t(uid, "btn_jw_premium"), callback_data="jw_type|premium"))
+    bot.send_message(chat_id, t(uid, "choose_jw_type"), parse_mode="HTML", reply_markup=kb)
+    bot.send_message(chat_id, "🔽", reply_markup=back_keyboard(uid))
+    USER_DATA.setdefault(uid, {}); USER_DATA[uid]["step"] = 2
+
 def show_bs_servers(chat_id, uid):
     kb = types.InlineKeyboardMarkup(row_width=2)
     kb.add(
@@ -961,6 +972,9 @@ def go_back(message):
         elif game == "bs_global":
             USER_DATA[uid] = {"game": "blood", "step": 2}
             show_bs_servers(message.chat.id, uid)
+        elif game in ("jawaker", "jawaker_premium"):
+            USER_DATA[uid] = {"game": "jawaker", "step": 2}
+            show_jw_types(message.chat.id, uid)
         else:
             bot.send_message(message.chat.id, t(uid, "back_done"), reply_markup=main_keyboard(uid))
             USER_DATA[uid] = {"step": 1}
@@ -1098,7 +1112,14 @@ def show_blood(message):
 def show_pubg(message): show_game_packages(message, "pubg")
 
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_jawaker"], TEXTS["en"]["btn_jawaker"]])
-def show_jawaker(message): show_game_packages(message, "jawaker")
+def show_jawaker(message):
+    ensure_user(message); uid = message.from_user.id
+    if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
+    if not is_orders_open():
+        bot.send_message(message.chat.id, t(uid, "orders_closed_dev") if get_setting("dev_mode", "off") == "on" else t(uid, "orders_closed"), parse_mode="HTML")
+        return
+    USER_DATA[uid] = {"game": "jawaker", "step": 2}
+    show_jw_types(message.chat.id, uid)
 
 def show_game_packages(message, game):
     ensure_user(message); uid = message.from_user.id
@@ -1121,6 +1142,19 @@ def choose_ff_type(call):
             USER_DATA[uid] = {"game": "ff_membership", "step": 3}
             show_packages_for_game(call.message.chat.id, uid, "ff_membership")
     except Exception as e: print(f"❌ {e}")
+
+@bot.callback_query_handler(func=lambda c: c.data.startswith("jw_type|"))
+def choose_jw_type(call):
+    try:
+        jw_type = call.data.split("|")[1]; uid = call.from_user.id
+        bot.answer_callback_query(call.id, "✅")
+        if jw_type == "tokens":
+            USER_DATA[uid] = {"game": "jawaker", "step": 3}
+            show_packages_for_game(call.message.chat.id, uid, "jawaker")
+        else:
+            USER_DATA[uid] = {"game": "jawaker_premium", "step": 3}
+            show_packages_for_game(call.message.chat.id, uid, "jawaker_premium")
+    except Exception as e: print(f"❌ choose_jw_type: {e}")
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("bs_server|"))
 def choose_bs_server(call):
@@ -1168,7 +1202,7 @@ def get_game_id(message):
     if not valid:
         if game in ("ff", "ff_membership"): key = "invalid_id_ff"
         elif game == "pubg": key = "invalid_id_pubg"
-        elif game == "jawaker": key = "invalid_id_jawaker"
+        elif game in ("jawaker", "jawaker_premium"): key = "invalid_id_jawaker"
         else: key = "invalid_id_bs"
         msg = bot.send_message(message.chat.id, t(uid, key, reason=result),
                                parse_mode="HTML", reply_markup=back_keyboard(uid))
@@ -1418,12 +1452,11 @@ def contestant_details(call):
         bot.send_message(uid_admin, text, parse_mode="HTML", reply_markup=kb)
     except Exception as e: print(f"❌ {e}")
 
-# ============ الدعم (مصلّح) ============
+# ============ الدعم ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_support"], TEXTS["en"]["btn_support"]])
 def support(message):
     uid = message.from_user.id
-    if not is_subscribed(uid):
-        show_subscription_message(message.chat.id, uid); return
+    if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
     kb = types.InlineKeyboardMarkup(row_width=1)
     kb.add(types.InlineKeyboardButton(t(uid, "btn_complaint"), callback_data="send_complaint"))
     bot.send_message(message.chat.id, t(uid, "support"), parse_mode="HTML", reply_markup=kb)
@@ -1700,8 +1733,8 @@ def unknown_message(message):
 
 # ============ تشغيل ============
 print("🤖 البوت يعمل الآن...")
-print("🃏 جواكر: 50k + 100k tokens مضافين")
-print("🆘 زر الدعم مصلّح")
+print("🃏 جواكر: خيارين (توكنز + بريميوم)")
+print("👑 بريميوم: فضي 900 / أحمر 3750")
 
 bot.infinity_polling(
     allowed_updates=[
@@ -1713,4 +1746,4 @@ bot.infinity_polling(
     skip_pending=True,
     timeout=30,
     long_polling_timeout=30
-)
+            )
