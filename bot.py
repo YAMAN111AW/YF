@@ -116,7 +116,7 @@ PACKAGES = {
 # ============ الترجمة ============
 TEXTS = {
     "ar": {
-        "welcome": "👋 أهلاً بك <b>{name}</b> في بوت شحن الجواهر والشدات 💎🔥\n\n🎯 <b>فكرة البوت:</b>\nيمكنك شحن فري فاير، ببجي، جواكر، أو Blood Strike عبر رصيد المحفظة الداخلي ✅\n\n💰 <b>رصيدك الحالي:</b> <b>{balance} ل.س</b>\n\n📌 <b>طريقة الشراء:</b>\n1️⃣ اختر اللعبة (يجب أن يكون رصيدك كافياً)\n2️⃣ اختر العرض\n3️⃣ أرسل ID حسابك\n4️⃣ أرسل اسمك في اللعبة\n5️⃣ سيتم خصم المبلغ وإرسال الطلب للإدارة ✅\n\n⏰ <b>الطلبات تُقبل من 12 ظهرًا حتى 10 مساءً بتوقيت السعودية</b> 🇸🇦",
+        "welcome": "👋 أهلاً بك <b>{name}</b> في بوت شحن الجواهر والشدات 💎🔥\n\n🎯 <b>فكرة البوت:</b>\nيمكنك شحن فري فاير، ببجي، جواكر، أو Blood Strike عبر رصيد المحفظة الداخلي ✅\n\n💰 <b>رصيدك الحالي:</b> <b>{balance} ل.س</b>\n\n📌 <b>طريقة الشراء:</b>\n1️⃣ اختر اللعبة\n2️⃣ اختر العرض\n3️⃣ أرسل ID حسابك\n4️⃣ أرسل اسمك في اللعبة\n5️⃣ سيتم خصم المبلغ وإرسال الطلب للإدارة ✅\n\n⏰ <b>الطلبات تُقبل من 12 ظهرًا حتى 10 مساءً بتوقيت السعودية</b> 🇸🇦",
         "subscribe_required": "🔒 <b>عذرًا عزيزي!</b>\n\n⚠️ يجب عليك <b>الاشتراك في قناتنا أولاً</b> لاستخدام البوت 💎\n\n📢 القناة: {CHANNEL_USERNAME}\n\n1️⃣ اضغط زر <b>اشترك في القناة</b>\n2️⃣ اشترك ✅\n3️⃣ ارجع واضغط <b>تحقق</b> 🔄",
         "btn_subscribe": "📢 اشترك في القناة",
         "btn_check": "✅ تحقق من الاشتراك",
@@ -159,7 +159,6 @@ TEXTS = {
         "rejected": "❌ عذرًا، تم <b>رفض طلبك</b>.\nتواصل مع الدعم 🆘",
         "wallet_paid": "✅ <b>تم خصم {price} ل.س من محفظتك بنجاح!</b>\n\n💎 طلبك قيد المعالجة الآن.",
         "wallet_insufficient": "❌ <b>رصيدك غير كافي!</b>\n\n💰 رصيدك الحالي: <b>{balance} ل.س</b>\n💵 المطلوب: <b>{price} ل.س</b>\n\nقم بالإيداع أولاً عبر زر (💳 إيداع رصيد).",
-        "wallet_empty_error": "⚠️ <b>عذراً، رصيدك الحالي ({balance} ل.س) غير كافٍ لبدء الطلب.</b>\n\nالرجاء إيداع رصيد أولاً لتتمكن من الشحن.",
         "my_info": "👤 <b>معلوماتك:</b>\n\n📛 الاسم: <b>{name}</b>\n🆔 الآيدي: <code>{rid}</code>\n💰 الرصيد: <b>{balance} ل.س</b>\n📅 التسجيل: {joined}\n🌐 اللغة: {lang}\n\n🧾 <b>آخر عمليات الشراء:</b>\n{orders}",
         "no_orders": "لا يوجد أي عمليات شراء حتى الآن 😕",
         "wallet_info": "💰 <b>محفظتك:</b>\n\nرصيدك الحالي هو: <b>{balance} ل.س</b>",
@@ -233,7 +232,7 @@ TEXTS = {
         "btn_complaint": "✉️ إرسال شكوى / اقتراح",
     },
     "en": {
-        "welcome": "👋 Welcome <b>{name}</b> 💎🔥\n\n🎯 Top up Free Fire, PUBG, Jawaker, or Blood Strike via Wallet ✅\n\n💰 <b>Current Balance:</b> <b>{balance} SYP</b>\n\n📌 <b>How to buy:</b>\n1️⃣ Choose game (Balance must be enough)\n2️⃣ Choose package\n3️⃣ Send your ID\n4️⃣ Send in-game name\n5️⃣ Amount deducted, order sent to admin ✅\n\n⏰ <b>Orders: 12 PM - 10 PM (Saudi time)</b> 🇸🇦",
+        "welcome": "👋 Welcome <b>{name}</b> 💎🔥\n\n🎯 Top up Free Fire, PUBG, Jawaker, or Blood Strike via Wallet ✅\n\n💰 <b>Current Balance:</b> <b>{balance} SYP</b>\n\n📌 <b>How to buy:</b>\n1️⃣ Choose game\n2️⃣ Choose package\n3️⃣ Send your ID\n4️⃣ Send in-game name\n5️⃣ Amount deducted, order sent to admin ✅\n\n⏰ <b>Orders: 12 PM - 10 PM (Saudi time)</b> 🇸🇦",
         "subscribe_required": "🔒 <b>Sorry!</b>\n\n⚠️ Subscribe to our channel first 💎\n\n📢 {CHANNEL_USERNAME}\n\n1️⃣ Subscribe\n2️⃣ Join ✅\n3️⃣ Check 🔄",
         "btn_subscribe": "📢 Subscribe",
         "btn_check": "✅ Check subscription",
@@ -276,7 +275,6 @@ TEXTS = {
         "rejected": "❌ Order <b>rejected</b>.",
         "wallet_paid": "✅ <b>{price} SYP deducted from wallet!</b>\n\n💎 Processing...",
         "wallet_insufficient": "❌ <b>Insufficient balance!</b>\n\n💰 Balance: <b>{balance}</b>\n💵 Required: <b>{price}</b>\n\nDeposit via (💳 Deposit).",
-        "wallet_empty_error": "⚠️ <b>Sorry, your balance ({balance} SYP) is insufficient.</b>\n\nPlease deposit first.",
         "my_info": "👤 <b>Info:</b>\n\n📛 {name}\n🆔 <code>{rid}</code>\n💰 Balance: <b>{balance} SYP</b>\n📅 {joined}\n🌐 {lang}\n\n🧾 <b>Orders:</b>\n{orders}",
         "no_orders": "No orders yet 😕",
         "wallet_info": "💰 <b>Your Wallet:</b>\n\nCurrent Balance: <b>{balance} SYP</b>",
@@ -781,7 +779,6 @@ def admin_send_balance(message):
 
     conn = db_connect(); cur = conn.cursor()
     
-    # البحث بالآيدي التلغرام أو الآيدي العشوائي أو اليوزر
     query = "SELECT user_id, full_name FROM users WHERE user_id = ? OR random_id = ?"
     params = [target, target]
     
@@ -808,15 +805,12 @@ def admin_send_balance(message):
     try: bot.send_message(uid, f"🎁 <b>تم إضافة {amount} ل.س إلى محفظتك من قِبَل الإدارة!</b>\n💰 رصيدك الجديد: <b>{new_balance} ل.س</b>", parse_mode="HTML")
     except: pass
 
-# ============ الألعاب والشراء (مع التحقق المسبق من الرصيد) ============
+# ============ الألعاب والشراء ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_ff"], TEXTS["en"]["btn_ff"]])
 def show_ff(message):
     ensure_user(message); uid = message.from_user.id
     if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
     if not is_orders_open(): bot.send_message(message.chat.id, t(uid, "orders_closed_dev") if get_setting("dev_mode", "off") == "on" else t(uid, "orders_closed"), parse_mode="HTML"); return
-    balance = get_wallet_balance(uid)
-    if balance <= 0:
-        bot.send_message(message.chat.id, t(uid, "wallet_empty_error", balance=balance), parse_mode="HTML"); return
     USER_DATA[uid] = {"game": "ff", "step": 2}; show_ff_types(message.chat.id, uid)
 
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_blood"], TEXTS["en"]["btn_blood"]])
@@ -824,9 +818,6 @@ def show_blood(message):
     ensure_user(message); uid = message.from_user.id
     if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
     if not is_orders_open(): bot.send_message(message.chat.id, t(uid, "orders_closed_dev") if get_setting("dev_mode", "off") == "on" else t(uid, "orders_closed"), parse_mode="HTML"); return
-    balance = get_wallet_balance(uid)
-    if balance <= 0:
-        bot.send_message(message.chat.id, t(uid, "wallet_empty_error", balance=balance), parse_mode="HTML"); return
     USER_DATA[uid] = {"game": "blood", "step": 2}; show_bs_servers(message.chat.id, uid)
 
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_jawaker"], TEXTS["en"]["btn_jawaker"]])
@@ -834,9 +825,6 @@ def show_jawaker(message):
     ensure_user(message); uid = message.from_user.id
     if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
     if not is_orders_open(): bot.send_message(message.chat.id, t(uid, "orders_closed_dev") if get_setting("dev_mode", "off") == "on" else t(uid, "orders_closed"), parse_mode="HTML"); return
-    balance = get_wallet_balance(uid)
-    if balance <= 0:
-        bot.send_message(message.chat.id, t(uid, "wallet_empty_error", balance=balance), parse_mode="HTML"); return
     USER_DATA[uid] = {"game": "jawaker", "step": 2}; show_jw_types(message.chat.id, uid)
 
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_pubg"], TEXTS["en"]["btn_pubg"]])
@@ -844,9 +832,6 @@ def show_pubg(message):
     ensure_user(message); uid = message.from_user.id
     if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
     if not is_orders_open(): bot.send_message(message.chat.id, t(uid, "orders_closed_dev") if get_setting("dev_mode", "off") == "on" else t(uid, "orders_closed"), parse_mode="HTML"); return
-    balance = get_wallet_balance(uid)
-    if balance <= 0:
-        bot.send_message(message.chat.id, t(uid, "wallet_empty_error", balance=balance), parse_mode="HTML"); return
     USER_DATA[uid] = {"game": "pubg", "step": 3}; show_packages_for_game(message.chat.id, uid, "pubg")
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("ff_type|"))
@@ -909,12 +894,10 @@ def get_player_name(message):
     price = data["price"]
     balance = get_wallet_balance(uid)
     
-    # تحقق أخير قبل الخصم
     if balance < price:
         bot.send_message(message.chat.id, t(uid, "wallet_insufficient", balance=balance, price=price), parse_mode="HTML", reply_markup=main_keyboard(uid))
         return
         
-    # خصم الرصيد وإنشاء الطلب
     deduct_wallet_balance(uid, price)
     
     conn = db_connect(); cur = conn.cursor()
