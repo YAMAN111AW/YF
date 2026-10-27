@@ -75,8 +75,8 @@ PACKAGES = {
         "items": {
             "pubg_60":   {"ar": "60 شدة 🪙",   "en": "60 UC 🪙",   "price": 140.0},
             "pubg_325":  {"ar": "325 شدة 🪙",  "en": "325 UC 🪙",  "price": 670.0},
-            "pubg_660":  {"ar": "660 شدة 🪙",  "en": "660 UC 🪙",  "price": 1300.0},
-            "pubg_1800": {"ar": "1800 شدة 🪙", "en": "1800 UC 🪙", "price": 3210.0},
+            "pubg_660":  {"ar": "660 شدة 🪙",  "en": "660 UC 🪙",  "price": 1320.0},
+            "pubg_1800": {"ar": "1800 شدة 🪙", "en": "1800 UC 🪙", "price": 3230.0},
         }
     },
     "jawaker": {
@@ -94,7 +94,7 @@ PACKAGES = {
         "title": {"ar": "👑 بريميوم جواكر", "en": "👑 Jawaker Premium"},
         "items": {
             "jw_prem_silver": {"ar": "بريميوم جواكر 🃏 (فضي)", "en": "Jawaker Premium 🃏 (Silver)", "price": 900.0},
-            "jw_prem_red":    {"ar": "بريميوم جواكر 🃏 (أحمر)", "en": "Jawaker Premium 🃏 (Red)",    "price": 3750.0},
+            "jw_prem_red":    {"ar": "بريميوم جواكر 🃏 (أحمر)", "en": "Jawaker Premium 🃏 (Red)",    "price": 3800.0},
         }
     },
     "bs_global": {
