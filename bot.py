@@ -168,6 +168,7 @@ TEXTS = {
         "deposit_success": "✅ <b>تم التحقق من التحويل بنجاح!</b>\n\n💰 تم إضافة <b>{amount} ل.س</b> إلى محفظتك.\n💳 رصيدك الجديد: <b>{balance} ل.س</b>",
         "deposit_fail": "❌ <b>فشل التحقق:</b> {reason}",
         "deposit_used": "❌ رقم العملية هذا تم استخدامه مسبقاً!",
+        "deposit_expired": "❌ رقم العملية هذا قديم! يجب أن يتم التحويل خلال 5 دقائق من إرسال الرقم.",
         "deposit_invalid_amount": "❌ الرجاء إدخال مبلغ صحيح (أرقام فقط).",
         "deposit_invalid_tx": "❌ رقم العملية يجب أن يكون أرقاماً فقط.",
         "admin_add_balance_usage": "⚠️ <b>طريقة الاستخدام:</b>\n<code>/sendrasid [ID/Username] [Amount]</code>\n\n<b>أمثلة:</b>\n<code>/sendrasid 6382473367 500</code> (آيدي تلغرام)\n<code>/sendrasid @Yamen 500</code> (يوزر)\n<code>/sendrasid 12345678 500</code> (آيدي البوت)",
@@ -284,6 +285,7 @@ TEXTS = {
         "deposit_success": "✅ <b>Deposit successful!</b>\n\n💰 Added <b>{amount} SYP</b>.\n💳 New balance: <b>{balance} SYP</b>",
         "deposit_fail": "❌ <b>Verification failed:</b> {reason}",
         "deposit_used": "❌ This transaction ID is already used!",
+        "deposit_expired": "❌ This transaction is too old! Must be within 5 minutes.",
         "deposit_invalid_amount": "❌ Please enter a valid amount.",
         "deposit_invalid_tx": "❌ Transaction ID must be digits only.",
         "admin_add_balance_usage": "⚠️ <b>Usage:</b>\n<code>/sendrasid [ID/Username] [Amount]</code>\n\n<b>Examples:</b>\n<code>/sendrasid 6382473367 500</code> (Telegram ID)\n<code>/sendrasid @Yamen 500</code> (Username)\n<code>/sendrasid 12345678 500</code> (Bot ID)",
@@ -398,7 +400,7 @@ def init_db():
     
     conn.commit()
     cur.close(); conn.close()
-    print("✅ قاعدة بيانات SQLite جاهزة (bot.db)")
+    print("✅ قاعدة بيانات SQLite جاهزة (/app/data/bot.db)")
 
 init_db()
 
@@ -463,10 +465,28 @@ def verify_sham_cash_tx(tx_id):
             tx = data["data"]["transaction"]
             amount = float(tx.get("amount", 0))
             currency = tx.get("currency", "")
-            if currency == "SYP":
-                return True, amount
-            else:
+            tx_date_str = tx.get("datetime") # مثال: "2025-01-01 10:15:00"
+            
+            if currency != "SYP":
                 return False, f"العملة غير مدعومة ({currency}). يرجى الدفع بالليرة السورية (SYP)."
+
+            # ✅ التحقق من الوقت (صلاحية 6 دقائق كحد أقصى كهامش أمان)
+            try:
+                tx_time = datetime.strptime(tx_date_str, "%Y-%m-%d %H:%M:%S")
+                # شام كاش يرسل الوقت بتوقيت سوريا (UTC+3). نستخدم نفس التوقيت للمقارنة.
+                now_time = datetime.now(timezone(timedelta(hours=3))).replace(tzinfo=None)
+                
+                time_diff = (now_time - tx_time).total_seconds()
+                
+                if time_diff > 360: # 6 دقائق بالثواني
+                    return False, "expired_date" # مفتاح خاص للترجمة
+                if time_diff < -60: # إذا كان الوقت بالمستقبل (خطأ بالسيرفر)
+                     return False, "تاريخ العملية غير صحيح."
+            except Exception as e:
+                print(f"⚠️ خطأ في قراءة التاريخ: {e}")
+                return False, "تعذر قراءة تاريخ العملية."
+
+            return True, amount
         return False, "رقم العملية غير موجود أو لم يتم العثور عليه."
     except Exception as e:
         return False, f"خطأ في الاتصال بالمنصة: {e}"
@@ -727,6 +747,7 @@ def process_deposit_tx(message):
         
     msg = bot.send_message(message.chat.id, t(uid, "deposit_verify"))
     
+    # 1. التحقق من التكرار
     conn = db_connect(); cur = conn.cursor()
     cur.execute("SELECT * FROM deposits WHERE tx_id = ?", (tx_id,))
     if cur.fetchone():
@@ -735,6 +756,7 @@ def process_deposit_tx(message):
         return
     cur.close(); conn.close()
     
+    # 2. التحقق من API (المبلغ + التاريخ)
     success, result = verify_sham_cash_tx(tx_id)
     if success:
         api_amount = float(result)
@@ -752,7 +774,10 @@ def process_deposit_tx(message):
         else:
             bot.edit_message_text(t(uid, "deposit_fail", reason=f"المبلغ المحول ({api_amount}) أقل من المبلغ المطلوب ({amount})."), chat_id=message.chat.id, message_id=msg.message_id)
     else:
-        bot.edit_message_text(t(uid, "deposit_fail", reason=result), chat_id=message.chat.id, message_id=msg.message_id)
+        if result == "expired_date":
+            bot.edit_message_text(t(uid, "deposit_expired"), chat_id=message.chat.id, message_id=msg.message_id)
+        else:
+            bot.edit_message_text(t(uid, "deposit_fail", reason=result), chat_id=message.chat.id, message_id=msg.message_id)
 
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_wallet"], TEXTS["en"]["btn_wallet"]])
 def show_wallet(message):
