@@ -350,7 +350,7 @@ TEXTS = {
 }
 
 # ============ قاعدة البيانات SQLite ============
-DB_FILE = "bot.db"
+DB_FILE = "/app/data/bot.db"
 
 def db_connect():
     conn = sqlite3.connect(DB_FILE, check_same_thread=False)
