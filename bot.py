@@ -11,6 +11,7 @@ import requests
 # ============ الإعدادات ============
 BOT_TOKEN = "8956086702:AAEtcqzxJwA7W7daV3s4DiDMjSMTt9InJ3k"
 ADMIN_ID = 6382473367
+PAYMENT_NUMBER_SYRIATEL = "0984674400"
 SUPPORT_USERNAME = "@Yamen494"
 CHANNEL_USERNAME = "@YF494YF"
 CHANNEL_LINK = "https://t.me/YF494YF"
@@ -22,10 +23,12 @@ API_SYRIA_ACCOUNT = "86471023dde39efc379b0f2fad8592e4"
 
 ORDERS_OPEN_HOUR = 12
 ORDERS_CLOSE_HOUR = 22
+PAYMENT_TIMEOUT_SECONDS = 300
 REQUIRED_JOINS = 5
 
 bot = telebot.TeleBot(BOT_TOKEN)
 USER_DATA = {}
+COUNTDOWNS = {}
 
 def fix_allowed_updates():
     try:
@@ -61,6 +64,7 @@ PACKAGES = {
             "ff_110": {"ar": "110 جوهرة 💎", "en": "110 Diamonds 💎", "price": 160.0},
             "ff_231": {"ar": "231 جوهرة 💎", "en": "231 Diamonds 💎", "price": 290.0},
             "ff_583": {"ar": "583 جوهرة 💎", "en": "583 Diamonds 💎", "price": 700.0},
+            "ff_1188": {"ar": "1188 جوهرة 💎", "en": "1188 Diamonds 💎", "price": 1400.0},
         }
     },
     "ff_membership": {
@@ -110,24 +114,58 @@ PACKAGES = {
             "bs_g_pass_p":{"ar": "Strike Pass Premium 🎫",  "en": "Strike Pass Premium 🎫",  "price": 1080.0},
             "bs_g_pass_e":{"ar": "Strike Pass Elite 🎫",    "en": "Strike Pass Elite 🎫",    "price": 500.0},
         }
+    },
+    "8bp_coins": {
+        "title": {"ar": "🪙 8 Ball Pool - كوينز", "en": "🪙 8 Ball Pool - Coins"},
+        "items": {
+            "8bp_c_20000":  {"ar": "20000 كوينز 🪙",  "en": "20000 Coins 🪙",  "price": 260.0},
+            "8bp_c_52000":  {"ar": "52000 كوينز 🪙",  "en": "52000 Coins 🪙",  "price": 280.0},
+            "8bp_c_112000": {"ar": "112000 كوينز 🪙", "en": "112000 Coins 🪙", "price": 350.0},
+            "8bp_c_256000": {"ar": "256000 كوينز 🪙", "en": "256000 Coins 🪙", "price": 660.0},
+            "8bp_c_800000": {"ar": "800000 كوينز 🪙", "en": "800000 Coins 🪙", "price": 1600.0},
+        }
+    },
+    "8bp_cash": {
+        "title": {"ar": "💸 8 Ball Pool - كاش", "en": "💸 8 Ball Pool - Cash"},
+        "items": {
+            "8bp_cash_20":   {"ar": "20 كاش 💸",   "en": "20 Cash 💸",   "price": 250.0},
+            "8bp_cash_50":   {"ar": "50 كاش 💸",   "en": "50 Cash 💸",   "price": 610.0},
+            "8bp_cash_110":  {"ar": "110 كاش 💸",  "en": "110 Cash 💸",  "price": 1170.0},
+            "8bp_cash_800":  {"ar": "800 كاش 💸",  "en": "800 Cash 💸",  "price": 1600.0},
+            "8bp_cash_2000": {"ar": "2000 كاش 💸", "en": "2000 Cash 💸", "price": 3200.0},
+        }
+    },
+    "8bp_memberships": {
+        "title": {"ar": "🔥 8 Ball Pool - العضويات", "en": "🔥 8 Ball Pool - Memberships"},
+        "items": {
+            "8bp_m_golden_spin":  {"ar": "8Ball Golden Spin 🔥",  "en": "8Ball Golden Spin 🔥",  "price": 150.0},
+            "8bp_m_golden_shot":  {"ar": "8Ball Golden Shot 🔥",  "en": "8Ball Golden Shot 🔥",  "price": 270.0},
+            "8bp_m_scratch":      {"ar": "8Ball 5 Scratch 🔥",    "en": "8Ball 5 Scratch 🔥",    "price": 210.0},
+            "8bp_m_coda":         {"ar": "8Ball Coda Bundle 🔥",  "en": "8Ball Coda Bundle 🔥",  "price": 620.0},
+            "8bp_m_pass_prem":    {"ar": "تصريح مميز 🔥",         "en": "Premium Pass 🔥",       "price": 1020.0},
+            "8bp_m_pass_elite":   {"ar": "تصريح النخبة 🔥",       "en": "Elite Pass 🔥",         "price": 2000.0},
+        }
     }
 }
 
 # ============ الترجمة ============
 TEXTS = {
     "ar": {
-        "welcome": "👋 أهلاً بك <b>{name}</b> في بوت شحن الجواهر والشدات 💎🔥\n\n🎯 <b>فكرة البوت:</b>\nيمكنك شحن فري فاير، ببجي، جواكر، أو Blood Strike عبر رصيد المحفظة الداخلي ✅\n\n💰 <b>رصيدك الحالي:</b> <b>{balance} ل.س</b>\n\n📌 <b>طريقة الشراء:</b>\n1️⃣ اختر اللعبة\n2️⃣ اختر العرض\n3️⃣ أرسل ID حسابك\n4️⃣ أرسل اسمك في اللعبة\n5️⃣ سيتم خصم المبلغ وإرسال الطلب للإدارة ✅\n\n⏰ <b>الطلبات تُقبل من 12 ظهرًا حتى 10 مساءً بتوقيت السعودية</b> 🇸🇦",
+        "welcome": "👋 أهلاً بك <b>{name}</b> في بوت شحن الجواهر والشدات 💎🔥\n\n🎯 <b>فكرة البوت:</b>\nيمكنك شحن فري فاير، ببجي، جواكر، Blood Strike، و 8 Ball Pool عبر المحفظة أو الدفع المباشر ✅\n\n💰 <b>رصيدك الحالي:</b> <b>{balance} ل.س</b>\n\n📌 <b>طريقة الشراء:</b>\n1️⃣ اختر اللعبة\n2️⃣ اختر العرض\n3️⃣ أرسل ID حسابك\n4️⃣ أرسل اسمك في اللعبة\n5️⃣ اختر طريقة الدفع (المحفظة أو يدوي)\n\n⏰ <b>الطلبات تُقبل من 12 ظهرًا حتى 10 مساءً بتوقيت السعودية</b> 🇸🇦",
         "subscribe_required": "🔒 <b>عذرًا عزيزي!</b>\n\n⚠️ يجب عليك <b>الاشتراك في قناتنا أولاً</b> لاستخدام البوت 💎\n\n📢 القناة: {CHANNEL_USERNAME}\n\n1️⃣ اضغط زر <b>اشترك في القناة</b>\n2️⃣ اشترك ✅\n3️⃣ ارجع واضغط <b>تحقق</b> 🔄",
         "btn_subscribe": "📢 اشترك في القناة",
         "btn_check": "✅ تحقق من الاشتراك",
+        "btn_games_menu": "🎮 قسم الألعاب",
         "btn_ff": "🔥 Free Fire",
         "btn_pubg": "🎯 PUBG",
         "btn_jawaker": "🃏 Jawaker",
         "btn_blood": "🩸 Blood Strike",
+        "btn_8bp": "🎱 8 Ball Pool",
         "btn_info": "👤 معلوماتي",
         "btn_support": "🆘 تواصل مع الدعم",
         "btn_settings": "⚙️ الإعدادات",
         "btn_back": "⬅️ رجوع",
+        "btn_back_main": "🔙 القائمة الرئيسية",
         "btn_inbox": "📬 البريد الوارد",
         "btn_contestants": "🏆 المتسابقين",
         "btn_contest": "🎁 المسابقة",
@@ -147,14 +185,26 @@ TEXTS = {
         "btn_bs_global": "🌍 عالمي",
         "btn_bs_mena": "🌐 مينا / العرب",
         "bs_mena_soon": "🌐 <b>Blood Strike — سيرفر مينا / العرب</b>\n\n⏳ <b>سيتوفر قريبًا!</b>\n\n🔔 تابع قناتنا لتصلك أخبار توفره فورًا.\nشكرًا لصبرك 🙏",
+        "choose_8bp_type": "🎱 <b>اختر القسم في 8 Ball Pool:</b>\n\n👇 اختر من الأزرار بالأسفل",
+        "btn_8bp_coins": "🪙 كوينز",
+        "btn_8bp_cash": "💸 كاش",
+        "btn_8bp_memberships": "🔥 العضويات",
         "choose_package": "💎 <b>قائمة أسعار {game}:</b>\n\nاختر العرض الذي تريده 👇",
         "chosen": "✅ اخترت: <b>{item}</b> بسعر <b>{price}</b> ل.س\n\n🆔 أرسل <b>ID حسابك في {game}</b>:\n\n💡 <i>ملاحظة: يجب أن يكون ID حقيقي (أرقام فقط)</i>",
         "invalid_id_ff": "❌ <b>ID Free Fire غير صالح!</b>\n\n⚠️ {reason}\n\n📌 <b>شروط ID فري فاير:</b>\n• أرقام فقط 🔢\n• من 5 إلى 15 رقم\n• لا يبدأ بـ 0\n\n🔁 أرسل ID صحيح:",
         "invalid_id_pubg": "❌ <b>ID PUBG غير صالح!</b>\n\n⚠️ {reason}\n\n📌 <b>شروط ID ببجي:</b>\n• أرقام فقط 🔢\n• من 9 إلى 12 رقم\n• لا يبدأ بـ 0\n\n🔁 أرسل ID صحيح:",
         "invalid_id_jawaker": "❌ <b>ID جواكر غير صالح!</b>\n\n⚠️ {reason}\n\n📌 <b>شروط ID جواكر:</b>\n• أرقام فقط 🔢\n• من 6 إلى 12 رقم\n• لا يبدأ بـ 0\n\n🔁 أرسل ID صحيح:",
         "invalid_id_bs": "❌ <b>ID Blood Strike غير صالح!</b>\n\n⚠️ {reason}\n\n📌 <b>شروط ID Blood Strike:</b>\n• أرقام فقط 🔢\n• من 6 إلى 15 رقم\n• لا يبدأ بـ 0\n\n🔁 أرسل ID صحيح:",
+        "invalid_id_8bp": "❌ <b>ID 8 Ball Pool غير صالح!</b>\n\n⚠️ {reason}\n\n📌 <b>شروط ID 8 Ball Pool:</b>\n• أرقام فقط 🔢\n• من 6 إلى 15 رقم\n• لا يبدأ بـ 0\n\n🔁 أرسل ID صحيح:",
         "send_name": "📝 ممتاز! الآن أرسل <b>اسمك داخل اللعبة</b>:",
         "invalid_name": "❌ الاسم قصير جدًا! أرسل اسمك الصحيح:",
+        "choose_payment": "💳 <b>اختر طريقة الدفع:</b>\n\n👇 اختر من الأزرار بالأسفل",
+        "btn_syriatel": "💳 سيرياتيل كاش",
+        "btn_sham": "📷 شام كاش",
+        "btn_bot_wallet": "💰 محفظة البوت",
+        "payment_with_timer": "💳 <b>طريقة الدفع: {method}</b>\n\n📌 <b>الخطوات:</b>\n{steps}\n\n⏳ <b>المتبقي للتسديد: {remaining}</b>\n\n🔔 <b>ملاحظة مهمة:</b>\nيجب تسديد المبلغ خلال <b>5 دقائق</b> وإلا سيُلغى الطلب تلقائيًا!\n\n⚠️ سيتم مراجعة طلبك من قِبَل الإدارة ✅\n🔖 رقم طلبك: <b>#{oid}</b>",
+        "payment_expired": "⌛ <b>انتهى وقت التسديد!</b>\n\nعذرًا، لم يتم تسديد المبلغ خلال <b>5 دقائق</b>.\n🔖 رقم طلبك: <b>#{oid}</b>\n\n🔄 يمكنك إنشاء طلب جديد عبر /start",
+        "sham_image_caption": "📷 <b>امسح هذا الكود للدفع عبر شام كاش</b>\n\n💰 المبلغ المطلوب: <b>{price}</b>",
         "accepted": "✅ <b>تم قبول طلبك!</b>\n\n💎 <b>{item}</b> سيصلك خلال <b>5 دقائق</b> ⏳\n\nشكرًا لثقتك ❤️",
         "rejected": "❌ عذرًا، تم <b>رفض طلبك</b>.\nتواصل مع الدعم 🆘",
         "wallet_paid": "✅ <b>تم خصم {price} ل.س من محفظتك بنجاح!</b>\n\n💎 طلبك قيد المعالجة الآن.",
@@ -221,30 +271,34 @@ TEXTS = {
         "btn_no": "❌ إلغاء",
         "order_current": "🔀 <b>ترتيب الأزرار:</b>\n\n{order}\n\nاختر:",
         "order_changed": "✅ تم تغيير الترتيب!",
-        "btn_order_1": "1️⃣ FF → PUBG → Jawaker → Blood",
-        "btn_order_2": "2️⃣ Blood → FF → PUBG → Jawaker",
-        "btn_order_3": "3️⃣ Jawaker → Blood → FF → PUBG",
+        "btn_order_1": "1️⃣ FF → PUBG → Jawaker → Blood → 8BP",
+        "btn_order_2": "2️⃣ Blood → FF → PUBG → Jawaker → 8BP",
+        "btn_order_3": "3️⃣ Jawaker → Blood → FF → PUBG → 8BP",
         "back_done": "⬅️ رجعنا للخطوة السابقة",
         "unknown_msg": "🤔 لم أفهم رسالتك. استخدم الأزرار بالأسفل 👇",
         "ask_message": "✉️ <b>أرسل رسالتك الآن</b>\n\n📝 اكتب شكواك، اقتراحك، أو أي استفسار\nسيتم إرسالها للإدارة مباشرة ✅",
         "message_sent": "✅ <b>تم إرسال رسالتك!</b>\n\nسيتم الرد قريبًا 📩",
         "message_too_short": "❌ الرسالة قصيرة! أرسل أطول:",
-        "support": "🆘 <b>مركز الدعم الفني</b>\n\n👨‍💻 للتواصل: {SUPPORT_USERNAME}\n\n📖 <b>طريقة الاستخدام:</b>\n1️⃣ اختر اللعبة\n2️⃣ اختر عرض الشحن 💎\n3️⃣ أرسل ID حسابك 🆔\n4️⃣ أرسل اسمك في اللعبة 📝\n5️⃣ تأكيد الطلب\n\n⏰ <b>ساعات العمل:</b> 12 ظهرًا - 10 مساءً 🇸🇦\n\n👇 يمكنك إرسال شكوى أو اقتراح عبر الزر بالأسفل:",
+        "support": "🆘 <b>مركز الدعم الفني</b>\n\n👨‍💻 للتواصل: {SUPPORT_USERNAME}\n\n📖 <b>طريقة الاستخدام:</b>\n1️⃣ اختر اللعبة\n2️⃣ اختر عرض الشحن 💎\n3️⃣ أرسل ID حسابك 🆔\n4️⃣ أرسل اسمك في اللعبة 📝\n5️⃣ اختر طريقة الدفع\n\n⏰ <b>ساعات العمل:</b> 12 ظهرًا - 10 مساءً 🇸🇦\n\n👇 يمكنك إرسال شكوى أو اقتراح عبر الزر بالأسفل:",
         "btn_complaint": "✉️ إرسال شكوى / اقتراح",
+        "games_menu_title": "🎮 <b>قسم الألعاب</b>\n\nاختر اللعبة التي تريد الشحن لها من الأزرار بالأسفل 👇",
     },
     "en": {
-        "welcome": "👋 Welcome <b>{name}</b> 💎🔥\n\n🎯 Top up Free Fire, PUBG, Jawaker, or Blood Strike via Wallet ✅\n\n💰 <b>Current Balance:</b> <b>{balance} SYP</b>\n\n📌 <b>How to buy:</b>\n1️⃣ Choose game\n2️⃣ Choose package\n3️⃣ Send your ID\n4️⃣ Send in-game name\n5️⃣ Amount deducted, order sent to admin ✅\n\n⏰ <b>Orders: 12 PM - 10 PM (Saudi time)</b> 🇸🇦",
+        "welcome": "👋 Welcome <b>{name}</b> 💎🔥\n\n🎯 Top up Free Fire, PUBG, Jawaker, Blood Strike, and 8 Ball Pool via Wallet or Direct Payment ✅\n\n💰 <b>Current Balance:</b> <b>{balance} SYP</b>\n\n📌 <b>How to buy:</b>\n1️⃣ Choose game\n2️⃣ Choose package\n3️⃣ Send your ID\n4️⃣ Send in-game name\n5️⃣ Choose payment method\n\n⏰ <b>Orders: 12 PM - 10 PM (Saudi time)</b> 🇸🇦",
         "subscribe_required": "🔒 <b>Sorry!</b>\n\n⚠️ Subscribe to our channel first 💎\n\n📢 {CHANNEL_USERNAME}\n\n1️⃣ Subscribe\n2️⃣ Join ✅\n3️⃣ Check 🔄",
         "btn_subscribe": "📢 Subscribe",
         "btn_check": "✅ Check subscription",
+        "btn_games_menu": "🎮 Games Menu",
         "btn_ff": "🔥 Free Fire",
         "btn_pubg": "🎯 PUBG",
         "btn_jawaker": "🃏 Jawaker",
         "btn_blood": "🩸 Blood Strike",
+        "btn_8bp": "🎱 8 Ball Pool",
         "btn_info": "👤 My info",
         "btn_support": "🆘 Support",
         "btn_settings": "⚙️ Settings",
         "btn_back": "⬅️ Back",
+        "btn_back_main": "🔙 Main Menu",
         "btn_inbox": "📬 Inbox",
         "btn_contestants": "🏆 Contestants",
         "btn_contest": "🎁 Contest",
@@ -264,14 +318,26 @@ TEXTS = {
         "btn_bs_global": "🌍 Global",
         "btn_bs_mena": "🌐 MENA / Arab",
         "bs_mena_soon": "🌐 <b>Blood Strike — MENA</b>\n\n⏳ <b>Coming soon!</b>",
+        "choose_8bp_type": "🎱 <b>Choose 8 Ball Pool section:</b>\n\n👇 From buttons below",
+        "btn_8bp_coins": "🪙 Coins",
+        "btn_8bp_cash": "💸 Cash",
+        "btn_8bp_memberships": "🔥 Memberships",
         "choose_package": "💎 <b>{game} prices:</b>\n\nChoose 👇",
         "chosen": "✅ Chosen: <b>{item}</b> for <b>{price} SYP</b>\n\n🆔 Send your <b>{game} ID</b>:",
         "invalid_id_ff": "❌ <b>Invalid FF ID!</b>\n\n⚠️ {reason}\n\n• Digits only 🔢\n• 5-15 digits\n• No leading 0\n\n🔁 Send valid:",
         "invalid_id_pubg": "❌ <b>Invalid PUBG ID!</b>\n\n⚠️ {reason}\n\n• Digits only 🔢\n• 9-12 digits\n\n🔁 Send valid:",
         "invalid_id_jawaker": "❌ <b>Invalid Jawaker ID!</b>\n\n⚠️ {reason}\n\n🔁 Send valid:",
         "invalid_id_bs": "❌ <b>Invalid Blood Strike ID!</b>\n\n⚠️ {reason}\n\n🔁 Send valid:",
+        "invalid_id_8bp": "❌ <b>Invalid 8 Ball Pool ID!</b>\n\n⚠️ {reason}\n\n🔁 Send valid:",
         "send_name": "📝 Now send your <b>in-game name</b>:",
         "invalid_name": "❌ Name too short!",
+        "choose_payment": "💳 <b>Choose payment method:</b>",
+        "btn_syriatel": "💳 Syriatel Cash",
+        "btn_sham": "📷 Sham Cash",
+        "btn_bot_wallet": "💰 Bot Wallet",
+        "payment_with_timer": "💳 <b>Payment: {method}</b>\n\n📌 <b>Steps:</b>\n{steps}\n\n⏳ <b>Time left: {remaining}</b>\n\n🔔 You must pay within <b>5 minutes</b>!\n\n⚠️ Reviewed by admin ✅\n🔖 Order #<b>{oid}</b>",
+        "payment_expired": "⌛ <b>Payment expired!</b>\n\n🔖 Order #<b>{oid}</b>",
+        "sham_image_caption": "📷 <b>Scan to pay via Sham Cash</b>\n\n💰 Amount: <b>{price}</b>",
         "accepted": "✅ <b>Accepted!</b>\n\n💎 <b>{item}</b> within <b>5 min</b> ⏳",
         "rejected": "❌ Order <b>rejected</b>.",
         "wallet_paid": "✅ <b>{price} SYP deducted from wallet!</b>\n\n💎 Processing...",
@@ -338,16 +404,17 @@ TEXTS = {
         "btn_no": "❌ Cancel",
         "order_current": "🔀 <b>Order:</b>\n\n{order}\n\nChoose:",
         "order_changed": "✅ Order changed!",
-        "btn_order_1": "1️⃣ FF → PUBG → Jawaker → Blood",
-        "btn_order_2": "2️⃣ Blood → FF → PUBG → Jawaker",
-        "btn_order_3": "3️⃣ Jawaker → Blood → FF → PUBG",
+        "btn_order_1": "1️⃣ FF → PUBG → Jawaker → Blood → 8BP",
+        "btn_order_2": "2️⃣ Blood → FF → PUBG → Jawaker → 8BP",
+        "btn_order_3": "3️⃣ Jawaker → Blood → FF → PUBG → 8BP",
         "back_done": "⬅️ Back",
         "unknown_msg": "🤔 I didn't understand.",
         "ask_message": "✉️ <b>Send your message</b>",
         "message_sent": "✅ <b>Sent!</b>",
         "message_too_short": "❌ Too short!",
-        "support": "🆘 <b>Support Center</b>\n\n👨‍💻 Contact: {SUPPORT_USERNAME}\n\n📖 <b>How to use:</b>\n1️⃣ Choose game\n2️⃣ Choose package 💎\n3️⃣ Send ID 🆔\n4️⃣ Send name 📝\n5️⃣ Confirm order\n\n⏰ <b>Working: 12 PM - 10 PM</b> 🇸🇦\n\n👇 Send a complaint/suggestion:",
+        "support": "🆘 <b>Support Center</b>\n\n👨‍💻 Contact: {SUPPORT_USERNAME}\n\n📖 <b>How to use:</b>\n1️⃣ Choose game\n2️⃣ Choose package 💎\n3️⃣ Send ID 🆔\n4️⃣ Send name 📝\n5️⃣ Choose payment\n\n⏰ <b>Working: 12 PM - 10 PM</b> 🇸🇦\n\n👇 Send a complaint/suggestion:",
         "btn_complaint": "✉️ Send complaint/suggestion",
+        "games_menu_title": "🎮 <b>Games Menu</b>\n\nChoose the game you want to top up from the buttons below 👇",
     }
 }
 
@@ -394,7 +461,7 @@ def init_db():
     cur.execute("""CREATE TABLE IF NOT EXISTS deposits (
         tx_id TEXT PRIMARY KEY, user_id INTEGER, amount REAL, created_at TEXT)""")
 
-    cur.execute("INSERT OR IGNORE INTO settings VALUES ('button_order', 'ff,pubg,jawaker,blood')")
+    cur.execute("INSERT OR IGNORE INTO settings VALUES ('button_order', 'ff,pubg,jawaker,blood,8bp')")
     cur.execute("INSERT OR IGNORE INTO settings VALUES ('dev_mode', 'off')")
     cur.execute("INSERT OR IGNORE INTO settings VALUES ('contest_mode', 'on')")
     
@@ -465,22 +532,18 @@ def verify_sham_cash_tx(tx_id):
             tx = data["data"]["transaction"]
             amount = float(tx.get("amount", 0))
             currency = tx.get("currency", "")
-            tx_date_str = tx.get("datetime") # مثال: "2025-01-01 10:15:00"
+            tx_date_str = tx.get("datetime")
             
             if currency != "SYP":
                 return False, f"العملة غير مدعومة ({currency}). يرجى الدفع بالليرة السورية (SYP)."
 
-            # ✅ التحقق من الوقت (صلاحية 6 دقائق كحد أقصى كهامش أمان)
             try:
                 tx_time = datetime.strptime(tx_date_str, "%Y-%m-%d %H:%M:%S")
-                # شام كاش يرسل الوقت بتوقيت سوريا (UTC+3). نستخدم نفس التوقيت للمقارنة.
                 now_time = datetime.now(timezone(timedelta(hours=3))).replace(tzinfo=None)
-                
                 time_diff = (now_time - tx_time).total_seconds()
-                
-                if time_diff > 360: # 6 دقائق بالثواني
-                    return False, "expired_date" # مفتاح خاص للترجمة
-                if time_diff < -60: # إذا كان الوقت بالمستقبل (خطأ بالسيرفر)
+                if time_diff > 360:
+                    return False, "expired_date"
+                if time_diff < -60:
                      return False, "تاريخ العملية غير صحيح."
             except Exception as e:
                 print(f"⚠️ خطأ في قراءة التاريخ: {e}")
@@ -495,7 +558,7 @@ def get_button_order():
     conn = db_connect(); cur = conn.cursor()
     cur.execute("SELECT value FROM settings WHERE key = 'button_order'")
     row = cur.fetchone(); cur.close(); conn.close()
-    return row["value"] if row else "ff,pubg,jawaker,blood"
+    return row["value"] if row else "ff,pubg,jawaker,blood,8bp"
 
 def set_button_order(value):
     conn = db_connect(); cur = conn.cursor()
@@ -541,9 +604,11 @@ def validate_game_id(game_id: str, game: str):
         if len(game_id) < 6 or len(game_id) > 12: return False, "ID غير صالح (6-12 رقم)"
     elif game == "bs_global":
         if len(game_id) < 6 or len(game_id) > 15: return False, "ID غير صالح (6-15 رقم)"
+    elif game in ("8bp_coins", "8bp_cash", "8bp_memberships"):
+        if len(game_id) < 6 or len(game_id) > 15: return False, "ID غير صالح (6-15 رقم)"
     return True, game_id
 
-# ============ دوال المسابقة ============
+# ============ دوال المسابقة والعداد ============
 def create_user_invite_link(uid):
     try:
         link_name = f"ref_{uid}_{int(time.time())}"
@@ -591,30 +656,79 @@ def contest_status_text(lang, status):
     elif status == "rejected": return TEXTS[lang]["contest_status_rejected"]
     else: return TEXTS[lang]["contest_status_active"]
 
+def format_remaining(seconds, lang):
+    m = seconds // 60; s = seconds % 60
+    if lang == "en": return f"{m}m {s}s" if m > 0 else f"{s}s"
+    else: return f"{m} دقيقة و {s} ثانية" if m > 0 else f"{s} ثانية"
+
+def build_payment_steps(method, lang, price):
+    if method == "syriatel":
+        if lang == "ar": return (f"1️⃣ افتح <b>سيرياتيل كاش</b>\n2️⃣ اختر <b>تحويل</b>\n3️⃣ أدخل الرقم: <code>{PAYMENT_NUMBER_SYRIATEL}</code>\n4️⃣ أدخل المبلغ: <b>{price}</b>\n5️⃣ أكّد ✅"), "سيرياتيل كاش 💳"
+        else: return (f"1️⃣ Open <b>Syriatel Cash</b>\n2️⃣ Choose <b>Transfer</b>\n3️⃣ Enter: <code>{PAYMENT_NUMBER_SYRIATEL}</code>\n4️⃣ Enter amount: <b>{price}</b>\n5️⃣ Confirm ✅"), "Syriatel Cash 💳"
+    else:
+        if lang == "ar": return (f"1️⃣ افتح <b>شام كاش</b>\n2️⃣ اختر <b>مسح QR</b>\n3️⃣ امسح الكود بالصورة ☝️\n4️⃣ أدخل المبلغ: <b>{price}</b>\n5️⃣ أكّد ✅"), "شام كاش 📷"
+        else: return (f"1️⃣ Open <b>Sham Cash</b>\n2️⃣ Choose <b>Scan QR</b>\n3️⃣ Scan code above ☝️\n4️⃣ Enter amount: <b>{price}</b>\n5️⃣ Confirm ✅"), "Sham Cash 📷"
+
+def start_countdown(chat_id, message_id, order_id, method, uid, lang, price_str, total_seconds=300):
+    COUNTDOWNS[order_id] = False
+    def run():
+        steps_text, method_name = build_payment_steps(method, lang, price_str)
+        remaining = total_seconds
+        while remaining > 0:
+            time.sleep(60); remaining -= 60
+            if COUNTDOWNS.get(order_id) is True: return
+            conn = db_connect(); cur = conn.cursor()
+            cur.execute("SELECT status FROM orders WHERE order_id = ?", (order_id,))
+            r = cur.fetchone(); cur.close(); conn.close()
+            if r and r["status"] != "pending": return
+            if remaining > 0:
+                remaining_text = format_remaining(remaining, lang)
+                text = t_lang(lang, "payment_with_timer", method=method_name, steps=steps_text, remaining=remaining_text, oid=order_id)
+                try: bot.edit_message_text(text, chat_id=chat_id, message_id=message_id, parse_mode="HTML")
+                except: return
+        conn = db_connect(); cur = conn.cursor()
+        cur.execute("SELECT status FROM orders WHERE order_id = ?", (order_id,))
+        r = cur.fetchone()
+        if r and r["status"] == "pending":
+            cur.execute("UPDATE orders SET status = 'expired' WHERE order_id = ?", (order_id,))
+            conn.commit(); cur.close(); conn.close()
+            try: bot.edit_message_text(t_lang(lang, "payment_expired", oid=order_id), chat_id=chat_id, message_id=message_id, parse_mode="HTML")
+            except: pass
+        else: cur.close(); conn.close()
+    threading.Thread(target=run, daemon=True).start()
+
 # ============ لوحات الأزرار ============
 def games_row(uid):
     T = TEXTS[get_lang(uid)]
     order = get_button_order().split(",")
-    game_map = {"ff": T["btn_ff"], "pubg": T["btn_pubg"], "jawaker": T["btn_jawaker"], "blood": T["btn_blood"]}
+    game_map = {"ff": T["btn_ff"], "pubg": T["btn_pubg"], "jawaker": T["btn_jawaker"], "blood": T["btn_blood"], "8bp": T["btn_8bp"]}
     return [game_map[g] for g in order if g in game_map]
 
 def main_keyboard(uid):
     T = TEXTS[get_lang(uid)]; kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    games = games_row(uid)
-    if len(games) == 4: kb.row(games[0], games[1]); kb.row(games[2], games[3])
-    elif len(games) == 3: kb.row(games[0], games[1]); kb.row(games[2])
-    else: kb.row(*games)
+    kb.row(T["btn_games_menu"])
     kb.row(T["btn_info"], T["btn_settings"])
     kb.row(T["btn_deposit"], T["btn_wallet"])
     if uid == ADMIN_ID: kb.row(T["btn_support"], T["btn_inbox"]); kb.row(T["btn_contestants"])
     else: kb.row(T["btn_support"])
     return kb
 
+def games_keyboard(uid):
+    T = TEXTS[get_lang(uid)]; kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    kb.row(T["btn_back_main"])
+    games = games_row(uid)
+    if len(games) == 5: kb.row(games[0], games[1]); kb.row(games[2], games[3]); kb.row(games[4])
+    elif len(games) == 4: kb.row(games[0], games[1]); kb.row(games[2], games[3])
+    elif len(games) == 3: kb.row(games[0], games[1]); kb.row(games[2])
+    else: kb.row(*games)
+    return kb
+
 def back_keyboard(uid):
     T = TEXTS[get_lang(uid)]; kb = types.ReplyKeyboardMarkup(resize_keyboard=True)
     kb.row(T["btn_back"])
     games = games_row(uid)
-    if len(games) == 4: kb.row(games[0], games[1]); kb.row(games[2], games[3])
+    if len(games) == 5: kb.row(games[0], games[1]); kb.row(games[2], games[3]); kb.row(games[4])
+    elif len(games) == 4: kb.row(games[0], games[1]); kb.row(games[2], games[3])
     elif len(games) == 3: kb.row(games[0], games[1]); kb.row(games[2])
     else: kb.row(*games)
     kb.row(T["btn_info"], T["btn_settings"])
@@ -659,16 +773,34 @@ def show_bs_servers(chat_id, uid):
     bot.send_message(chat_id, "🔽", reply_markup=back_keyboard(uid))
     USER_DATA.setdefault(uid, {})["step"] = 2
 
+def show_8bp_types(chat_id, uid):
+    kb = types.InlineKeyboardMarkup(row_width=3).add(
+        types.InlineKeyboardButton(t(uid, "btn_8bp_coins"), callback_data="8bp_type|coins"),
+        types.InlineKeyboardButton(t(uid, "btn_8bp_cash"), callback_data="8bp_type|cash"),
+        types.InlineKeyboardButton(t(uid, "btn_8bp_memberships"), callback_data="8bp_type|memberships")
+    )
+    bot.send_message(chat_id, t(uid, "choose_8bp_type"), parse_mode="HTML", reply_markup=kb)
+    bot.send_message(chat_id, "🔽", reply_markup=back_keyboard(uid))
+    USER_DATA.setdefault(uid, {})["step"] = 2
+
 def go_back(message):
     uid = message.from_user.id; data = USER_DATA.get(uid, {}); step = data.get("step", 1)
+    
+    # في حال كان في قسم الألعاب
+    if message.text == TEXTS[get_lang(uid)]["btn_back_main"]:
+        bot.send_message(message.chat.id, t(uid, "back_done"), reply_markup=main_keyboard(uid))
+        USER_DATA[uid] = {"step": 1}
+        return
+
     if step <= 2:
-        bot.send_message(message.chat.id, t(uid, "back_done"), reply_markup=main_keyboard(uid)); USER_DATA[uid] = {"step": 1}; return
+        bot.send_message(message.chat.id, t(uid, "back_done"), reply_markup=games_keyboard(uid)); USER_DATA[uid] = {"step": 1}; return
     if step == 3:
         game = data.get("game", "")
         if game in ("ff", "ff_membership"): USER_DATA[uid] = {"game": "ff", "step": 2}; show_ff_types(message.chat.id, uid)
         elif game == "bs_global": USER_DATA[uid] = {"game": "blood", "step": 2}; show_bs_servers(message.chat.id, uid)
         elif game in ("jawaker", "jawaker_premium"): USER_DATA[uid] = {"game": "jawaker", "step": 2}; show_jw_types(message.chat.id, uid)
-        else: bot.send_message(message.chat.id, t(uid, "back_done"), reply_markup=main_keyboard(uid)); USER_DATA[uid] = {"step": 1}
+        elif game in ("8bp_coins", "8bp_cash", "8bp_memberships"): USER_DATA[uid] = {"game": "8bp", "step": 2}; show_8bp_types(message.chat.id, uid)
+        else: bot.send_message(message.chat.id, t(uid, "back_done"), reply_markup=games_keyboard(uid)); USER_DATA[uid] = {"step": 1}
         return
     if step == 4:
         game = data.get("game", "ff"); USER_DATA[uid]["step"] = 3; show_packages_for_game(message.chat.id, uid, game); return
@@ -682,7 +814,7 @@ def go_back(message):
         bot.register_next_step_handler(msg, get_player_name); return
     bot.send_message(message.chat.id, t(uid, "back_done"), reply_markup=main_keyboard(uid)); USER_DATA[uid] = {"step": 1}
 
-@bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"]])
+@bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_back"], TEXTS["en"]["btn_back"], TEXTS["ar"]["btn_back_main"], TEXTS["en"]["btn_back_main"]])
 def back_button_handler(message):
     try: ensure_user(message); go_back(message)
     except Exception as e: print(f"❌ back: {e}")
@@ -747,7 +879,6 @@ def process_deposit_tx(message):
         
     msg = bot.send_message(message.chat.id, t(uid, "deposit_verify"))
     
-    # 1. التحقق من التكرار
     conn = db_connect(); cur = conn.cursor()
     cur.execute("SELECT * FROM deposits WHERE tx_id = ?", (tx_id,))
     if cur.fetchone():
@@ -756,7 +887,6 @@ def process_deposit_tx(message):
         return
     cur.close(); conn.close()
     
-    # 2. التحقق من API (المبلغ + التاريخ)
     success, result = verify_sham_cash_tx(tx_id)
     if success:
         api_amount = float(result)
@@ -831,6 +961,13 @@ def admin_send_balance(message):
     except: pass
 
 # ============ الألعاب والشراء ============
+@bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_games_menu"], TEXTS["en"]["btn_games_menu"]])
+def games_menu(message):
+    ensure_user(message); uid = message.from_user.id
+    if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
+    bot.send_message(message.chat.id, t(uid, "games_menu_title"), parse_mode="HTML", reply_markup=games_keyboard(uid))
+    USER_DATA[uid] = {"step": 1}
+
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_ff"], TEXTS["en"]["btn_ff"]])
 def show_ff(message):
     ensure_user(message); uid = message.from_user.id
@@ -851,6 +988,13 @@ def show_jawaker(message):
     if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
     if not is_orders_open(): bot.send_message(message.chat.id, t(uid, "orders_closed_dev") if get_setting("dev_mode", "off") == "on" else t(uid, "orders_closed"), parse_mode="HTML"); return
     USER_DATA[uid] = {"game": "jawaker", "step": 2}; show_jw_types(message.chat.id, uid)
+
+@bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_8bp"], TEXTS["en"]["btn_8bp"]])
+def show_8bp(message):
+    ensure_user(message); uid = message.from_user.id
+    if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
+    if not is_orders_open(): bot.send_message(message.chat.id, t(uid, "orders_closed_dev") if get_setting("dev_mode", "off") == "on" else t(uid, "orders_closed"), parse_mode="HTML"); return
+    USER_DATA[uid] = {"game": "8bp", "step": 2}; show_8bp_types(message.chat.id, uid)
 
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_pubg"], TEXTS["en"]["btn_pubg"]])
 def show_pubg(message):
@@ -875,18 +1019,19 @@ def choose_jw_type(call):
 def choose_bs_server(call):
     server = call.data.split("|")[1]; uid = call.from_user.id; bot.answer_callback_query(call.id, "✅")
     if server == "global": USER_DATA[uid] = {"game": "bs_global", "step": 3}; show_packages_for_game(call.message.chat.id, uid, "bs_global")
-    else: bot.send_message(call.message.chat.id, t(uid, "bs_mena_soon"), parse_mode="HTML", reply_markup=main_keyboard(uid)); USER_DATA[uid] = {"step": 1}
+    else: bot.send_message(call.message.chat.id, t(uid, "bs_mena_soon"), parse_mode="HTML", reply_markup=back_keyboard(uid)); USER_DATA[uid] = {"step": 2}
+
+@bot.callback_query_handler(func=lambda c: c.data.startswith("8bp_type|"))
+def choose_8bp_type(call):
+    bp_type = call.data.split("|")[1]; uid = call.from_user.id; bot.answer_callback_query(call.id, "✅")
+    if bp_type == "coins": USER_DATA[uid] = {"game": "8bp_coins", "step": 3}; show_packages_for_game(call.message.chat.id, uid, "8bp_coins")
+    elif bp_type == "cash": USER_DATA[uid] = {"game": "8bp_cash", "step": 3}; show_packages_for_game(call.message.chat.id, uid, "8bp_cash")
+    else: USER_DATA[uid] = {"game": "8bp_memberships", "step": 3}; show_packages_for_game(call.message.chat.id, uid, "8bp_memberships")
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("pkg|"))
 def choose_package(call):
     _, game, key = call.data.split("|"); uid = call.from_user.id; lang = get_lang(uid); item = PACKAGES[game]["items"][key]
     
-    balance = get_wallet_balance(uid)
-    if balance < item["price"]:
-        bot.answer_callback_query(call.id, "❌ رصيدك غير كافي لهذا العرض!", show_alert=True)
-        bot.send_message(call.message.chat.id, t(uid, "wallet_insufficient", balance=balance, price=item["price"]), parse_mode="HTML")
-        return
-        
     bot.answer_callback_query(call.id, "✅")
     USER_DATA[uid] = {"game": game, "package_key": key, "package_name": item[lang], "price": item["price"], "step": 4}
     msg = bot.send_message(call.message.chat.id, t(uid, "chosen", item=item[lang], price=item["price"], game=PACKAGES[game]["title"][lang]), parse_mode="HTML", reply_markup=back_keyboard(uid))
@@ -900,7 +1045,12 @@ def get_game_id(message):
     game = data.get("game", "ff"); game_id = message.text.strip() if message.text else ""
     valid, result = validate_game_id(game_id, game)
     if not valid:
-        key = "invalid_id_ff" if game in ("ff", "ff_membership") else ("invalid_id_pubg" if game == "pubg" else ("invalid_id_jawaker" if game in ("jawaker", "jawaker_premium") else "invalid_id_bs"))
+        if game in ("ff", "ff_membership"): key = "invalid_id_ff"
+        elif game == "pubg": key = "invalid_id_pubg"
+        elif game in ("jawaker", "jawaker_premium"): key = "invalid_id_jawaker"
+        elif game == "bs_global": key = "invalid_id_bs"
+        else: key = "invalid_id_8bp"
+        
         msg = bot.send_message(message.chat.id, t(uid, key, reason=result), parse_mode="HTML", reply_markup=back_keyboard(uid))
         bot.register_next_step_handler(msg, get_game_id); return
     USER_DATA[uid]["game_id"] = result; USER_DATA[uid]["step"] = 5
@@ -916,26 +1066,61 @@ def get_player_name(message):
     if len(player_name) < 2:
         msg = bot.send_message(message.chat.id, t(uid, "invalid_name"), reply_markup=back_keyboard(uid)); bot.register_next_step_handler(msg, get_player_name); return
         
-    price = data["price"]
-    balance = get_wallet_balance(uid)
+    USER_DATA[uid]["player_name"] = player_name
+    USER_DATA[uid]["step"] = 6
     
-    if balance < price:
-        bot.send_message(message.chat.id, t(uid, "wallet_insufficient", balance=balance, price=price), parse_mode="HTML", reply_markup=main_keyboard(uid))
+    kb = types.InlineKeyboardMarkup(row_width=2)
+    kb.add(types.InlineKeyboardButton(t(uid, "btn_bot_wallet"), callback_data="pay|wallet"))
+    kb.add(types.InlineKeyboardButton(t(uid, "btn_syriatel"), callback_data="pay|syriatel"), types.InlineKeyboardButton(t(uid, "btn_sham"), callback_data="pay|sham"))
+    bot.send_message(message.chat.id, t(uid, "choose_payment"), parse_mode="HTML", reply_markup=kb)
+    bot.send_message(message.chat.id, "🔽", reply_markup=back_keyboard(uid))
+
+@bot.callback_query_handler(func=lambda c: c.data.startswith("pay|"))
+def choose_payment(call):
+    method = call.data.split("|")[1]; uid = call.from_user.id; data = USER_DATA.get(uid)
+    if not data or "game_id" not in data: bot.answer_callback_query(call.id, "⚠️ /start", show_alert=True); return
+    
+    if method == "wallet":
+        balance = get_wallet_balance(uid)
+        price = data["price"]
+        if balance >= price:
+            bot.answer_callback_query(call.id, "✅")
+            deduct_wallet_balance(uid, price)
+            conn = db_connect(); cur = conn.cursor()
+            cur.execute("INSERT INTO orders (user_id, game, package, price, game_id, player_name, payment_method, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        (uid, data["game"], data["package_name"], price, data["game_id"], data["player_name"], "wallet", "pending", datetime.now().strftime("%Y-%m-%d %H:%M")))
+            order_id = cur.lastrowid; conn.commit(); cur.close(); conn.close()
+            
+            bot.send_message(call.message.chat.id, t(uid, "wallet_paid", price=price), parse_mode="HTML", reply_markup=main_keyboard(uid))
+            
+            admin_text = f"🔔 <b>طلب جديد (محفظة)!</b>\n\n🔖 #{order_id}\n👤 {call.from_user.full_name}\n🆔 <code>{call.from_user.id}</code>\n\n🎮 {data['game'].upper()}\n💎 {data['package_name']}\n💰 {price} ل.س\n🎮 ID: <code>{data['game_id']}</code>\n📝 {data['player_name']}\n💳 محفظة البوت"
+            kb = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("✅ قبول", callback_data=f"accept|{order_id}"), types.InlineKeyboardButton("❌ رفض", callback_data=f"reject|{order_id}"))
+            bot.send_message(ADMIN_ID, admin_text, parse_mode="HTML", reply_markup=kb)
+            USER_DATA.pop(uid, None)
+        else:
+            bot.answer_callback_query(call.id, "❌ رصيدك غير كافي!", show_alert=True)
+            bot.send_message(call.message.chat.id, t(uid, "wallet_insufficient", balance=balance, price=price), parse_mode="HTML")
         return
         
-    deduct_wallet_balance(uid, price)
-    
+    bot.answer_callback_query(call.id, "✅")
     conn = db_connect(); cur = conn.cursor()
     cur.execute("INSERT INTO orders (user_id, game, package, price, game_id, player_name, payment_method, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (uid, data["game"], data["package_name"], price, data["game_id"], player_name, "wallet", "pending", datetime.now().strftime("%Y-%m-%d %H:%M")))
+                (uid, data["game"], data["package_name"], data["price"], data["game_id"], data["player_name"], method, "pending", datetime.now().strftime("%Y-%m-%d %H:%M")))
     order_id = cur.lastrowid; conn.commit(); cur.close(); conn.close()
     
-    bot.send_message(message.chat.id, t(uid, "wallet_paid", price=price), parse_mode="HTML", reply_markup=main_keyboard(uid))
+    lang = get_lang(uid)
+    if method == "sham":
+        try:
+            with open(SHAM_IMAGE_PATH, "rb") as photo: bot.send_photo(call.message.chat.id, photo, caption=t(uid, "sham_image_caption", price=data["price"]), parse_mode="HTML")
+        except: pass
+            
+    steps_text, method_name = build_payment_steps(method, lang, data["price"])
+    sent_msg = bot.send_message(call.message.chat.id, t_lang(lang, "payment_with_timer", method=method_name, steps=steps_text, remaining="5 دقائق" if lang == "ar" else "5 min", oid=order_id), parse_mode="HTML", reply_markup=main_keyboard(uid))
+    start_countdown(call.message.chat.id, sent_msg.message_id, order_id, method, uid, lang, data["price"], PAYMENT_TIMEOUT_SECONDS)
     
-    admin_text = f"🔔 <b>طلب جديد (محفظة)!</b>\n\n🔖 #{order_id}\n👤 {message.from_user.full_name}\n🆔 <code>{message.from_user.id}</code>\n\n🎮 {data['game'].upper()}\n💎 {data['package_name']}\n💰 {price} ل.س\n🎮 ID: <code>{data['game_id']}</code>\n📝 {player_name}\n💳 محفظة البوت"
+    admin_text = f"🔔 <b>طلب جديد!</b>\n\n🔖 #{order_id}\n👤 {call.from_user.full_name}\n🆔 <code>{call.from_user.id}</code>\n\n🎮 {data['game'].upper()}\n💎 {data['package_name']}\n💰 {data['price']} ل.س\n🎮 ID: <code>{data['game_id']}</code>\n📝 {data['player_name']}\n💳 {method_name}"
     kb = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("✅ قبول", callback_data=f"accept|{order_id}"), types.InlineKeyboardButton("❌ رفض", callback_data=f"reject|{order_id}"))
     bot.send_message(ADMIN_ID, admin_text, parse_mode="HTML", reply_markup=kb)
-    
     USER_DATA.pop(uid, None)
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("accept|") or c.data.startswith("reject|"))
@@ -1081,7 +1266,7 @@ def cfg_lang(call):
 def cfg_order(call):
     uid = call.from_user.id
     if uid != ADMIN_ID: bot.answer_callback_query(call.id, "🚫", show_alert=True); return
-    kb = types.InlineKeyboardMarkup(row_width=1).add(types.InlineKeyboardButton(t(uid, "btn_order_1"), callback_data="set_order|ff,pubg,jawaker,blood"), types.InlineKeyboardButton(t(uid, "btn_order_2"), callback_data="set_order|blood,ff,pubg,jawaker"), types.InlineKeyboardButton(t(uid, "btn_order_3"), callback_data="set_order|jawaker,blood,ff,pubg"))
+    kb = types.InlineKeyboardMarkup(row_width=1).add(types.InlineKeyboardButton(t(uid, "btn_order_1"), callback_data="set_order|ff,pubg,jawaker,blood,8bp"), types.InlineKeyboardButton(t(uid, "btn_order_2"), callback_data="set_order|blood,ff,pubg,jawaker,8bp"), types.InlineKeyboardButton(t(uid, "btn_order_3"), callback_data="set_order|jawaker,blood,ff,pubg,8bp"))
     bot.edit_message_text(t(uid, "order_current", order=get_button_order()), call.message.chat.id, call.message.message_id, reply_markup=kb); bot.answer_callback_query(call.id)
 
 @bot.callback_query_handler(func=lambda c: c.data == "cfg_dev")
@@ -1163,7 +1348,7 @@ def unknown_message(message):
     except Exception as e: print(f"❌ {e}")
 
 # ============ تشغيل ============
-print("🤖 البوت يعمل الآن على SQLite (نظام المحفظة فقط)...")
+print("🤖 البوت يعمل الآن على SQLite...")
 bot.infinity_polling(
     allowed_updates=["message", "edited_message", "callback_query", "inline_query", "chosen_inline_result", "channel_post", "edited_channel_post", "chat_member", "my_chat_member", "chat_join_request"],
     skip_pending=True, timeout=30, long_polling_timeout=30
