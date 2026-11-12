@@ -520,8 +520,10 @@ def gen_random_id():
 def get_user(uid):
     conn = db_connect(); cur = conn.cursor()
     cur.execute("SELECT * FROM users WHERE user_id = ?", (uid,))
-    u = cur.fetchone(); cur.close(); conn.close()
-    return u
+    row = cur.fetchone()
+    cur.close(); conn.close()
+    # ✅ تم إصلاح الخطأ هنا (تحويل السطر إلى dict لدعم .get)
+    return dict(row) if row else None
 
 def ensure_user(message):
     uid = message.from_user.id
