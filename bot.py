@@ -75,30 +75,42 @@ PACKAGES = {
         }
     },
     "pubg": {
-        "title": {"ar": "🎯 ببجي", "en": "🎯 PUBG"},
+        "title": {"ar": "🎯 شحن شدات ببجي", "en": "🎯 PUBG UC"},
         "items": {
             "pubg_60":   {"ar": "60 شدة 🪙",   "en": "60 UC 🪙",   "price": 140.0},
             "pubg_325":  {"ar": "325 شدة 🪙",  "en": "325 UC 🪙",  "price": 670.0},
-            "pubg_660":  {"ar": "660 شدة 🪙",  "en": "660 UC 🪙",  "price": 1320.0},
-            "pubg_1800": {"ar": "1800 شدة 🪙", "en": "1800 UC 🪙", "price": 3230.0},
+            "pubg_660":  {"ar": "660 شدة 🪙",  "en": "660 UC 🪙",  "price": 1300.0},
+            "pubg_1800": {"ar": "1800 شدة 🪙", "en": "1800 UC 🪙", "price": 3210.0},
+        }
+    },
+    "pubg_membership": {
+        "title": {"ar": "👑 عضويات ببجي", "en": "👑 PUBG Memberships"},
+        "items": {
+            "pubg_m_prime_m":   {"ar": "برايم شهر 👑", "en": "Prime 1 Month 👑", "price": 150.0},
+            "pubg_m_prime_6m":  {"ar": "برايم 6 أشهر 👑", "en": "Prime 6 Months 👑", "price": 800.0},
+            "pubg_m_bundle1":   {"ar": "حزمة الشراء الأولى 🎁", "en": "First Purchase Bundle 🎁", "price": 150.0},
+            "pubg_m_week1":     {"ar": "حزمة عروض أسبوعية 1 🎁", "en": "Weekly Offers Bundle 1 🎁", "price": 160.0},
+            "pubg_m_week2":     {"ar": "حزمة عروض أسبوعية 2 🎁", "en": "Weekly Offers Bundle 2 🎁", "price": 410.0},
+            "pubg_m_mythic":    {"ar": "حزمة الشعار الخرافي (الأسبوعية) 🎖️", "en": "Mythic Emblem Bundle (Weekly) 🎖️", "price": 420.0},
+            "pubg_m_legend":    {"ar": "حزمة شعار الأسطوري 🎖️", "en": "Legendary Emblem Bundle 🎖️", "price": 680.0},
         }
     },
     "jawaker": {
         "title": {"ar": "🃏 شحن توكنز جواكر", "en": "🃏 Jawaker Tokens"},
         "items": {
-            "jw_10000":  {"ar": "10000 توكنز ♦️",  "en": "10000 Tokens ♦️",  "price": 190.0},
+            "jw_10000":  {"ar": "10000 توكنز ♦️",  "en": "10000 Tokens ♦️",  "price": 180.0},
             "jw_15000":  {"ar": "15000 توكنز ♠️",  "en": "15000 Tokens ♠️",  "price": 260.0},
-            "jw_20000":  {"ar": "20000 توكنز ♥️",  "en": "20000 Tokens ♥️",  "price": 350.0},
-            "jw_30000":  {"ar": "30000 توكنز ♣️",  "en": "30000 Tokens ♣️",  "price": 500.0},
-            "jw_50000":  {"ar": "50000 توكنز 🃏",  "en": "50000 Tokens 🃏",  "price": 800.0},
-            "jw_100000": {"ar": "100000 توكنز 👑", "en": "100000 Tokens 👑", "price": 1580.0},
+            "jw_20000":  {"ar": "20000 توكنز ♥️",  "en": "20000 Tokens ♥️",  "price": 340.0},
+            "jw_30000":  {"ar": "30000 توكنز ♣️",  "en": "30000 Tokens ♣️",  "price": 490.0},
+            "jw_50000":  {"ar": "50000 توكنز 🃏",  "en": "50000 Tokens 🃏",  "price": 790.0},
+            "jw_100000": {"ar": "100000 توكنز 👑", "en": "100000 Tokens 👑", "price": 1550.0},
         }
     },
     "jawaker_premium": {
         "title": {"ar": "👑 بريميوم جواكر", "en": "👑 Jawaker Premium"},
         "items": {
             "jw_prem_silver": {"ar": "بريميوم جواكر 🃏 (فضي)", "en": "Jawaker Premium 🃏 (Silver)", "price": 900.0},
-            "jw_prem_red":    {"ar": "بريميوم جواكر 🃏 (أحمر)", "en": "Jawaker Premium 🃏 (Red)",    "price": 3800.0},
+            "jw_prem_red":    {"ar": "بريميوم جواكر 🃏 (أحمر)", "en": "Jawaker Premium 🃏 (Red)",    "price": 3750.0},
         }
     },
     "bs_global": {
@@ -173,11 +185,15 @@ TEXTS = {
         "btn_wallet": "💰 محفظتي",
         "check_success": "✅ تم التحقق بنجاح! أهلاً بك 🎉",
         "check_fail": "❌ لم تشترك في القناة بعد!",
+        "banned_user": "🚫 <b>أنت محظور من استخدام البوت.</b>\nتواصل مع الدعم: {SUPPORT_USERNAME}",
         "orders_closed": "⛔ عذرًا، البوت لا يستقبل الطلبات حاليًا.\n🕛 ساعات العمل: من <b>12 ظهرًا</b> حتى <b>10 مساءً</b> بتوقيت السعودية 🇸🇦",
         "orders_closed_dev": "🔧 <b>البوت في وضع الصيانة/التجارب مؤقتًا</b>\n\n⛔ لا يستقبل الطلبات حاليًا.\n🔄 يرجى المحاولة لاحقًا.",
         "choose_ff_type": "🔥 <b>اختر نوع الشحن في فري فاير:</b>\n\n👇 من الأزرار بالأسفل",
         "btn_ff_diamonds": "💎 شحن جواهر",
         "btn_ff_membership": "⭐ شحن عضوية",
+        "choose_pubg_type": "🎯 <b>اختر نوع الشحن في ببجي:</b>\n\n👇 من الأزرار بالأسفل",
+        "btn_pubg_uc": "🪙 شحن شدات (UC)",
+        "btn_pubg_membership": "👑 شحن عضويات",
         "choose_jw_type": "🃏 <b>اختر نوع الشحن في جواكر:</b>\n\n👇 اختر من الأزرار بالأسفل",
         "btn_jw_tokens": "💰 شحن توكنز",
         "btn_jw_premium": "👑 شحن بريميوم",
@@ -224,6 +240,10 @@ TEXTS = {
         "admin_add_balance_usage": "⚠️ <b>طريقة الاستخدام:</b>\n<code>/sendrasid [ID/Username] [Amount]</code>\n\n<b>أمثلة:</b>\n<code>/sendrasid 6382473367 500</code> (آيدي تلغرام)\n<code>/sendrasid @Yamen 500</code> (يوزر)\n<code>/sendrasid 12345678 500</code> (آيدي البوت)",
         "admin_user_not_found": "❌ لم يتم العثور على مستخدم بهذا الآيدي أو اليوزر.",
         "admin_balance_added": "✅ تم إضافة <b>{amount} ل.س</b> إلى رصيد المستخدم <b>{name}</b>.\n💰 رصيده الجديد: <b>{balance} ل.س</b>",
+        "admin_block_usage": "⚠️ <b>طريقة الاستخدام:</b>\n<code>/block [ID/Username]</code>\n\n<b>مثال:</b>\n<code>/block @Yamen</code>",
+        "admin_block_success": "🚫 تم حظر المستخدم <b>{name}</b> بنجاح.",
+        "admin_unblock_usage": "⚠️ <b>طريقة الاستخدام:</b>\n<code>/unblock [ID/Username]</code>\n\n<b>مثال:</b>\n<code>/unblock @Yamen</code>",
+        "admin_unblock_success": "✅ تم إلغاء حظر المستخدم <b>{name}</b> بنجاح.",
         "contest_disabled": "🚫 <b>المسابقة متوقفة حاليًا</b>\n\nعد قريبًا!",
         "contest_title": "🎁 <b>مسابقة البوت!</b>\n\n🎯 <b>الشروط:</b>\n📢 اجلب <b>{REQUIRED_JOINS} أشخاص</b> يشتركوا في القناة عبر رابطك الخاص\n\n🔗 <b>رابطك الخاص بالدعوة:</b>\n<code>{link}</code>\n\n📌 <b>كيف يعمل؟</b>\n1️⃣ انسخ رابطك بالأعلى ☝️\n2️⃣ شاركه مع أصحابك\n3️⃣ كل من يشترك في القناة عبر رابطك = +1 تلقائيًا\n4️⃣ عند {REQUIRED_JOINS} مشتركين → تدخل السحب تلقائيًا 🎉\n\n📊 <b>مدعوينك الحاليين:</b> <b>{count}/{required}</b>\n🎯 الحالة: {status}",
         "btn_copy_link": "📋 انسخ الرابط",
@@ -306,11 +326,15 @@ TEXTS = {
         "btn_wallet": "💰 My Wallet",
         "check_success": "✅ Verified! 🎉",
         "check_fail": "❌ Not subscribed!",
+        "banned_user": "🚫 <b>You are banned from using this bot.</b>\nContact support: {SUPPORT_USERNAME}",
         "orders_closed": "⛔ Orders closed.\n🕛 Working: 12 PM - 10 PM 🇸🇦",
         "orders_closed_dev": "🔧 <b>Bot is in maintenance mode</b>",
         "choose_ff_type": "🔥 <b>Choose FF type:</b>\n\n👇 From buttons",
         "btn_ff_diamonds": "💎 Diamonds",
         "btn_ff_membership": "⭐ Membership",
+        "choose_pubg_type": "🎯 <b>Choose PUBG type:</b>\n\n👇 From buttons",
+        "btn_pubg_uc": "🪙 UC Top-up",
+        "btn_pubg_membership": "👑 Memberships",
         "choose_jw_type": "🃏 <b>Choose Jawaker top-up type:</b>\n\n👇 From buttons below",
         "btn_jw_tokens": "💰 Tokens",
         "btn_jw_premium": "👑 Premium",
@@ -357,6 +381,10 @@ TEXTS = {
         "admin_add_balance_usage": "⚠️ <b>Usage:</b>\n<code>/sendrasid [ID/Username] [Amount]</code>\n\n<b>Examples:</b>\n<code>/sendrasid 6382473367 500</code> (Telegram ID)\n<code>/sendrasid @Yamen 500</code> (Username)\n<code>/sendrasid 12345678 500</code> (Bot ID)",
         "admin_user_not_found": "❌ User not found.",
         "admin_balance_added": "✅ Added <b>{amount} SYP</b> to <b>{name}</b>.\n💰 New balance: <b>{balance} SYP</b>",
+        "admin_block_usage": "⚠️ <b>Usage:</b>\n<code>/block [ID/Username]</code>\n\n<b>Example:</b>\n<code>/block @Yamen</code>",
+        "admin_block_success": "🚫 User <b>{name}</b> has been blocked.",
+        "admin_unblock_usage": "⚠️ <b>Usage:</b>\n<code>/unblock [ID/Username]</code>\n\n<b>Example:</b>\n<code>/unblock @Yamen</code>",
+        "admin_unblock_success": "✅ User <b>{name}</b> has been unblocked.",
         "contest_disabled": "🚫 <b>Contest is disabled</b>",
         "contest_title": "🎁 <b>Contest!</b>\n\n📢 Invite <b>{REQUIRED_JOINS} people</b> to the channel via your link\n\n🔗 <b>Your link:</b>\n<code>{link}</code>\n\n📊 <b>Invites:</b> <b>{count}/{required}</b>\n🎯 Status: {status}",
         "btn_copy_link": "📋 Copy link",
@@ -432,7 +460,12 @@ def init_db():
     
     cur.execute("""CREATE TABLE IF NOT EXISTS users (
         user_id INTEGER PRIMARY KEY, username TEXT, full_name TEXT,
-        random_id TEXT, language TEXT DEFAULT 'ar', joined_at TEXT)""")
+        random_id TEXT, language TEXT DEFAULT 'ar', joined_at TEXT, is_banned INTEGER DEFAULT 0)""")
+    # Add is_banned column if it doesn't exist (for old DBs)
+    try:
+        cur.execute("ALTER TABLE users ADD COLUMN is_banned INTEGER DEFAULT 0")
+    except:
+        pass
         
     cur.execute("""CREATE TABLE IF NOT EXISTS orders (
         order_id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, game TEXT, package TEXT,
@@ -464,6 +497,15 @@ def init_db():
     cur.execute("INSERT OR IGNORE INTO settings VALUES ('button_order', 'ff,pubg,jawaker,blood,8bp')")
     cur.execute("INSERT OR IGNORE INTO settings VALUES ('dev_mode', 'off')")
     cur.execute("INSERT OR IGNORE INTO settings VALUES ('contest_mode', 'on')")
+    
+    # Auto-update button order if it's missing the new games (fixes the 8bp missing issue)
+    cur.execute("SELECT value FROM settings WHERE key = 'button_order'")
+    row = cur.fetchone()
+    if row:
+        current_order = row["value"]
+        if "8bp" not in current_order:
+            cur.execute("UPDATE settings SET value = 'ff,pubg,jawaker,blood,8bp' WHERE key = 'button_order'")
+            print("🔧 تم تحديث ترتيب الأزرار تلقائياً لإضافة 8bp")
     
     conn.commit()
     cur.close(); conn.close()
@@ -598,7 +640,7 @@ def validate_game_id(game_id: str, game: str):
     if game_id.startswith("0"): return False, "لا يبدأ بـ 0"
     if game in ("ff", "ff_membership"):
         if len(game_id) < 5 or len(game_id) > 15: return False, "ID غير صالح (5-15 رقم)"
-    elif game == "pubg":
+    elif game in ("pubg", "pubg_membership"):
         if len(game_id) < 9 or len(game_id) > 12: return False, "ID غير صالح (9-12 رقم)"
     elif game in ("jawaker", "jawaker_premium"):
         if len(game_id) < 6 or len(game_id) > 12: return False, "ID غير صالح (6-12 رقم)"
@@ -761,6 +803,12 @@ def show_ff_types(chat_id, uid):
     bot.send_message(chat_id, "🔽", reply_markup=back_keyboard(uid))
     USER_DATA.setdefault(uid, {})["step"] = 2
 
+def show_pubg_types(chat_id, uid):
+    kb = types.InlineKeyboardMarkup(row_width=2).add(types.InlineKeyboardButton(t(uid, "btn_pubg_uc"), callback_data="pubg_type|uc"), types.InlineKeyboardButton(t(uid, "btn_pubg_membership"), callback_data="pubg_type|membership"))
+    bot.send_message(chat_id, t(uid, "choose_pubg_type"), parse_mode="HTML", reply_markup=kb)
+    bot.send_message(chat_id, "🔽", reply_markup=back_keyboard(uid))
+    USER_DATA.setdefault(uid, {})["step"] = 2
+
 def show_jw_types(chat_id, uid):
     kb = types.InlineKeyboardMarkup(row_width=2).add(types.InlineKeyboardButton(t(uid, "btn_jw_tokens"), callback_data="jw_type|tokens"), types.InlineKeyboardButton(t(uid, "btn_jw_premium"), callback_data="jw_type|premium"))
     bot.send_message(chat_id, t(uid, "choose_jw_type"), parse_mode="HTML", reply_markup=kb)
@@ -797,6 +845,7 @@ def go_back(message):
     if step == 3:
         game = data.get("game", "")
         if game in ("ff", "ff_membership"): USER_DATA[uid] = {"game": "ff", "step": 2}; show_ff_types(message.chat.id, uid)
+        elif game in ("pubg", "pubg_membership"): USER_DATA[uid] = {"game": "pubg", "step": 2}; show_pubg_types(message.chat.id, uid)
         elif game == "bs_global": USER_DATA[uid] = {"game": "blood", "step": 2}; show_bs_servers(message.chat.id, uid)
         elif game in ("jawaker", "jawaker_premium"): USER_DATA[uid] = {"game": "jawaker", "step": 2}; show_jw_types(message.chat.id, uid)
         elif game in ("8bp_coins", "8bp_cash", "8bp_memberships"): USER_DATA[uid] = {"game": "8bp", "step": 2}; show_8bp_types(message.chat.id, uid)
@@ -823,6 +872,12 @@ def back_button_handler(message):
 @bot.message_handler(commands=['start'])
 def cmd_start(message):
     ensure_user(message); uid = message.from_user.id
+    
+    u = get_user(uid)
+    if u and u.get("is_banned") == 1:
+        bot.send_message(message.chat.id, t(uid, "banned_user"), parse_mode="HTML")
+        return
+        
     if is_subscribed(uid): send_welcome(message.chat.id, message.from_user.first_name, uid); USER_DATA[uid] = {"step": 1}
     else: show_subscription_message(message.chat.id, uid)
 
@@ -841,6 +896,8 @@ def check_subscription(call):
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_deposit"], TEXTS["en"]["btn_deposit"]])
 def deposit_menu(message):
     uid = message.from_user.id
+    u = get_user(uid)
+    if u and u.get("is_banned") == 1: return
     if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
     msg = bot.send_message(message.chat.id, t(uid, "deposit_ask_amount"), parse_mode="HTML")
     bot.register_next_step_handler(msg, process_deposit_amount)
@@ -912,6 +969,8 @@ def process_deposit_tx(message):
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_wallet"], TEXTS["en"]["btn_wallet"]])
 def show_wallet(message):
     uid = message.from_user.id
+    u = get_user(uid)
+    if u and u.get("is_banned") == 1: return
     balance = get_wallet_balance(uid)
     bot.send_message(message.chat.id, t(uid, "wallet_info", balance=balance), parse_mode="HTML")
 
@@ -960,10 +1019,80 @@ def admin_send_balance(message):
     try: bot.send_message(uid, f"🎁 <b>تم إضافة {amount} ل.س إلى محفظتك من قِبَل الإدارة!</b>\n💰 رصيدك الجديد: <b>{new_balance} ل.س</b>", parse_mode="HTML")
     except: pass
 
+@bot.message_handler(commands=['block'])
+def admin_block_user(message):
+    if message.from_user.id != ADMIN_ID: return
+    
+    args = message.text.split()
+    if len(args) != 2:
+        bot.send_message(message.chat.id, t(ADMIN_ID, "admin_block_usage"), parse_mode="HTML")
+        return
+        
+    target = args[1].strip()
+    conn = db_connect(); cur = conn.cursor()
+    
+    query = "SELECT user_id, full_name FROM users WHERE user_id = ? OR random_id = ?"
+    params = [target, target]
+    if target.startswith("@"):
+        query += " OR username = ?"
+        params.append(target[1:])
+    
+    cur.execute(query, params)
+    user = cur.fetchone()
+    
+    if not user:
+        cur.close(); conn.close()
+        bot.send_message(message.chat.id, t(ADMIN_ID, "admin_user_not_found"))
+        return
+        
+    uid = user["user_id"]
+    name = user["full_name"]
+    
+    cur.execute("UPDATE users SET is_banned = 1 WHERE user_id = ?", (uid,))
+    conn.commit(); cur.close(); conn.close()
+    
+    bot.send_message(message.chat.id, t(ADMIN_ID, "admin_block_success", name=name), parse_mode="HTML")
+
+@bot.message_handler(commands=['unblock'])
+def admin_unblock_user(message):
+    if message.from_user.id != ADMIN_ID: return
+    
+    args = message.text.split()
+    if len(args) != 2:
+        bot.send_message(message.chat.id, t(ADMIN_ID, "admin_unblock_usage"), parse_mode="HTML")
+        return
+        
+    target = args[1].strip()
+    conn = db_connect(); cur = conn.cursor()
+    
+    query = "SELECT user_id, full_name FROM users WHERE user_id = ? OR random_id = ?"
+    params = [target, target]
+    if target.startswith("@"):
+        query += " OR username = ?"
+        params.append(target[1:])
+    
+    cur.execute(query, params)
+    user = cur.fetchone()
+    
+    if not user:
+        cur.close(); conn.close()
+        bot.send_message(message.chat.id, t(ADMIN_ID, "admin_user_not_found"))
+        return
+        
+    uid = user["user_id"]
+    name = user["full_name"]
+    
+    cur.execute("UPDATE users SET is_banned = 0 WHERE user_id = ?", (uid,))
+    conn.commit(); cur.close(); conn.close()
+    
+    bot.send_message(message.chat.id, t(ADMIN_ID, "admin_unblock_success", name=name), parse_mode="HTML")
+
 # ============ الألعاب والشراء ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_games_menu"], TEXTS["en"]["btn_games_menu"]])
 def games_menu(message):
     ensure_user(message); uid = message.from_user.id
+    u = get_user(uid)
+    if u and u.get("is_banned") == 1: return
     if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
     bot.send_message(message.chat.id, t(uid, "games_menu_title"), parse_mode="HTML", reply_markup=games_keyboard(uid))
     USER_DATA[uid] = {"step": 1}
@@ -971,13 +1100,26 @@ def games_menu(message):
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_ff"], TEXTS["en"]["btn_ff"]])
 def show_ff(message):
     ensure_user(message); uid = message.from_user.id
+    u = get_user(uid)
+    if u and u.get("is_banned") == 1: return
     if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
     if not is_orders_open(): bot.send_message(message.chat.id, t(uid, "orders_closed_dev") if get_setting("dev_mode", "off") == "on" else t(uid, "orders_closed"), parse_mode="HTML"); return
     USER_DATA[uid] = {"game": "ff", "step": 2}; show_ff_types(message.chat.id, uid)
 
+@bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_pubg"], TEXTS["en"]["btn_pubg"]])
+def show_pubg(message):
+    ensure_user(message); uid = message.from_user.id
+    u = get_user(uid)
+    if u and u.get("is_banned") == 1: return
+    if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
+    if not is_orders_open(): bot.send_message(message.chat.id, t(uid, "orders_closed_dev") if get_setting("dev_mode", "off") == "on" else t(uid, "orders_closed"), parse_mode="HTML"); return
+    USER_DATA[uid] = {"game": "pubg", "step": 2}; show_pubg_types(message.chat.id, uid)
+
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_blood"], TEXTS["en"]["btn_blood"]])
 def show_blood(message):
     ensure_user(message); uid = message.from_user.id
+    u = get_user(uid)
+    if u and u.get("is_banned") == 1: return
     if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
     if not is_orders_open(): bot.send_message(message.chat.id, t(uid, "orders_closed_dev") if get_setting("dev_mode", "off") == "on" else t(uid, "orders_closed"), parse_mode="HTML"); return
     USER_DATA[uid] = {"game": "blood", "step": 2}; show_bs_servers(message.chat.id, uid)
@@ -985,6 +1127,8 @@ def show_blood(message):
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_jawaker"], TEXTS["en"]["btn_jawaker"]])
 def show_jawaker(message):
     ensure_user(message); uid = message.from_user.id
+    u = get_user(uid)
+    if u and u.get("is_banned") == 1: return
     if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
     if not is_orders_open(): bot.send_message(message.chat.id, t(uid, "orders_closed_dev") if get_setting("dev_mode", "off") == "on" else t(uid, "orders_closed"), parse_mode="HTML"); return
     USER_DATA[uid] = {"game": "jawaker", "step": 2}; show_jw_types(message.chat.id, uid)
@@ -992,21 +1136,22 @@ def show_jawaker(message):
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_8bp"], TEXTS["en"]["btn_8bp"]])
 def show_8bp(message):
     ensure_user(message); uid = message.from_user.id
+    u = get_user(uid)
+    if u and u.get("is_banned") == 1: return
     if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
     if not is_orders_open(): bot.send_message(message.chat.id, t(uid, "orders_closed_dev") if get_setting("dev_mode", "off") == "on" else t(uid, "orders_closed"), parse_mode="HTML"); return
     USER_DATA[uid] = {"game": "8bp", "step": 2}; show_8bp_types(message.chat.id, uid)
-
-@bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_pubg"], TEXTS["en"]["btn_pubg"]])
-def show_pubg(message):
-    ensure_user(message); uid = message.from_user.id
-    if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
-    if not is_orders_open(): bot.send_message(message.chat.id, t(uid, "orders_closed_dev") if get_setting("dev_mode", "off") == "on" else t(uid, "orders_closed"), parse_mode="HTML"); return
-    USER_DATA[uid] = {"game": "pubg", "step": 3}; show_packages_for_game(message.chat.id, uid, "pubg")
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("ff_type|"))
 def choose_ff_type(call):
     ff_type = call.data.split("|")[1]; uid = call.from_user.id; bot.answer_callback_query(call.id, "✅")
     USER_DATA[uid] = {"game": "ff" if ff_type == "diamonds" else "ff_membership", "step": 3}
+    show_packages_for_game(call.message.chat.id, uid, USER_DATA[uid]["game"])
+
+@bot.callback_query_handler(func=lambda c: c.data.startswith("pubg_type|"))
+def choose_pubg_type(call):
+    pubg_type = call.data.split("|")[1]; uid = call.from_user.id; bot.answer_callback_query(call.id, "✅")
+    USER_DATA[uid] = {"game": "pubg" if pubg_type == "uc" else "pubg_membership", "step": 3}
     show_packages_for_game(call.message.chat.id, uid, USER_DATA[uid]["game"])
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("jw_type|"))
@@ -1046,7 +1191,7 @@ def get_game_id(message):
     valid, result = validate_game_id(game_id, game)
     if not valid:
         if game in ("ff", "ff_membership"): key = "invalid_id_ff"
-        elif game == "pubg": key = "invalid_id_pubg"
+        elif game in ("pubg", "pubg_membership"): key = "invalid_id_pubg"
         elif game in ("jawaker", "jawaker_premium"): key = "invalid_id_jawaker"
         elif game == "bs_global": key = "invalid_id_bs"
         else: key = "invalid_id_8bp"
@@ -1149,8 +1294,10 @@ def handle_decision(call):
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_info"], TEXTS["en"]["btn_info"]])
 def my_info(message):
     ensure_user(message); uid = message.from_user.id
+    u = get_user(uid)
+    if u and u.get("is_banned") == 1: return
     if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
-    u = get_user(uid); lang = get_lang(uid); balance = get_wallet_balance(uid)
+    lang = get_lang(uid); balance = get_wallet_balance(uid)
     conn = db_connect(); cur = conn.cursor(); cur.execute("SELECT order_id, package, price, status, created_at FROM orders WHERE user_id = ? ORDER BY order_id DESC LIMIT 5", (uid,)); orders = cur.fetchall(); cur.close(); conn.close()
     status_map = {"pending": "⏳", "accepted": "✅", "rejected": "❌", "expired": "⌛"}
     orders_text = "".join([f"\n🔖 #{o['order_id']} — {o['package']} ({o['price']})\n   {status_map.get(o['status'], o['status'])} | {o['created_at']}\n" for o in orders]) if orders else t(uid, "no_orders")
@@ -1162,6 +1309,8 @@ def my_info(message):
 @bot.callback_query_handler(func=lambda c: c.data == "contest_show")
 def contest_show(call):
     uid = call.from_user.id; bot.answer_callback_query(call.id)
+    u = get_user(uid)
+    if u and u.get("is_banned") == 1: return
     if not is_contest_open(): bot.send_message(uid, t(uid, "contest_disabled"), parse_mode="HTML"); return
     entry = get_contest_entry(uid); lang = get_lang(uid)
     if entry:
@@ -1216,6 +1365,8 @@ def contestant_details(call):
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_support"], TEXTS["en"]["btn_support"]])
 def support(message):
     uid = message.from_user.id
+    u = get_user(uid)
+    if u and u.get("is_banned") == 1: return
     if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
     kb = types.InlineKeyboardMarkup(row_width=1).add(types.InlineKeyboardButton(t(uid, "btn_complaint"), callback_data="send_complaint"))
     bot.send_message(message.chat.id, t(uid, "support"), parse_mode="HTML", reply_markup=kb)
@@ -1251,6 +1402,8 @@ def show_inbox(message):
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_settings"], TEXTS["en"]["btn_settings"]])
 def settings_menu(message):
     uid = message.from_user.id; ensure_user(message)
+    u = get_user(uid)
+    if u and u.get("is_banned") == 1: return
     if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
     is_admin = (uid == ADMIN_ID); kb = types.InlineKeyboardMarkup(row_width=1).add(types.InlineKeyboardButton(t(uid, "btn_change_lang"), callback_data="cfg_lang"))
     if is_admin: kb.add(types.InlineKeyboardButton(t(uid, "btn_change_order"), callback_data="cfg_order"), types.InlineKeyboardButton(t(uid, "btn_dev_mode"), callback_data="cfg_dev"), types.InlineKeyboardButton(t(uid, "btn_contest_toggle"), callback_data="cfg_contest"))
@@ -1343,6 +1496,8 @@ def cancel_reset(call):
 def unknown_message(message):
     try:
         uid = message.from_user.id; ensure_user(message)
+        u = get_user(uid)
+        if u and u.get("is_banned") == 1: return
         if is_subscribed(uid): bot.send_message(message.chat.id, t(uid, "unknown_msg"), reply_markup=main_keyboard(uid))
         else: show_subscription_message(message.chat.id, uid)
     except Exception as e: print(f"❌ {e}")
