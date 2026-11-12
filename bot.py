@@ -70,7 +70,7 @@ PACKAGES = {
     "ff_membership": {
         "title": {"ar": "⭐ عضوية فري فاير", "en": "⭐ Free Fire Membership"},
         "items": {
-            "ffm_week":  {"ar": "عضوية أسبوعية ⭐", "en": "Weekly Membership ⭐", "price": 340.0},
+            "ffm_week":  {"ar": "عضوية أسبوعية ⭐", "en": "Weekly Membership ⭐", "price": 350.0},
             "ffm_month": {"ar": "عضوية شهرية ⭐",  "en": "Monthly Membership ⭐", "price": 1540.0},
         }
     },
@@ -79,8 +79,8 @@ PACKAGES = {
         "items": {
             "pubg_60":   {"ar": "60 شدة 🪙",   "en": "60 UC 🪙",   "price": 140.0},
             "pubg_325":  {"ar": "325 شدة 🪙",  "en": "325 UC 🪙",  "price": 670.0},
-            "pubg_660":  {"ar": "660 شدة 🪙",  "en": "660 UC 🪙",  "price": 1300.0},
-            "pubg_1800": {"ar": "1800 شدة 🪙", "en": "1800 UC 🪙", "price": 3210.0},
+            "pubg_660":  {"ar": "660 شدة 🪙",  "en": "660 UC 🪙",  "price": 1320.0},
+            "pubg_1800": {"ar": "1800 شدة 🪙", "en": "1800 UC 🪙", "price": 3230.0},
         }
     },
     "pubg_membership": {
@@ -110,7 +110,7 @@ PACKAGES = {
         "title": {"ar": "👑 بريميوم جواكر", "en": "👑 Jawaker Premium"},
         "items": {
             "jw_prem_silver": {"ar": "بريميوم جواكر 🃏 (فضي)", "en": "Jawaker Premium 🃏 (Silver)", "price": 900.0},
-            "jw_prem_red":    {"ar": "بريميوم جواكر 🃏 (أحمر)", "en": "Jawaker Premium 🃏 (Red)",    "price": 3750.0},
+            "jw_prem_red":    {"ar": "بريميوم جواكر 🃏 (أحمر)", "en": "Jawaker Premium 🃏 (Red)",    "price": 3800.0},
         }
     },
     "bs_global": {
