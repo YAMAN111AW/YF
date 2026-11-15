@@ -62,9 +62,9 @@ PACKAGES = {
         "title": {"ar": "💎 شحن جواهر فري فاير", "en": "💎 Free Fire Diamonds"},
         "items": {
             "ff_110": {"ar": "110 جوهرة 💎", "en": "110 Diamonds 💎", "price": 160.0},
-            "ff_231": {"ar": "231 جوهرة 💎", "en": "231 Diamonds 💎", "price": 290.0},
-            "ff_583": {"ar": "583 جوهرة 💎", "en": "583 Diamonds 💎", "price": 700.0},
-            "ff_1188": {"ar": "1188 جوهرة 💎", "en": "1188 Diamonds 💎", "price": 1400.0},
+            "ff_231": {"ar": "231 جوهرة 💎", "en": "231 Diamonds 💎", "price": 310.0},
+            "ff_583": {"ar": "583 جوهرة 💎", "en": "583 Diamonds 💎", "price": 730.0},
+            "ff_1188": {"ar": "1188 جوهرة 💎", "en": "1188 Diamonds 💎", "price": 1450.0},
         }
     },
     "ff_membership": {
