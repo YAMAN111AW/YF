@@ -103,14 +103,14 @@ PACKAGES = {
             "jw_20000":  {"ar": "20000 توكنز ♥️",  "en": "20000 Tokens ♥️",  "price": 340.0},
             "jw_30000":  {"ar": "30000 توكنز ♣️",  "en": "30000 Tokens ♣️",  "price": 490.0},
             "jw_50000":  {"ar": "50000 توكنز 🃏",  "en": "50000 Tokens 🃏",  "price": 790.0},
-            "jw_100000": {"ar": "100000 توكنز 👑", "en": "100000 Tokens 👑", "price": 1550.0},
+            "jw_100000": {"ar": "100000 توكنز 👑", "en": "100000 Tokens 👑", "price": 1600.0},
         }
     },
     "jawaker_premium": {
         "title": {"ar": "👑 بريميوم جواكر", "en": "👑 Jawaker Premium"},
         "items": {
-            "jw_prem_silver": {"ar": "بريميوم جواكر 🃏 (فضي)", "en": "Jawaker Premium 🃏 (Silver)", "price": 900.0},
-            "jw_prem_red":    {"ar": "بريميوم جواكر 🃏 (أحمر)", "en": "Jawaker Premium 🃏 (Red)",    "price": 3800.0},
+            "jw_prem_silver": {"ar": "بريميوم جواكر 🃏 (فضي)", "en": "Jawaker Premium 🃏 (Silver)", "price": 850.0},
+            "jw_prem_red":    {"ar": "بريميوم جواكر 🃏 (أحمر)", "en": "Jawaker Premium 🃏 (Red)",    "price": 3900.0},
         }
     },
     "bs_global": {
