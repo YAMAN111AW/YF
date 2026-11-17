@@ -542,7 +542,10 @@ def get_lang(uid):
 def t(uid, key, **kwargs):
     lang = get_lang(uid)
     text = TEXTS.get(lang, TEXTS["ar"]).get(key, "")
-    return text.format(**kwargs, CHANNEL_USERNAME=CHANNEL_USERNAME, SUPPORT_USERNAME=SUPPORT_USERNAME, REQUIRED_JOINS=REQUIRED_JOINS) if kwargs else text
+    kwargs.setdefault("CHANNEL_USERNAME", CHANNEL_USERNAME)
+kwargs.setdefault("SUPPORT_USERNAME", SUPPORT_USERNAME)
+kwargs.setdefault("REQUIRED_JOINS", REQUIRED_JOINS)
+return text.format(**kwargs)
 
 def t_lang(lang, key, **kwargs):
     text = TEXTS.get(lang, TEXTS["ar"]).get(key, "")
