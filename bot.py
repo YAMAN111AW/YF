@@ -272,6 +272,7 @@ TEXTS = {
         "btn_reset_data": "🗑️ تصفير بياناتي",
         "btn_dev_mode": "🔧 وضع المطور (تشغيل البوت)",
         "btn_contest_toggle": "🎁 إدارة المسابقة",
+        "btn_logs": "📋 سجل الشكاوى",
         "contest_toggle_current_on": "🎁 <b>حالة المسابقة:</b> ✅ مفعّلة\n\nالمستخدمون يمكنهم المشاركة حاليًا.\n\nاضغط لإيقافها:",
         "contest_toggle_current_off": "🎁 <b>حالة المسابقة:</b> ❌ متوقفة\n\nالمستخدمون لا يمكنهم المشاركة حاليًا.\n\nاضغط لتشغيلها:",
         "btn_contest_toggle_on": "✅ تشغيل المسابقة",
@@ -413,6 +414,7 @@ TEXTS = {
         "btn_reset_data": "🗑️ Reset my data",
         "btn_dev_mode": "🔧 Developer mode",
         "btn_contest_toggle": "🎁 Manage Contest",
+        "btn_logs": "📋 Complaints Log",
         "contest_toggle_current_on": "🎁 <b>Contest:</b> ✅ ON\n\nPress to disable:",
         "contest_toggle_current_off": "🎁 <b>Contest:</b> ❌ OFF\n\nPress to enable:",
         "btn_contest_toggle_on": "✅ Enable Contest",
@@ -542,10 +544,11 @@ def get_lang(uid):
 def t(uid, key, **kwargs):
     lang = get_lang(uid)
     text = TEXTS.get(lang, TEXTS["ar"]).get(key, "")
+    # ✅ إجبار البوت على تمرير المتغيرات الأساسية دائماً
     kwargs.setdefault("CHANNEL_USERNAME", CHANNEL_USERNAME)
-kwargs.setdefault("SUPPORT_USERNAME", SUPPORT_USERNAME)
-kwargs.setdefault("REQUIRED_JOINS", REQUIRED_JOINS)
-return text.format(**kwargs)
+    kwargs.setdefault("SUPPORT_USERNAME", SUPPORT_USERNAME)
+    kwargs.setdefault("REQUIRED_JOINS", REQUIRED_JOINS)
+    return text.format(**kwargs)
 
 def t_lang(lang, key, **kwargs):
     text = TEXTS.get(lang, TEXTS["ar"]).get(key, "")
@@ -1415,7 +1418,9 @@ def settings_menu(message):
     if u and u.get("is_banned") == 1: return
     if not is_subscribed(uid): show_subscription_message(message.chat.id, uid); return
     is_admin = (uid == ADMIN_ID); kb = types.InlineKeyboardMarkup(row_width=1).add(types.InlineKeyboardButton(t(uid, "btn_change_lang"), callback_data="cfg_lang"))
-    if is_admin: kb.add(types.InlineKeyboardButton(t(uid, "btn_change_order"), callback_data="cfg_order"), types.InlineKeyboardButton(t(uid, "btn_dev_mode"), callback_data="cfg_dev"), types.InlineKeyboardButton(t(uid, "btn_contest_toggle"), callback_data="cfg_contest"))
+    if is_admin: 
+        kb.add(types.InlineKeyboardButton(t(uid, "btn_change_order"), callback_data="cfg_order"), types.InlineKeyboardButton(t(uid, "btn_dev_mode"), callback_data="cfg_dev"), types.InlineKeyboardButton(t(uid, "btn_contest_toggle"), callback_data="cfg_contest"))
+        kb.add(types.InlineKeyboardButton(t(uid, "btn_logs"), callback_data="cfg_logs"))
     kb.add(types.InlineKeyboardButton(t(uid, "btn_reset_data"), callback_data="cfg_reset"))
     bot.send_message(message.chat.id, t(uid, "settings_admin") if is_admin else t(uid, "settings_user"), parse_mode="HTML", reply_markup=kb)
 
@@ -1444,6 +1449,26 @@ def cfg_contest(call):
     if uid != ADMIN_ID: bot.answer_callback_query(call.id, "🚫", show_alert=True); return
     cur = get_setting("contest_mode", "on"); text = t(uid, "contest_toggle_current_on") if cur == "on" else t(uid, "contest_toggle_current_off"); btn = t(uid, "btn_contest_toggle_off") if cur == "on" else t(uid, "btn_contest_toggle_on"); cb = "contest|off" if cur == "on" else "contest|on"
     kb = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(btn, callback_data=cb)); bot.edit_message_text(text, call.message.chat.id, call.message.message_id, parse_mode="HTML", reply_markup=kb); bot.answer_callback_query(call.id)
+
+@bot.callback_query_handler(func=lambda c: c.data == "cfg_logs")
+def cfg_logs(call):
+    uid = call.from_user.id
+    if uid != ADMIN_ID: bot.answer_callback_query(call.id, "🚫", show_alert=True); return
+    
+    conn = db_connect(); cur = conn.cursor(); cur.execute("SELECT * FROM messages ORDER BY id DESC LIMIT 10"); msgs = cur.fetchall(); cur.close(); conn.close()
+    
+    if not msgs: 
+        bot.edit_message_text(t(uid, "inbox_empty"), call.message.chat.id, call.message.message_id)
+        return
+        
+    bot.edit_message_text(t(uid, "inbox_title", count=len(msgs)), call.message.chat.id, call.message.message_id, parse_mode="HTML")
+    
+    for m in msgs:
+        kb = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("👤 الرد", url=f"tg://user?id={m['user_id']}"))
+        username_txt = f"@{m['username']}" if m['username'] else "لا يوجد"
+        bot.send_message(call.message.chat.id, t(uid, "inbox_item", n=m["id"], name=m["full_name"], username=username_txt, uid=m["user_id"], time=m["created_at"], msg=m["message"]), parse_mode="HTML", reply_markup=kb)
+        
+    bot.answer_callback_query(call.id)
 
 @bot.callback_query_handler(func=lambda c: c.data.startswith("contest|"))
 def contest_toggle(call):
