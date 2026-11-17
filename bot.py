@@ -78,21 +78,22 @@ PACKAGES = {
         "title": {"ar": "🎯 شحن شدات ببجي", "en": "🎯 PUBG UC"},
         "items": {
             "pubg_60":   {"ar": "60 شدة 🪙",   "en": "60 UC 🪙",   "price": 140.0},
-            "pubg_325":  {"ar": "325 شدة 🪙",  "en": "325 UC 🪙",  "price": 670.0},
-            "pubg_660":  {"ar": "660 شدة 🪙",  "en": "660 UC 🪙",  "price": 1320.0},
-            "pubg_1800": {"ar": "1800 شدة 🪙", "en": "1800 UC 🪙", "price": 3230.0},
+            "pubg_325":  {"ar": "325 شدة 🪙",  "en": "325 UC 🪙",  "price": 700.0},
+            "pubg_660":  {"ar": "660 شدة 🪙",  "en": "660 UC 🪙",  "price": 1450.0},
+            "pubg_1800": {"ar": "1800 شدة 🪙", "en": "1800 UC 🪙", "price": 3500.0},
+            "pubg_3850": {"ar": "3850 شدة 🪙", "en": "3850 UC 🪙", "price": 7000.0},
         }
     },
     "pubg_membership": {
         "title": {"ar": "👑 عضويات ببجي", "en": "👑 PUBG Memberships"},
         "items": {
             "pubg_m_prime_m":   {"ar": "برايم شهر 👑", "en": "Prime 1 Month 👑", "price": 150.0},
-            "pubg_m_prime_6m":  {"ar": "برايم 6 أشهر 👑", "en": "Prime 6 Months 👑", "price": 800.0},
+            "pubg_m_prime_6m":  {"ar": "برايم 6 أشهر 👑", "en": "Prime 6 Months 👑", "price": 850.0},
             "pubg_m_bundle1":   {"ar": "حزمة الشراء الأولى 🎁", "en": "First Purchase Bundle 🎁", "price": 150.0},
             "pubg_m_week1":     {"ar": "حزمة عروض أسبوعية 1 🎁", "en": "Weekly Offers Bundle 1 🎁", "price": 160.0},
-            "pubg_m_week2":     {"ar": "حزمة عروض أسبوعية 2 🎁", "en": "Weekly Offers Bundle 2 🎁", "price": 410.0},
+            "pubg_m_week2":     {"ar": "حزمة عروض أسبوعية 2 🎁", "en": "Weekly Offers Bundle 2 🎁", "price": 440.0},
             "pubg_m_mythic":    {"ar": "حزمة الشعار الخرافي (الأسبوعية) 🎖️", "en": "Mythic Emblem Bundle (Weekly) 🎖️", "price": 420.0},
-            "pubg_m_legend":    {"ar": "حزمة شعار الأسطوري 🎖️", "en": "Legendary Emblem Bundle 🎖️", "price": 680.0},
+            "pubg_m_legend":    {"ar": "حزمة شعار الأسطوري 🎖️", "en": "Legendary Emblem Bundle 🎖️", "price": 700.0},
         }
     },
     "jawaker": {
