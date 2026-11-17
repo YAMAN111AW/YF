@@ -264,7 +264,7 @@ TEXTS = {
         "contestant_full_details": "━━━━━━━━━━━━━━━━━━\n📋 <b>تفاصيل المتسابق</b>\n━━━━━━━━━━━━━━━━━━\n\n👤 <b>الاسم:</b> {name}\n🆔 <b>تلغرام آيدي:</b> <code>{uid}</code>\n🌐 <b>يوزر:</b> @{username}\n\n━━━━━━━━━━━━━━━━━━\n🎁 <b>بيانات المسابقة</b>\n━━━━━━━━━━━━━━━━━━\n\n📊 <b>المدعوين:</b> <b>{count}/{required}</b>\n🎯 <b>الحالة:</b> {status}\n🕒 <b>بدأ المسابقة:</b> {created}\n🕐 <b>آخر مدعو:</b> {last}\n\n🔗 <b>رابط الدعوة:</b>\n<code>{link}</code>\n\n━━━━━━━━━━━━━━━━━━\n👥 <b>قائمة المدعوين ({count}):</b>\n{referrals_list}",
         "inbox_title": "📬 <b>البريد الوارد</b>\n\n📥 آخر <b>{count}</b> رسالة",
         "inbox_empty": "📭 لا يوجد رسائل حتى الآن",
-        "inbox_item": "📩 <b>شكوى رقم #{n}</b>\n\n👤 الاسم: <b>{name}</b>\n🆔 <code>{uid}</code>\n🕒 {time}\n\n💬 <b>الشكوى:</b>\n{msg}",
+        "inbox_item": "📩 <b>شكوى رقم #{n}</b>\n\n👤 الاسم: <b>{name}</b>\n🌐 اليوزر: {username}\n🆔 <code>{uid}</code>\n🕒 {time}\n\n💬 <b>الشكوى:</b>\n{msg}",
         "settings_admin": "⚙️ <b>الإعدادات (أدمن)</b>\n\nاختر:",
         "settings_user": "⚙️ <b>الإعدادات</b>\n\nاختر:",
         "btn_change_lang": "🌐 تغيير اللغة",
@@ -405,7 +405,7 @@ TEXTS = {
         "contestant_full_details": "📋 <b>Contestant Details</b>\n\n👤 <b>{name}</b>\n🆔 <code>{uid}</code>\n🌐 @{username}\n\n📊 <b>{count}/{required}</b>\n🎯 {status}\n🕒 {created}\n🕐 {last}\n🔗 <code>{link}</code>\n\n👥 <b>Invited ({count}):</b>\n{referrals_list}",
         "inbox_title": "📬 <b>Inbox</b>\n\n📥 Last <b>{count}</b>",
         "inbox_empty": "📭 No messages",
-        "inbox_item": "📩 <b>#{n}</b>\n\n👤 {name}\n🆔 <code>{uid}</code>\n🕒 {time}\n\n💬 {msg}",
+        "inbox_item": "📩 <b>#{n}</b>\n\n👤 {name}\n🌐 Username: {username}\n🆔 <code>{uid}</code>\n🕒 {time}\n\n💬 {msg}",
         "settings_admin": "⚙️ <b>Settings (Admin)</b>",
         "settings_user": "⚙️ <b>Settings</b>",
         "btn_change_lang": "🌐 Change language",
@@ -523,7 +523,6 @@ def get_user(uid):
     cur.execute("SELECT * FROM users WHERE user_id = ?", (uid,))
     row = cur.fetchone()
     cur.close(); conn.close()
-    # ✅ تم إصلاح الخطأ هنا (تحويل السطر إلى dict لدعم .get)
     return dict(row) if row else None
 
 def ensure_user(message):
@@ -1390,7 +1389,10 @@ def receive_complaint(message):
     cur.execute("INSERT INTO messages (user_id, username, full_name, message, created_at) VALUES (?, ?, ?, ?, ?)", (uid, message.from_user.username or "", message.from_user.full_name, text, datetime.now().strftime("%Y-%m-%d %H:%M")))
     conn.commit(); cur.close(); conn.close()
     bot.send_message(message.chat.id, t(uid, "message_sent"), parse_mode="HTML", reply_markup=main_keyboard(uid))
-    bot.send_message(ADMIN_ID, f"📩 <b>رسالة جديدة!</b>\n\n👤 {message.from_user.full_name}\n💬 {text}", parse_mode="HTML")
+    
+    # ✅ إرسال إشعار للمطور مع اليوزر
+    username_txt = f"@{message.from_user.username}" if message.from_user.username else "لا يوجد"
+    bot.send_message(ADMIN_ID, f"📩 <b>رسالة جديدة!</b>\n\n👤 {message.from_user.full_name}\n🌐 اليوزر: {username_txt}\n🆔 <code>{uid}</code>\n\n💬 {text}", parse_mode="HTML")
 
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_inbox"], TEXTS["en"]["btn_inbox"]] and m.from_user.id == ADMIN_ID)
 def show_inbox(message):
@@ -1399,7 +1401,8 @@ def show_inbox(message):
     bot.send_message(message.chat.id, t(uid, "inbox_title", count=len(msgs)), parse_mode="HTML")
     for m in msgs:
         kb = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("👤 الرد", url=f"tg://user?id={m['user_id']}"))
-        bot.send_message(message.chat.id, t(uid, "inbox_item", n=m["id"], name=m["full_name"], uid=m["user_id"], time=m["created_at"], msg=m["message"]), parse_mode="HTML", reply_markup=kb)
+        username_txt = f"@{m['username']}" if m['username'] else "لا يوجد"
+        bot.send_message(message.chat.id, t(uid, "inbox_item", n=m["id"], name=m["full_name"], username=username_txt, uid=m["user_id"], time=m["created_at"], msg=m["message"]), parse_mode="HTML", reply_markup=kb)
 
 # ============ الإعدادات ============
 @bot.message_handler(func=lambda m: m.text in [TEXTS["ar"]["btn_settings"], TEXTS["en"]["btn_settings"]])
@@ -1505,8 +1508,33 @@ def unknown_message(message):
         else: show_subscription_message(message.chat.id, uid)
     except Exception as e: print(f"❌ {e}")
 
+# ============ إرسال آخر رسالة دعم للمطور عند التشغيل ============
+def send_last_support_msg():
+    try:
+        conn = db_connect(); cur = conn.cursor()
+        cur.execute("SELECT * FROM messages ORDER BY id DESC LIMIT 1")
+        msg = cur.fetchone()
+        cur.close(); conn.close()
+        
+        if msg:
+            username_txt = f"@{msg['username']}" if msg['username'] else "لا يوجد"
+            text = (
+                "🚨 <b>تنبيه: آخر رسالة دعم (عند تشغيل البوت)</b>\n\n"
+                f"👤 الاسم: {msg['full_name']}\n"
+                f"🌐 اليوزر: {username_txt}\n"
+                f"🆔 الآيدي: <code>{msg['user_id']}</code>\n"
+                f"🕒 الوقت: {msg['created_at']}\n\n"
+                f"💬 <b>الرسالة:</b>\n{msg['message']}"
+            )
+            kb = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton("👤 فتح حساب", url=f"tg://user?id={msg['user_id']}"))
+            bot.send_message(ADMIN_ID, text, parse_mode="HTML", reply_markup=kb)
+    except Exception as e:
+        print(f"❌ خطأ في إرسال آخر رسالة دعم: {e}")
+
 # ============ تشغيل ============
 print("🤖 البوت يعمل الآن على SQLite...")
+send_last_support_msg() # ✅ يتم إرسال آخر رسالة دعم للمطور مرة واحدة عند تشغيل البوت
+
 bot.infinity_polling(
     allowed_updates=["message", "edited_message", "callback_query", "inline_query", "chosen_inline_result", "channel_post", "edited_channel_post", "chat_member", "my_chat_member", "chat_join_request"],
     skip_pending=True, timeout=30, long_polling_timeout=30
